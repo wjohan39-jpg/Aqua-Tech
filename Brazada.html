@@ -469,24 +469,24 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiPh">PH <span class="lsi-pbadge" id="lsiPhBadge"></span></label>
-                  <input type="number" class="form-input" id="lsiPh" value="7.4" step="0.1" min="0" max="14" oninput="clampInput(this,0,14);calcLSI()" />
+                  <input type="number" class="form-input" id="lsiPh" placeholder="ej. 7.1" step="0.1" min="0" max="14" oninput="clampInput(this,0,14);calcLSI()" />
                   <div class="lsi-param-hint">Res. 234/2026 &middot; 6.8&ndash;7.3</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiTemp">TEMPERATURA <span class="lsi-pbadge" id="lsiTempBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiTemp" value="27" min="0" max="40" oninput="clampInput(this,0,40);calcLSI()" /><span class="unit">°C</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiTemp" placeholder="ej. 27" min="0" max="40" oninput="clampInput(this,0,40);calcLSI()" /><span class="unit">°C</span></div>
                   <div class="lsi-param-hint">M&aacute;x. 40 °C</div>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiHard">DUREZA CÁLCICA <span class="lsi-pbadge" id="lsiHardBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiHard" value="250" min="0" max="700" oninput="clampInput(this,0,700);calcLSI()" /><span class="unit">ppm</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiHard" placeholder="ej. 250" min="0" max="700" oninput="clampInput(this,0,700);calcLSI()" /><span class="unit">ppm</span></div>
                   <div class="lsi-param-hint">Res. 234/2026 &middot; 200&ndash;700 ppm</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiAlk">ALCALINIDAD TOTAL <span class="lsi-pbadge" id="lsiAlkBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiAlk" value="100" min="0" max="150" oninput="clampInput(this,0,150);calcLSI()" /><span class="unit">ppm</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiAlk" placeholder="ej. 100" min="0" max="150" oninput="clampInput(this,0,150);calcLSI()" /><span class="unit">ppm</span></div>
                   <div class="lsi-param-hint">Res. 234/2026 &middot; 20&ndash;150 ppm</div>
                 </div>
               </div>
@@ -642,16 +642,16 @@
                     <span>Cloro residual <span class="irapi-tag auto" id="tagCloro"></span></span>
                     <span class="irapi-weight">peso 20%</span>
                   </div>
-                  <input type="range" class="irapi-range" id="sliderCloro" min="0" max="100" value="10" oninput="calcIRAPI()" />
-                  <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valCloro">10%</span><span>100%</span></div>
+                  <input type="range" class="irapi-range" id="sliderCloro" min="0" max="100" value="0" oninput="calcIRAPI()" />
+                  <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valCloro">0%</span><span>100%</span></div>
                 </div>
                 <div class="irapi-slider-group">
                   <div class="irapi-slider-header">
                     <span>Alcalinidad / pH <span class="irapi-tag auto" id="tagAlk"></span></span>
                     <span class="irapi-weight">peso 30%</span>
                   </div>
-                  <input type="range" class="irapi-range" id="sliderAlk" min="0" max="100" value="15" oninput="calcIRAPI()" />
-                  <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valAlk">15%</span><span>100%</span></div>
+                  <input type="range" class="irapi-range" id="sliderAlk" min="0" max="100" value="0" oninput="calcIRAPI()" />
+                  <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valAlk">0%</span><span>100%</span></div>
                 </div>
                 <div class="irapi-slider-group">
                   <div class="irapi-slider-header">
@@ -687,9 +687,9 @@
               </div>
               <div class="irapi-ranges">
                 <div class="irapi-range-item sin-riesgo"><span class="rng-range">0&ndash;10</span><span class="rng-label">Sin riesgo</span></div>
-                <div class="irapi-range-item bajo active-range"><span class="rng-range">10.1&ndash;35</span><span class="rng-label">Bajo</span></div>
-                <div class="irapi-range-item alto"><span class="rng-range">35.1&ndash;80</span><span class="rng-label">Alto</span></div>
-                <div class="irapi-range-item inviable"><span class="rng-range">&gt;80</span><span class="rng-label">Inviable</span></div>
+                <div class="irapi-range-item bajo"><span class="rng-range">10.1&ndash;35</span><span class="rng-label">Bajo</span></div>
+                <div class="irapi-range-item medio"><span class="rng-range">35.1&ndash;75</span><span class="rng-label">Medio</span></div>
+                <div class="irapi-range-item alto"><span class="rng-range">75.1&ndash;100</span><span class="rng-label">Alto</span></div>
               </div>
             </div>
           </div>
@@ -803,15 +803,21 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label" for="logBanistas">BAÑISTAS</label>
-                <input type="number" class="form-input" id="logBanistas" placeholder="ej. 15" min="0" />
+                <label class="form-label lsi-plabel" for="logDureza">DUREZA CÁLCICA <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logDureza')" aria-label="Ayuda: dureza cálcica">?</button> <span class="lsi-pbadge" id="logDurezaBadge"></span></label>
+                <div class="input-unit"><input type="number" class="form-input" id="logDureza" min="0" max="700" placeholder="ej. 250" oninput="clampInput(this,0,700);checkLogForm()" /><span class="unit">ppm</span></div>
+                <div class="lsi-param-hint">200&ndash;700 ppm &middot; Usada en el ISL</div>
+                <div class="param-tooltip-card" id="tt-logDureza" hidden>
+                  <div class="tt-what">La concentración de calcio disuelto. Afecta directamente el Índice de Saturación Langelier (ISL).</div>
+                  <div class="tt-equipo">Equipo: kit de dureza total o fotómetro con reactivo de calcio</div>
+                  <div class="tt-range">Normal: 200–700 ppm &middot; Menos de 200: agua corrosiva · Más de 700: agua incrustante</div>
+                </div>
               </div>
             </div>
             <div class="log-art16-section">
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               <span class="log-art16-label">Art. 16 Res. 234/2026 &mdash; Registro operacional (recomendado completar diariamente)</span>
             </div>
-            <div class="form-grid-3">
+            <div class="form-grid-4">
               <div class="form-group">
                 <label class="form-label" for="logCaudal">CAUDAL DE CIRCULACIÓN</label>
                 <div class="input-unit">
@@ -832,6 +838,10 @@
                   <input type="number" class="form-input" id="logAguaRep" min="0" max="9999" step="0.1" placeholder="ej. 2.5" oninput="clampInput(this,0,9999)" />
                   <span class="unit">m&sup3;</span>
                 </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="logBanistas">BAÑISTAS</label>
+                <input type="number" class="form-input" id="logBanistas" placeholder="ej. 15" min="0" />
               </div>
             </div>
             <div class="form-row">

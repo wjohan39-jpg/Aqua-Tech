@@ -29,6 +29,13 @@ function sectionInit(section) {
 function navigate(section, event) {
   if (event) event.preventDefault();
 
+  // Cerrar cualquier modal abierto y restaurar scroll
+  ['logDetailOverlay', 'afrDetailOverlay', 'afrEditOverlay'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  document.body.style.overflow = '';
+
   const target  = document.getElementById('section-' + section);
   const current = document.querySelector('.page-section.active');
   if (!target || current === target) return;
@@ -321,9 +328,11 @@ const PARAM_DEFS = [
     icon: '<path d="M9 3h6m-3 0v7l-4.5 7.38A2 2 0 0 0 9.26 20h5.48a2 2 0 0 0 1.74-2.97L12 10V3"/>' },
   { id: 'g-ph',        key: 'ph',        label: 'pH',                      unit: '',      min: 6,  max: 9,    range: 'Rango: 6.8–7.3',    normMin: 6.8,  normMax: 7.3,
     icon: '<line x1="8.5" y1="2" x2="15.5" y2="2"/><path d="M14.5 2v17.5c0 1.38-1.12 2.5-2.5 2.5s-2.5-1.12-2.5-2.5V2"/>' },
-  { id: 'g-alc',       key: 'alc',       label: 'Alcalinidad total',       unit: 'ppm',   min: 0,  max: 200,  range: 'Rango: 20–150 ppm', normMin: 20,   normMax: 150,
+  { id: 'g-alc',       key: 'alc',       label: 'Alcalinidad total',       unit: 'ppm',   min: 0,  max: 200,  range: 'Rango: 20–150 ppm',   normMin: 20,   normMax: 150,
     icon: '<path d="M2 12c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/><path d="M2 17c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/>' },
-  { id: 'g-cya',       key: 'cya',       label: 'Estabilizador (CYA)',     unit: 'ppm',   min: 0,  max: 100,  range: 'Rango: 0–75 ppm',   normMin: 0,    normMax: 75,
+  { id: 'g-dureza',    key: 'dureza',    label: 'Dureza cálcica',          unit: 'ppm',   min: 0,  max: 800,  range: 'Rango: 200–700 ppm',  normMin: 200,  normMax: 700,
+    icon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>' },
+  { id: 'g-cya',       key: 'cya',       label: 'Estabilizador (CYA)',     unit: 'ppm',   min: 0,  max: 100,  range: 'Rango: 0–75 ppm',     normMin: 0,    normMax: 75,
     icon: '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>' },
   { id: 'g-turb',      key: 'turb',      label: 'Transparencia',           unit: 'UNT',   min: 0,  max: 1,    range: 'Rango: 0–0.5 UNT', normMin: 0,    normMax: 0.5,
     icon: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>' },
@@ -476,13 +485,15 @@ function renderDashboardIndices() {
   if (!getLog().length) { el.innerHTML = ''; return; }
 
   const irapiResult = JSON.parse(sessionStorage.getItem('aqua_irapi_result') || 'null');
-  const lsiResult   = JSON.parse(sessionStorage.getItem('aqua_lsi_result')   || 'null');
+  const lastWithISL = getLog().find(e => e.isl != null);
+  const lsiResult   = lastWithISL ? { lsi: lastWithISL.isl, status: lastWithISL.islStatus } : null;
 
   if (!irapiResult && !lsiResult) { el.innerHTML = ''; return; }
 
   const irapiColor = !irapiResult ? '#94a3b8'
     : irapiResult.score <= 10 ? '#0cb86a'
     : irapiResult.score <= 35 ? '#f59e0b'
+    : irapiResult.score <= 75 ? '#ea580c'
     : '#ef4444';
 
   const lsiColor = !lsiResult ? '#94a3b8'
@@ -1192,13 +1203,30 @@ function updateDefaultNotice(noticeId, defaults) {
   notice.classList.toggle('default-notice-hidden', !isDefault);
 }
 
+function _lsiClearResult() {
+  const valEl = document.getElementById('lsiValue');
+  const stEl  = document.getElementById('lsiStatus');
+  if (valEl) { valEl.textContent = '–'; valEl.style.color = ''; }
+  if (stEl)  { stEl.textContent  = 'Sin datos'; stEl.style.color = 'var(--text-muted)'; }
+  document.querySelectorAll('.lsi-leg-item').forEach(l => l.classList.remove('active-leg'));
+  const diagEl = document.getElementById('lsiDiagnosis');
+  if (diagEl) diagEl.innerHTML = '';
+  ['lsiPhBadge','lsiTempBadge','lsiHardBadge','lsiAlkBadge'].forEach(id => _setLsiPBadge(id));
+  const canvas = document.getElementById('lsiGaugeCanvas');
+  if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  sessionStorage.removeItem('aqua_lsi_result');
+  sessionStorage.removeItem('aqua_lsi_fields');
+}
+
 function calcLSI() {
-  updateDefaultNotice('lsiDefaultNotice', LSI_DEFAULTS);
   const _r = id => { const v = parseFloat(document.getElementById(id)?.value); return isNaN(v) ? null : v; };
-  const pH   = _r('lsiPh')   ?? 7.4;
-  const temp = _r('lsiTemp') ?? 27;
-  const hard = _r('lsiHard') ?? 250;
-  const alk  = _r('lsiAlk')  ?? 100;
+  const pH   = _r('lsiPh');
+  const temp = _r('lsiTemp');
+  const hard = _r('lsiHard');
+  const alk  = _r('lsiAlk');
+
+  // Si algún campo está vacío → no calcular
+  if (pH === null || temp === null || hard === null || alk === null) { _lsiClearResult(); return; }
 
   // Coeficientes exactos de la Tabla Res. 234/2026: ISL = pH + CT + CD + CA − 12.1
   const CT = _lsiInterp(_LSI_TEMP, temp);
@@ -1328,10 +1356,10 @@ function calcLSI() {
 function restoreLSIFields() {
   const f = JSON.parse(sessionStorage.getItem('aqua_lsi_fields') || 'null');
   if (!f) return;
-  document.getElementById('lsiPh').value   = f.ph   ?? 7.4;
-  document.getElementById('lsiTemp').value = f.temp ?? 27;
-  document.getElementById('lsiHard').value = f.hard ?? 250;
-  document.getElementById('lsiAlk').value  = f.alk  ?? 100;
+  if (f.ph   != null) document.getElementById('lsiPh').value   = f.ph;
+  if (f.temp != null) document.getElementById('lsiTemp').value = f.temp;
+  if (f.hard != null) document.getElementById('lsiHard').value = f.hard;
+  if (f.alk  != null) document.getElementById('lsiAlk').value  = f.alk;
 }
 
 function calcLSIFromBitacora() {
@@ -1341,10 +1369,11 @@ function calcLSIFromBitacora() {
     return;
   }
 
-  const last = entries[0];
-  const ph   = (last.ph   != null && isFinite(last.ph))   ? +last.ph   : null;
-  const temp = (last.temp != null && isFinite(last.temp)) ? +last.temp : null;
-  const alc  = (last.alc  != null && isFinite(last.alc))  ? +last.alc  : null;
+  const last  = entries[0];
+  const ph    = (last.ph    != null && isFinite(last.ph))    ? +last.ph    : null;
+  const temp  = (last.temp  != null && isFinite(last.temp))  ? +last.temp  : null;
+  const alc   = (last.alc   != null && isFinite(last.alc))   ? +last.alc   : null;
+  const hard  = _lastDureza();
 
   if (ph === null && temp === null && alc === null) {
     showToast('El último registro no contiene datos de pH, temperatura ni alcalinidad.', 'warning');
@@ -1354,6 +1383,7 @@ function calcLSIFromBitacora() {
   if (ph   !== null) { const el = document.getElementById('lsiPh');   el.value = ph;   clampInput(el, 0, 14);  }
   if (temp !== null) { const el = document.getElementById('lsiTemp'); el.value = temp; clampInput(el, 0, 40);  }
   if (alc  !== null) { const el = document.getElementById('lsiAlk');  el.value = alc;  clampInput(el, 0, 150); }
+  { const el = document.getElementById('lsiHard'); el.value = hard; clampInput(el, 0, 700); }
 
   calcLSI();
 
@@ -1361,12 +1391,69 @@ function calcLSIFromBitacora() {
   if (ph   !== null) parts.push(`pH ${ph}`);
   if (temp !== null) parts.push(`T ${temp} °C`);
   if (alc  !== null) parts.push(`Alc ${alc} ppm`);
+  parts.push(`Dur ${hard} ppm`);
   showToast(`Cargado desde bitácora (${last.fecha}): ${parts.join(' · ')}`, 'success');
 }
 
 // ── IRAPI 2026 ────────────────────────────────────────────
+
+function hasTrimestreData() {
+  const log = getLog();
+  if (!log.length) return false;
+  const oldest = new Date(log[log.length - 1].fecha + 'T00:00:00');
+  const today  = new Date(); today.setHours(0, 0, 0, 0);
+  return Math.floor((today - oldest) / 86400000) >= 90;
+}
+
+function _diasParaTrimestre() {
+  const log = getLog();
+  if (!log.length) return 90;
+  const oldest = new Date(log[log.length - 1].fecha + 'T00:00:00');
+  const today  = new Date(); today.setHours(0, 0, 0, 0);
+  return Math.max(0, 90 - Math.floor((today - oldest) / 86400000));
+}
+
 function calcIRAPI() {
   updateDefaultNotice('irapiDefaultNotice', IRAPI_DEFAULTS);
+
+  const hasEnough = hasTrimestreData();
+  const IDS = ['sliderMicro','sliderCloro','sliderAlk','sliderOtros'];
+
+  if (!hasEnough) {
+    IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = 0;
+      el.disabled = true;
+      el.style.setProperty('--pct', '0%');
+    });
+    ['valMicro','valCloro','valAlk','valOtros'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = '0%';
+    });
+    const bar = document.getElementById('irapiBarFill');
+    if (bar) { bar.style.width = '0%'; bar.style.background = '#94a3b8'; }
+    const scoreLbl = document.getElementById('irapiScoreLabel');
+    if (scoreLbl) { scoreLbl.textContent = '–'; scoreLbl.style.color = '#94a3b8'; }
+    document.querySelectorAll('.irapi-range-item').forEach(el => el.classList.remove('active-range'));
+    const actionEl = document.getElementById('irapiAction');
+    if (actionEl) {
+      const faltan = _diasParaTrimestre();
+      const log = getLog();
+      const primerReg = log.length ? ` · Primer registro: ${log[log.length - 1].fecha}` : '';
+      actionEl.textContent = `El IRAPI se calcula trimestralmente (Art. 9, Res. 234/2026). Faltan ${faltan} día${faltan !== 1 ? 's' : ''} para completar el trimestre${primerReg}.`;
+      actionEl.className = 'irapi-action-phrase';
+    }
+    sessionStorage.removeItem('aqua_irapi_result');
+    sessionStorage.removeItem('aqua_irapi_sliders');
+    return;
+  }
+
+  IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = false;
+  });
+
   const micro = parseInt(document.getElementById('sliderMicro').value) || 0;
   const cloro = parseInt(document.getElementById('sliderCloro').value) || 0;
   const alk   = parseInt(document.getElementById('sliderAlk').value)   || 0;
@@ -1387,10 +1474,10 @@ function calcIRAPI() {
   const bar = document.getElementById('irapiBarFill');
   if (bar) bar.style.width = Math.min(score, 100) + '%';
 
-  let label = 'Sin riesgo', color = '#2563eb', cls = 'sin-riesgo';
-  if (score > 80)      { label = 'Inviable'; color = '#ef4444'; cls = 'inviable'; }
-  else if (score > 35) { label = 'Alto';     color = '#ea580c'; cls = 'alto'; }
-  else if (score > 10) { label = 'Bajo';     color = '#d97706'; cls = 'bajo'; }
+  let label = 'Sin riesgo', color = '#0cb86a', cls = 'sin-riesgo';
+  if (score > 75)      { label = 'Alto';  color = '#ef4444'; cls = 'alto'; }
+  else if (score > 35) { label = 'Medio'; color = '#ea580c'; cls = 'medio'; }
+  else if (score > 10) { label = 'Bajo';  color = '#d97706'; cls = 'bajo'; }
 
   const scoreLbl = document.getElementById('irapiScoreLabel');
   if (scoreLbl) { scoreLbl.textContent = label; scoreLbl.style.color = color; }
@@ -1414,6 +1501,12 @@ function calcIRAPI() {
     alk:   'Alcalinidad con margen de riesgo. Verifica y corrige antes de la próxima medición.',
     otros: 'Factores adicionales elevan el riesgo. Revisa novedades registradas en la bitácora.',
   };
+  const ACTION_MEDIO = {
+    micro: 'Riesgo microbiológico moderado. Programa análisis de laboratorio urgente y refuerza la desinfección.',
+    cloro: 'Cloro en nivel de alerta. Corrige la dosificación antes de la próxima sesión de uso.',
+    alk:   'Alcalinidad en rango de riesgo medio. Ajusta la química del agua hoy.',
+    otros: 'Factores adicionales en alerta. Revisa novedades y aplica acciones correctivas.',
+  };
   const ACTION_ALTO = {
     micro: 'Riesgo microbiológico alto. Solicita análisis de laboratorio urgente y considera cierre preventivo.',
     cloro: 'Cloro en nivel crítico. Ajusta la dosificación de inmediato y restringe el acceso hasta normalizar.',
@@ -1423,8 +1516,8 @@ function calcIRAPI() {
   let phrase = '';
   if (cls === 'sin-riesgo') phrase = 'Agua en condiciones óptimas. Mantén el monitoreo diario según Res. 234/2026.';
   else if (cls === 'bajo')  phrase = ACTION_BAJO[dominant];
-  else if (cls === 'alto')  phrase = ACTION_ALTO[dominant];
-  else                      phrase = 'Riesgo inviable. Cierra la piscina de inmediato y notifica al responsable sanitario · Art. 6, Res. 234/2026.';
+  else if (cls === 'medio') phrase = ACTION_MEDIO[dominant];
+  else                      phrase = ACTION_ALTO[dominant];
 
   const actionEl = document.getElementById('irapiAction');
   if (actionEl) {
@@ -1481,14 +1574,20 @@ function calcMicroEstimacion() {
 }
 
 function restoreIRAPISliders() {
-  try {
-    const s = JSON.parse(sessionStorage.getItem('aqua_irapi_sliders'));
-    if (!s) return;
-    document.getElementById('sliderMicro').value = s.micro;
-    document.getElementById('sliderCloro').value = s.cloro;
-    document.getElementById('sliderAlk').value   = s.alk;
-    document.getElementById('sliderOtros').value = s.otros;
-  } catch {}
+  if (!hasTrimestreData()) {
+    sessionStorage.removeItem('aqua_irapi_sliders');
+    sessionStorage.removeItem('aqua_irapi_result');
+  } else {
+    try {
+      const s = JSON.parse(sessionStorage.getItem('aqua_irapi_sliders'));
+      if (s) {
+        document.getElementById('sliderMicro').value = s.micro;
+        document.getElementById('sliderCloro').value = s.cloro;
+        document.getElementById('sliderAlk').value   = s.alk;
+        document.getElementById('sliderOtros').value = s.otros;
+      }
+    } catch {}
+  }
 
   const mode = localStorage.getItem('aqua_micro_mode') || 'lab';
   setMicroMode(mode);
@@ -1498,19 +1597,29 @@ function updateIRAPIBitacoraBtn() {
   const btn  = document.getElementById('btnCalcIRAPIBitacora');
   const note = document.getElementById('irapibitacoraNote');
   if (!btn) return;
-  const count = getLog().length;
-  const ready = count >= 15;
+  const ready  = hasTrimestreData();
+  const log    = getLog();
   btn.disabled = !ready;
   if (note) {
-    note.textContent = ready
-      ? `${count} registros disponibles · se usarán los últimos 15. Microbiológico requiere laboratorio.`
-      : `Mínimo 15 registros · tienes ${count} de 15. Microbiológico requiere laboratorio.`;
+    if (ready) {
+      const today  = new Date(); today.setHours(23, 59, 59, 999);
+      const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 90);
+      const trimLog = log.filter(e => new Date(e.fecha + 'T00:00:00') >= cutoff);
+      note.textContent = `${trimLog.length} registro${trimLog.length !== 1 ? 's' : ''} del último trimestre · Microbiológico requiere laboratorio certificado.`;
+    } else {
+      const faltan = _diasParaTrimestre();
+      note.textContent = `IRAPI trimestral (Art. 9 Res. 234/2026) · Faltan ${faltan} día${faltan !== 1 ? 's' : ''} para completar el primer trimestre de operación.`;
+    }
   }
 }
 
 function calcIRAPIFromBitacora() {
-  const log = getLog().slice(0, 15);
-  if (log.length < 15) return;
+  if (!hasTrimestreData()) return;
+
+  const today  = new Date(); today.setHours(23, 59, 59, 999);
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 90);
+  const log    = getLog().filter(e => new Date(e.fecha + 'T00:00:00') >= cutoff);
+  if (!log.length) return;
 
   const total   = log.length;
   const ncCloro = log.filter(e =>
@@ -1533,11 +1642,11 @@ function calcIRAPIFromBitacora() {
 
   ['tagCloro', 'tagAlk', 'tagOtros'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.textContent = 'Últimos 15 registros'; el.style.display = 'inline'; }
+    if (el) { el.textContent = `Trimestre (${total} reg.)`; el.style.display = 'inline'; }
   });
 
   calcIRAPI();
-  showToast('IRAPI calculado desde los últimos 15 registros de la bitácora.', 'success');
+  showToast(`IRAPI trimestral calculado desde ${total} registros de los últimos 90 días.`, 'success');
 }
 
 // ── BITÁCORA ──────────────────────────────────────────────
@@ -1567,6 +1676,7 @@ const LOG_PARAM_RANGES = [
   { id: 'logCloroComb', badge: 'logCloroCombBadge', min: 0,   max: 0.3  },
   { id: 'logPh',        badge: 'logPhBadge',        min: 6.8, max: 7.3  },
   { id: 'logAlc',       badge: 'logAlcBadge',       min: 20,  max: 150  },
+  { id: 'logDureza',   badge: 'logDurezaBadge',    min: 200, max: 700  },
   { id: 'logCya',       badge: 'logCyaBadge',       min: 0,   max: 75   },
   { id: 'logTurb',      badge: 'logTurbBadge',      min: 0,   max: 0.5  },
   { id: 'logTemp',      badge: 'logTempBadge',      min: 0,   max: 40   },
@@ -1615,6 +1725,11 @@ function checkLogForm() {
   }
 }
 
+function _lastDureza() {
+  const found = getLog().find(e => e.dureza != null && isFinite(e.dureza));
+  return found ? +found.dureza : 250;
+}
+
 function clearLogForm() {
   const now  = new Date();
   document.getElementById('logDate').value      = localDateStr(now);
@@ -1627,6 +1742,7 @@ function clearLogForm() {
   document.getElementById('logCya').value       = '';
   document.getElementById('logTurb').value      = '';
   document.getElementById('logTemp').value      = '';
+  document.getElementById('logDureza').value    = '';
   document.getElementById('logBanistas').value  = '';
   document.getElementById('logOrp').value       = '';
   document.getElementById('logTds').value       = '';
@@ -1655,6 +1771,7 @@ function editLog(ts) {
   document.getElementById('logCya').value       = entry.cya       ?? '';
   document.getElementById('logTurb').value      = entry.turb      ?? '';
   document.getElementById('logTemp').value      = entry.temp      ?? '';
+  document.getElementById('logDureza').value    = entry.dureza    ?? '';
   document.getElementById('logBanistas').value  = entry.banistas  ?? '';
   document.getElementById('logOrp').value       = entry.orp       ?? '';
   document.getElementById('logTds').value       = entry.tds       ?? '';
@@ -1691,6 +1808,7 @@ function saveLog() {
   const horasFunRaw  = parseFloat(document.getElementById('logHorasFun').value);
   const aguaRepRaw   = parseFloat(document.getElementById('logAguaRep').value);
   const retrolavRaw  = parseInt(document.getElementById('logRetrolav').value);
+  const durezaRaw    = parseFloat(document.getElementById('logDureza').value);
   const entry = {
     fecha:     document.getElementById('logDate').value,
     hora:      document.getElementById('logTime').value,
@@ -1702,6 +1820,7 @@ function saveLog() {
     cya:       parseFloat(document.getElementById('logCya').value),
     turb:      parseFloat(document.getElementById('logTurb').value),
     temp:      parseFloat(document.getElementById('logTemp').value),
+    dureza:    isNaN(durezaRaw)    ? null : durezaRaw,
     banistas:  isNaN(banistasRaw)  ? null : banistasRaw,
     orp:       isNaN(orpRaw)       ? null : orpRaw,
     tds:       isNaN(tdsRaw)       ? null : tdsRaw,
@@ -1715,6 +1834,17 @@ function saveLog() {
     notas:     document.getElementById('logNotas').value,
     ts:        editingLogTs || Date.now(),
   };
+
+  // Calcular ISL automáticamente para este registro
+  if (isFinite(entry.ph) && isFinite(entry.temp) && isFinite(entry.alc)) {
+    const hard = entry.dureza !== null ? entry.dureza : _lastDureza();
+    const CT = _lsiInterp(_LSI_TEMP, entry.temp);
+    const CD = _lsiInterp(_LSI_HARD, hard);
+    const CA = _lsiInterp(_LSI_ALK,  entry.alc);
+    entry.isl       = +(entry.ph + CT + CD + CA - 12.1).toFixed(2);
+    entry.islStatus = entry.isl < -0.3 ? 'Corrosiva' : entry.isl > 0.5 ? 'Incrustante' : 'Equilibrada';
+    entry.islDureza = hard;
+  }
 
   let log = getLog();
   let toastMsg;
@@ -1748,8 +1878,12 @@ function deleteLog(ts) {
     if (!log.length) {
       sessionStorage.removeItem('aqua_irapi_result');
       sessionStorage.removeItem('aqua_irapi_sliders');
-      sessionStorage.removeItem('aqua_lsi_result');
-      sessionStorage.removeItem('aqua_lsi_fields');
+      _lsiClearResult();
+      // Limpiar inputs LSI
+      ['lsiPh','lsiTemp','lsiHard','lsiAlk'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
     }
     renderLog();
     renderDashboardGauges();
@@ -1808,8 +1942,8 @@ function renderLog() {
       <thead>
         <tr>
           <th>Fecha</th><th>Hora</th><th>Operador</th>
-          <th>Cl. Libre</th><th>Cl. Comb</th><th>pH</th><th>Alcalinidad</th>
-          <th>CYA</th><th>Turbiedad</th><th>Temp</th><th>ORP</th><th>TDS</th><th>Conduct.</th><th>Art.16</th><th>Bañistas</th><th></th>
+          <th>Cl. Libre</th><th>Cl. Comb</th><th>pH</th><th>Alcalinidad</th><th>Dureza</th>
+          <th>CYA</th><th>Turbiedad</th><th>Temp</th><th>ORP</th><th>TDS</th><th>Conduct.</th><th>ISL</th><th>Art.16</th><th>Bañistas</th><th></th>
         </tr>
       </thead>
       <tbody>
@@ -1822,12 +1956,14 @@ function renderLog() {
             <td data-label="Cl. Comb" ${cc('clorocomb', e.clorocomb)}>${e.clorocomb != null && !isNaN(e.clorocomb) ? e.clorocomb + ' ppm' : '–'}</td>
             <td data-label="pH"       ${cc('ph',         e.ph       )}>${e.ph        ?? '–'}</td>
             <td data-label="Alcalinidad"${cc('alc',   e.alc  )}>${e.alc   ?? '–'} ppm</td>
+            <td data-label="Dureza"${cc('dureza', e.dureza)}>${e.dureza != null && !isNaN(e.dureza) ? e.dureza + ' ppm' : '–'}</td>
             <td data-label="CYA"${cc('cya',   e.cya  )}>${e.cya   ?? '–'} ppm</td>
             <td data-label="Turbiedad"${cc('turb',  e.turb )}>${e.turb  ?? '–'} UNT</td>
             <td data-label="Temp."${cc('temp',  e.temp )}>${e.temp  ?? '–'} °C</td>
             <td data-label="ORP"${e.orp != null && !isNaN(e.orp) ? (e.orp <= 700 ? ' class="cell-ok"' : ' class="cell-out"') : ''}>${e.orp != null && !isNaN(e.orp) ? e.orp + ' mV' : '–'}</td>
             <td data-label="TDS"${cc('tds', e.tds)}>${e.tds != null && !isNaN(e.tds) ? e.tds + ' mg/L' : '–'}</td>
             <td data-label="Conduct."${cc('cond', e.cond)}>${e.cond != null && !isNaN(e.cond) ? e.cond + ' µS/cm' : '–'}</td>
+            <td data-label="ISL">${e.isl != null ? `<span style="font-weight:700;color:${e.islStatus==='Equilibrada'?'#0cb86a':e.islStatus==='Incrustante'?'#f59e0b':'#ef4444'}">${e.isl.toFixed(2)}</span>` : '–'}</td>
             <td data-label="Art.16" title="${[e.caudal != null ? 'Caudal: ' + e.caudal + ' m³/h' : '', e.horasFun != null ? 'Horas: ' + e.horasFun + 'h' : '', e.aguaRep != null ? 'Agua: ' + e.aguaRep + ' m³' : '', e.retrolav != null ? 'Retrolavados: ' + e.retrolav : '', e.prodQuim ? 'Prod: ' + e.prodQuim : '', e.averias ? 'Averías: ' + e.averias : ''].filter(Boolean).join(' · ') || 'Sin datos Art.16'}">${(e.caudal != null || e.horasFun != null || e.aguaRep != null || e.retrolav != null || e.prodQuim || e.averias) ? '✓' : '–'}</td>
             <td data-label="Bañistas">${e.banistas ?? '–'}</td>
             <td data-label="">
@@ -1873,16 +2009,17 @@ function viewLog(ts) {
   meta.textContent  = `${entry.hora || ''} · ${entry.operador || 'Sin operador'}`;
 
   const paramRows = [
-    { key: 'cloro',     label: 'Cloro libre residual', unit: 'ppm', normMin: 2.0,  normMax: 4.0  },
-    { key: 'clorocomb', label: 'Cloro combinado',       unit: 'ppm', normMin: 0,    normMax: 0.3  },
-    { key: 'ph',        label: 'pH',                    unit: '',    normMin: 6.8,  normMax: 7.3  },
-    { key: 'alc',       label: 'Alcalinidad total',     unit: 'ppm', normMin: 20,   normMax: 150  },
-    { key: 'cya',       label: 'Estabilizador (CYA)',   unit: 'ppm', normMin: 0,    normMax: 75   },
-    { key: 'turb',      label: 'Transparencia',         unit: 'UNT', normMin: 0,    normMax: 0.5  },
-    { key: 'temp',      label: 'Temperatura',           unit: '°C',  normMin: 0,    normMax: 40   },
-    { key: 'orp',       label: 'Oxidación (ORP)',       unit: 'mV',  normMin: 0,    normMax: 700  },
-    { key: 'tds',       label: 'Sólidos disueltos (TDS)',unit: 'mg/L',normMin: 1000, normMax: 1200 },
-    { key: 'cond',      label: 'Conductividad eléctrica',unit: 'µS/cm',normMin: 2000,normMax: 2400},
+    { key: 'cloro',     label: 'Cloro libre residual',  unit: 'ppm',   normMin: 2.0,  normMax: 4.0  },
+    { key: 'clorocomb', label: 'Cloro combinado',        unit: 'ppm',   normMin: 0,    normMax: 0.3  },
+    { key: 'ph',        label: 'pH',                     unit: '',      normMin: 6.8,  normMax: 7.3  },
+    { key: 'alc',       label: 'Alcalinidad total',      unit: 'ppm',   normMin: 20,   normMax: 150  },
+    { key: 'dureza',    label: 'Dureza cálcica',         unit: 'ppm',   normMin: 200,  normMax: 700  },
+    { key: 'cya',       label: 'Estabilizador (CYA)',    unit: 'ppm',   normMin: 0,    normMax: 75   },
+    { key: 'turb',      label: 'Transparencia',          unit: 'UNT',   normMin: 0,    normMax: 0.5  },
+    { key: 'temp',      label: 'Temperatura',            unit: '°C',    normMin: 0,    normMax: 40   },
+    { key: 'orp',       label: 'Oxidación (ORP)',        unit: 'mV',    normMin: 0,    normMax: 700  },
+    { key: 'tds',       label: 'Sólidos disueltos (TDS)',unit: 'mg/L',  normMin: 1000, normMax: 1200 },
+    { key: 'cond',      label: 'Conductividad eléctrica',unit: 'µS/cm', normMin: 2000, normMax: 2400 },
   ];
 
   const paramHTML = paramRows.map(p => {
@@ -1929,7 +2066,26 @@ function viewLog(ts) {
         ${entry.notas ? `<div class="log-detail-notas"><em>${entry.notas}</em></div>` : ''}
       </div>` : '';
 
+  let islHTML = '';
+  if (entry.isl != null) {
+    const islColor  = entry.islStatus === 'Equilibrada' ? '#0cb86a' : entry.islStatus === 'Incrustante' ? '#f59e0b' : '#ef4444';
+    const islBg     = entry.islStatus === 'Equilibrada' ? '#f0fdf4' : entry.islStatus === 'Incrustante' ? '#fffbeb' : '#fef2f2';
+    const islBorder = entry.islStatus === 'Equilibrada' ? '#bbf7d0' : entry.islStatus === 'Incrustante' ? '#fde68a' : '#fecaca';
+    const durezaNote = entry.dureza == null ? ` <span style="font-size:11px;color:#94a3b8">(dureza estimada: ${entry.islDureza} ppm)</span>` : '';
+    islHTML = `<div class="log-detail-section">
+      <div class="log-detail-section-title">Índice de Saturación Langelier (ISL)</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;border:1px solid ${islBorder};background:${islBg}">
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;color:${islColor}">${entry.isl.toFixed(2)}</span>
+        <div>
+          <div style="font-weight:700;color:${islColor}">${entry.islStatus}</div>
+          <div style="font-size:12px;color:#64748b">Rango óptimo: −0.3 a +0.5${durezaNote}</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   body.innerHTML = `
+    ${islHTML}
     <div class="log-detail-section">
       <div class="log-detail-section-title">Parámetros del agua</div>
       <div class="log-detail-params">${paramHTML || '<p class="log-detail-empty">Sin parámetros registrados.</p>'}</div>
@@ -2669,10 +2825,10 @@ function __buildPDF(logoB64) {
     // Microbiológico no disponible desde bitácora — se normaliza sobre el 55% medible
     const irapiScore = +(pCloro * (20/55) + pAlk * (30/55) + pOtros * (5/55)).toFixed(1);
     let irapiLabel = 'Sin riesgo (parcial)';
-    if (irapiScore > 80)      irapiLabel = 'Inviable (parcial)';
-    else if (irapiScore > 35) irapiLabel = 'Alto (parcial)';
+    if (irapiScore > 75)      irapiLabel = 'Alto (parcial)';
+    else if (irapiScore > 35) irapiLabel = 'Medio (parcial)';
     else if (irapiScore > 10) irapiLabel = 'Bajo (parcial)';
-    const scoreColor = irapiScore <= 10 ? [220, 252, 231] : irapiScore <= 35 ? [254, 243, 199] : [254, 226, 226];
+    const scoreColor = irapiScore <= 10 ? [220, 252, 231] : irapiScore <= 35 ? [254, 243, 199] : irapiScore <= 75 ? [255, 237, 213] : [254, 226, 226];
 
     const pageH  = doc.internal.pageSize.getHeight();
     let irapiY = doc.lastAutoTable.finalY + 12;
