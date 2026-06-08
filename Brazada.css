@@ -1428,6 +1428,7 @@ input, select, textarea { font-family: inherit; }
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .afr-type-btn {
@@ -1576,6 +1577,7 @@ input, select, textarea { font-family: inherit; }
   display: flex;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .afr-footer .form-input {
@@ -1838,6 +1840,12 @@ input, select, textarea { font-family: inherit; }
 }
 
 @media (max-width: 560px) {
+  /* Tablas normativa — scroll horizontal en lugar de desbordar */
+  .norm-freq-group {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* Espaciado general */
   .content-area { padding: 14px; }
   .card { padding: 16px; }
