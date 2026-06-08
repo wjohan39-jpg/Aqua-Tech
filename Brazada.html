@@ -352,33 +352,33 @@
                 <div class="form-row" id="rectFields">
                   <div class="form-group">
                     <label class="form-label" for="poolLength">LARGO</label>
-                    <div class="input-unit"><input type="number" class="form-input" id="poolLength" value="8" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                    <div class="input-unit"><input type="number" class="form-input" id="poolLength" placeholder="ej. 25" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="poolWidth">ANCHO</label>
-                    <div class="input-unit"><input type="number" class="form-input" id="poolWidth" value="4" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                    <div class="input-unit"><input type="number" class="form-input" id="poolWidth" placeholder="ej. 12" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
                   </div>
                 </div>
                 <div class="form-group" id="circField" style="display:none;">
                   <label class="form-label" for="poolDiam">DIÁMETRO</label>
-                  <div class="input-unit"><input type="number" class="form-input" id="poolDiam" value="8" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="poolDiam" placeholder="ej. 8" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="poolDepth">PROFUNDIDAD MEDIA</label>
-                  <div class="input-unit"><input type="number" class="form-input" id="poolDepth" value="1.5" step="0.1" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="poolDepth" placeholder="ej. 1.5" step="0.1" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
                 </div>
               </div>
               <div class="calc-vol-result">
                 <div class="calc-vol-row">
                   <span class="calc-vol-label">Volumen</span>
-                  <span class="calc-vol-value" id="volValue">48.0 m³</span>
+                  <span class="calc-vol-value" id="volValue">–</span>
                 </div>
                 <div class="calc-vol-row">
                   <span class="calc-vol-label">Equivale a</span>
-                  <span class="calc-vol-liters" id="volValueL">48,000 L</span>
+                  <span class="calc-vol-liters" id="volValueL">–</span>
                 </div>
               </div>
-              <div class="calc-formula-note" id="calcFormulaNote">Rectangular: Largo &times; Ancho &times; Profundidad</div>
+              <div class="calc-formula-note" id="calcFormulaNote">Ingresa las dimensiones del estanque</div>
             </div>
 
             <!-- Paso 2: Medición actual -->
@@ -398,7 +398,7 @@
                   <span class="calc-arrow-sep">&rarr;</span>
                   <div class="form-group" style="flex:1">
                     <label class="form-label">OBJETIVO (ppm)</label>
-                    <input type="number" class="form-input" id="calcCloroObj" step="0.1" min="2.0" max="4.0" value="3.0" oninput="clampInput(this,2.0,4.0);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcCloroObj" step="0.1" min="2.0" max="4.0" value="4.0" oninput="clampInput(this,2.0,4.0);calcDosificacion()" />
                   </div>
                 </div>
                 <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; Rango: 2.0&ndash;4.0 ppm</div>
@@ -414,7 +414,7 @@
                   <span class="calc-arrow-sep">&rarr;</span>
                   <div class="form-group" style="flex:1">
                     <label class="form-label">OBJETIVO</label>
-                    <input type="number" class="form-input" id="calcPhObj" step="0.1" min="6.8" max="7.3" value="7.1" oninput="clampInput(this,6.8,7.3);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcPhObj" step="0.1" min="6.8" max="7.3" value="7.3" oninput="clampInput(this,6.8,7.3);calcDosificacion()" />
                   </div>
                 </div>
                 <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; Rango: 6.8&ndash;7.3</div>

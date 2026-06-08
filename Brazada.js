@@ -870,9 +870,15 @@ function calcVolume() {
   const el  = document.getElementById('volValue');
   const elL = document.getElementById('volValueL');
   const elN = document.getElementById('calcFormulaNote');
-  if (el)  el.textContent  = vol.toFixed(1) + ' m³';
-  if (elL) elL.textContent = Math.round(vol * 1000).toLocaleString('es-CO') + ' L';
-  if (elN) elN.textContent = formulaNote;
+  if (vol > 0) {
+    if (el)  el.textContent  = vol.toFixed(1) + ' m³';
+    if (elL) elL.textContent = Math.round(vol * 1000).toLocaleString('es-CO') + ' L';
+    if (elN) elN.textContent = formulaNote;
+  } else {
+    if (el)  el.textContent  = '–';
+    if (elL) elL.textContent = '–';
+    if (elN) elN.textContent = 'Ingresa las dimensiones del estanque';
+  }
 
   if (vol > 0) {
     const repVol = document.getElementById('repVolumen');
