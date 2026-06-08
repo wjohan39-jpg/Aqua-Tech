@@ -1,0 +1,1423 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brazada Aqua Tech</title>
+  <meta name="description" content="Sistema de gestión de piscinas bajo Resolución 234/2026 · Colombia" />
+
+  <!-- Favicon y PWA icons -->
+  <link rel="icon" type="image/png" href="Multimedia/Logo.png" />
+  <link rel="apple-touch-icon" href="Multimedia/Logo.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Brazada Aqua Tech" />
+  <meta name="theme-color" content="#1e293b" />
+  <link rel="manifest" href="manifest.json" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="Brazada.css" />
+</head>
+<body>
+
+  <!-- LAYOUT PRINCIPAL -->
+  <div class="app-layout" id="appLayout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+      <!-- Logo / Brand -->
+      <div class="sidebar-brand">
+        <img src="Multimedia/Logo.png" alt="Aqua Tech" class="brand-logo-img" />
+        <div class="brand-text">
+          <span class="brand-name">Brazada Aqua Tech</span>
+          <span class="brand-sub">RES. 234 / 2026</span>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="sidebar-nav">
+        <span class="nav-label">Operación</span>
+
+        <ul class="nav-list">
+
+          <li class="nav-item active" data-section="dashboard">
+            <button type="button" class="nav-link" onclick="navigate('dashboard', event)">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+              <span class="nav-text">Dashboard</span>
+            </button>
+          </li>
+
+          <li class="nav-item" data-section="calculadora">
+            <button type="button" class="nav-link" onclick="navigate('calculadora', event)">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/>
+              </svg>
+              <span class="nav-text">Calculadora Química</span>
+            </button>
+          </li>
+
+          <li class="nav-item" data-section="lsi">
+            <button type="button" class="nav-link" onclick="navigate('lsi', event)">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+              <span class="nav-text">Equilibrio del agua (ISL)</span>
+            </button>
+          </li>
+
+          <li class="nav-item" data-section="irapi">
+            <button type="button" class="nav-link" onclick="navigate('irapi', event)">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              <span class="nav-text">Riesgo sanitario (IRAPI)</span>
+            </button>
+          </li>
+
+          <li class="nav-item" data-section="bitacora">
+            <button type="button" class="nav-link" onclick="navigate('bitacora', event)">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span class="nav-text">Bitácora Diaria</span>
+            </button>
+          </li>
+
+          <li class="nav-item" data-section="protocolo">
+            <button type="button" class="nav-link" onclick="navigate('protocolo', event)">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span class="nav-text">Protocolo AFR</span>
+            </button>
+          </li>
+
+          <li class="nav-item" data-section="reporte">
+            <button type="button" class="nav-link" onclick="navigate('reporte', event)">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+              </svg>
+              <span class="nav-text">Reporte Semanal</span>
+            </button>
+          </li>
+
+          <li class="nav-item" data-section="normativa">
+            <button type="button" class="nav-link" onclick="navigate('normativa', event)">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+              </svg>
+              <span class="nav-text">Normativa</span>
+            </button>
+          </li>
+
+          <li class="nav-item" data-section="documentos">
+            <button type="button" class="nav-link" onclick="navigate('documentos', event)">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>
+              </svg>
+              <span class="nav-text">Documentos</span>
+            </button>
+          </li>
+
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- OVERLAY MOVIL -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="main-wrapper">
+
+      <!-- HEADER -->
+      <header class="topbar">
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Alternar menú">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>
+          </svg>
+        </button>
+        <img src="Multimedia/Logo.png" alt="Aqua Tech" class="topbar-logo" />
+        <div class="topbar-status">
+          <span class="status-dot"></span>
+          <span class="status-text">Sistema operativo · Colombia</span>
+          <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Alternar modo oscuro" title="Modo oscuro / claro">
+            <svg class="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="theme-icon-sun"  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- ÁREA DE CONTENIDO (secciones) -->
+      <main class="content-area" id="contentArea">
+
+        <!-- SECCION: DASHBOARD -->
+        <section class="page-section active" id="section-dashboard">
+          <div class="section-topbar">
+            <div class="section-actions">
+              <button class="btn btn-outline" onclick="navigate('bitacora', event)">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Registrar medición
+              </button>
+              <button id="btnDashReport" class="btn btn-primary btn-locked" onclick="dashboardReportClick()" aria-disabled="true">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                Generar reporte
+              </button>
+            </div>
+          </div>
+          <!-- Panel de inicio guiado (visible solo sin datos) -->
+          <div id="dashEmptyGuide" class="dash-empty-guide" style="display:none">
+            <div class="deg-header">
+              <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <div>
+                <div class="deg-title">¿Por dónde empezar?</div>
+                <div class="deg-subtitle">Sigue estos pasos para poner en marcha el monitoreo de tu piscina</div>
+              </div>
+            </div>
+            <div class="deg-steps">
+              <button class="deg-step" onclick="navigate('calculadora', event)">
+                <div class="deg-step-num">1</div>
+                <div class="deg-step-body">
+                  <div class="deg-step-title">Calculadora química</div>
+                  <div class="deg-step-desc">Ingresa las dimensiones de tu piscina y obtén la dosis exacta de cloro y pH</div>
+                </div>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <div class="deg-connector"></div>
+              <button class="deg-step" onclick="navigate('bitacora', event)">
+                <div class="deg-step-num">2</div>
+                <div class="deg-step-body">
+                  <div class="deg-step-title">Registrar medición</div>
+                  <div class="deg-step-desc">Guarda los parámetros del agua en la bitácora diaria. Es el núcleo de todo el análisis</div>
+                </div>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <div class="deg-connector"></div>
+              <button class="deg-step" onclick="navigate('lsi', event)">
+                <div class="deg-step-num">3</div>
+                <div class="deg-step-body">
+                  <div class="deg-step-title">Índice de equilibrio (ISL) e IRAPI</div>
+                  <div class="deg-step-desc">Con tus datos, calcula el equilibrio del agua y el nivel de riesgo sanitario</div>
+                </div>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hero cumplimiento -->
+          <div class="compliance-hero" id="complianceHero">
+            <div class="compliance-icon">
+              <svg aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <polyline points="9 12 11 14 15 10"/>
+              </svg>
+            </div>
+            <div class="compliance-info">
+              <span class="compliance-label">ESTADO DE CUMPLIMIENTO</span>
+              <h2 class="compliance-title" id="complianceTitle">Apta para uso público</h2>
+            </div>
+            <span class="badge badge-success" id="complianceBadge">&#10003; Cumple</span>
+          </div>
+          <!-- Banner antigüedad de datos -->
+          <div id="dataAgeWarning" style="display:none"></div>
+          <!-- Parámetros -->
+          <div class="params-header">
+            <h3 class="params-title" id="paramsTitle">Parámetros del agua · última medición</h3>
+            <button class="share-btn" id="shareBtn" onclick="compartirEstado()" title="Compartir estado de la piscina" style="display:none" aria-label="Compartir estado">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              <span class="share-btn-text">Compartir</span>
+            </button>
+          </div>
+          <div class="gauges-grid" id="gaugesGrid">
+            <!-- Generado por JS -->
+          </div>
+          <!-- Gráfico de tendencias -->
+          <div class="card trend-card" id="trendCard" style="display:none;margin-bottom:1.5rem">
+            <div class="trend-header">
+              <h3 class="card-title" style="margin:0">Tendencia de parámetros</h3>
+              <div class="trend-controls">
+                <div class="trend-btn-group">
+                  <button class="trend-btn active" data-param="cloro" onclick="setTrendParam('cloro')">Cloro libre</button>
+                  <button class="trend-btn" data-param="ph" onclick="setTrendParam('ph')">pH</button>
+                  <button class="trend-btn" data-param="alc" onclick="setTrendParam('alc')">Alcalinidad</button>
+                </div>
+                <div class="trend-btn-group">
+                  <button class="trend-day active" data-days="7" onclick="setTrendDays(7)">7 d</button>
+                  <button class="trend-day" data-days="14" onclick="setTrendDays(14)">14 d</button>
+                  <button class="trend-day" data-days="30" onclick="setTrendDays(30)">30 d</button>
+                </div>
+              </div>
+            </div>
+            <div class="trend-canvas-wrap">
+              <canvas id="trendCanvas"></canvas>
+            </div>
+            <div class="trend-legend">
+              <span class="trend-leg"><span class="trend-leg-dot ok"></span>En rango</span>
+              <span class="trend-leg"><span class="trend-leg-dot out"></span>Fuera de rango</span>
+              <span class="trend-leg"><span class="trend-leg-band"></span>Zona normativa Res. 234/2026</span>
+            </div>
+          </div>
+
+          <!-- Índices de riesgo -->
+          <div id="dashIndices" style="margin-bottom:1.5rem"></div>
+
+          <!-- Alertas de vencimientos -->
+          <div id="dashVencAlerts" style="display:none;margin-bottom:1.5rem"></div>
+
+          <!-- Seguridad + Accesos rápidos -->
+          <div class="bottom-grid">
+            <div class="card safety-card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <h3>Seguridad obligatoria · Ley 1209 / 2008</h3>
+              </div>
+              <div class="safety-grid">
+                <div class="safety-item"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg><span>Cerramientos perimetrales con mínimo 1.20 m de altura</span></div>
+                <div class="safety-item"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg><span>Alarmas de inmersión funcionales y revisadas</span></div>
+                <div class="safety-item"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg><span>Botón de parada de emergencia accesible y señalizado</span></div>
+                <div class="safety-item"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg><span>Ganchos de rescate y aros salvavidas visibles</span></div>
+                <div class="safety-item"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg><span>Drenajes antiatrapamiento certificados</span></div>
+                <div class="safety-item"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg><span>Salvavidas certificado durante el horario de uso</span></div>
+              </div>
+            </div>
+            <div class="card quick-access-card">
+              <h3 class="card-title">Accesos rápidos</h3>
+              <div class="quick-list">
+                <button class="quick-btn" onclick="navigate('bitacora', event)">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Registrar medición
+                </button>
+                <button class="quick-btn" onclick="navigate('calculadora', event)">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>
+                  Calculadora Química
+                </button>
+                <button class="quick-btn" onclick="navigate('irapi', event)">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  Ver nivel de riesgo (IRAPI)
+                </button>
+                <button class="quick-btn" onclick="navigate('protocolo', event)">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  Protocolo AFR
+                </button>
+                <button class="quick-btn" onclick="navigate('normativa', event)">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                  Ver normativa
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCION: CALCULADORA -->
+        <section class="page-section" id="section-calculadora">
+          <div class="two-col-layout">
+
+            <!-- Paso 1: Volumen -->
+            <div class="card">
+              <div class="card-header">
+                <span class="calc-step-num">1</span>
+                <h3>Volumen del estanque</h3>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="poolShape">FORMA</label>
+                <select class="form-select" id="poolShape" onchange="updateShapeFields()">
+                  <option value="rectangular">Rectangular</option>
+                  <option value="oval">Ovalada</option>
+                  <option value="circular">Circular</option>
+                </select>
+              </div>
+              <div id="shapeFields">
+                <div class="form-row" id="rectFields">
+                  <div class="form-group">
+                    <label class="form-label" for="poolLength">LARGO</label>
+                    <div class="input-unit"><input type="number" class="form-input" id="poolLength" value="8" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="poolWidth">ANCHO</label>
+                    <div class="input-unit"><input type="number" class="form-input" id="poolWidth" value="4" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                  </div>
+                </div>
+                <div class="form-group" id="circField" style="display:none;">
+                  <label class="form-label" for="poolDiam">DIÁMETRO</label>
+                  <div class="input-unit"><input type="number" class="form-input" id="poolDiam" value="8" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="poolDepth">PROFUNDIDAD MEDIA</label>
+                  <div class="input-unit"><input type="number" class="form-input" id="poolDepth" value="1.5" step="0.1" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                </div>
+              </div>
+              <div class="calc-vol-result">
+                <div class="calc-vol-row">
+                  <span class="calc-vol-label">Volumen</span>
+                  <span class="calc-vol-value" id="volValue">48.0 m³</span>
+                </div>
+                <div class="calc-vol-row">
+                  <span class="calc-vol-label">Equivale a</span>
+                  <span class="calc-vol-liters" id="volValueL">48,000 L</span>
+                </div>
+              </div>
+              <div class="calc-formula-note" id="calcFormulaNote">Rectangular: Largo &times; Ancho &times; Profundidad</div>
+            </div>
+
+            <!-- Paso 2: Medición actual -->
+            <div class="card">
+              <div class="card-header">
+                <span class="calc-step-num">2</span>
+                <h3>Medición actual del agua</h3>
+              </div>
+
+              <div class="calc-param-block">
+                <div class="calc-param-title">Cloro libre</div>
+                <div class="calc-param-pair">
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label">ACTUAL (ppm)</label>
+                    <input type="number" class="form-input" id="calcCloroActual" step="0.1" min="0" max="20" placeholder="ej. 1.5" oninput="clampInput(this,0,20);calcDosificacion()" />
+                  </div>
+                  <span class="calc-arrow-sep">&rarr;</span>
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label">OBJETIVO (ppm)</label>
+                    <input type="number" class="form-input" id="calcCloroObj" step="0.1" min="2.0" max="4.0" value="3.0" oninput="clampInput(this,2.0,4.0);calcDosificacion()" />
+                  </div>
+                </div>
+                <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; Rango: 2.0&ndash;4.0 ppm</div>
+              </div>
+
+              <div class="calc-param-block">
+                <div class="calc-param-title">pH</div>
+                <div class="calc-param-pair">
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label">ACTUAL</label>
+                    <input type="number" class="form-input" id="calcPhActual" step="0.1" min="0" max="14" placeholder="ej. 7.6" oninput="clampInput(this,0,14);calcDosificacion()" />
+                  </div>
+                  <span class="calc-arrow-sep">&rarr;</span>
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label">OBJETIVO</label>
+                    <input type="number" class="form-input" id="calcPhObj" step="0.1" min="6.8" max="7.3" value="7.1" oninput="clampInput(this,6.8,7.3);calcDosificacion()" />
+                  </div>
+                </div>
+                <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; Rango: 6.8&ndash;7.3</div>
+              </div>
+
+              <div class="calc-priority-note">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                El ajuste de <strong>pH se calcula primero</strong>. Art.&nbsp;5: no dosificar con ba&ntilde;istas en el agua.
+              </div>
+              <button class="btn btn-outline btn-full calc-to-bitacora" onclick="navigateCalcToBitacora(event)">
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                Registrar medici&oacute;n en bit&aacute;cora
+              </button>
+            </div>
+          </div>
+
+          <!-- Paso 3: Resultados -->
+          <div class="card" style="margin-top:1.25rem">
+            <div class="card-header">
+              <span class="calc-step-num calc-step-num-3">3</span>
+              <h3>Dosificaci&oacute;n recomendada</h3>
+            </div>
+            <div id="calcResultados">
+              <p class="empty-state">Ingresa las mediciones del agua en el Paso 2 para ver la dosificaci&oacute;n recomendada.</p>
+            </div>
+          </div>
+
+          <div class="flow-next-step">
+            <div class="fns-left">
+              <div class="fns-label">Siguiente paso</div>
+              <div class="fns-title">Registrar medición en bitácora</div>
+              <div class="fns-desc">Guarda los valores actuales para el historial oficial y el cálculo del IRAPI</div>
+            </div>
+            <button class="fns-btn" onclick="navigate('bitacora', event)">
+              Ir a bitácora
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- SECCION: LSI -->
+        <section class="page-section" id="section-lsi">
+          <div class="two-col-layout">
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+                <h3>Parámetros</h3>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label lsi-plabel" for="lsiPh">PH <span class="lsi-pbadge" id="lsiPhBadge"></span></label>
+                  <input type="number" class="form-input" id="lsiPh" value="7.4" step="0.1" min="0" max="14" oninput="clampInput(this,0,14);calcLSI()" />
+                  <div class="lsi-param-hint">Res. 234/2026 &middot; 6.8&ndash;7.3</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label lsi-plabel" for="lsiTemp">TEMPERATURA <span class="lsi-pbadge" id="lsiTempBadge"></span></label>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiTemp" value="27" min="0" max="40" oninput="clampInput(this,0,40);calcLSI()" /><span class="unit">°C</span></div>
+                  <div class="lsi-param-hint">M&aacute;x. 40 °C</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label lsi-plabel" for="lsiHard">DUREZA CÁLCICA <span class="lsi-pbadge" id="lsiHardBadge"></span></label>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiHard" value="250" min="0" max="700" oninput="clampInput(this,0,700);calcLSI()" /><span class="unit">ppm</span></div>
+                  <div class="lsi-param-hint">Res. 234/2026 &middot; 200&ndash;700 ppm</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label lsi-plabel" for="lsiAlk">ALCALINIDAD TOTAL <span class="lsi-pbadge" id="lsiAlkBadge"></span></label>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiAlk" value="100" min="0" max="150" oninput="clampInput(this,0,150);calcLSI()" /><span class="unit">ppm</span></div>
+                  <div class="lsi-param-hint">Res. 234/2026 &middot; 20&ndash;150 ppm</div>
+                </div>
+              </div>
+              <div class="irapi-bitacora-btn-wrap">
+                <button class="btn btn-outline btn-full" onclick="calcLSIFromBitacora()">
+                  <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                  Cargar desde última medición
+                </button>
+                <p class="irapi-bitacora-note">Carga pH, temperatura y alcalinidad del último registro. Dureza cálcica: ingresar manualmente.</p>
+              </div>
+            </div>
+            <div class="card lsi-result-card">
+              <h3 class="card-title">Índice de Saturación Langelier — ISL</h3>
+              <div id="lsiDefaultNotice" class="default-notice">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Usando valores por defecto — ingresa tus mediciones reales para un resultado preciso
+              </div>
+              <div class="lsi-gauge-wrap">
+                <canvas id="lsiGaugeCanvas" width="300" height="180"></canvas>
+                <div class="lsi-value-wrap">
+                  <span class="lsi-value" id="lsiValue">-0.20</span>
+                  <span class="lsi-status" id="lsiStatus">Equilibrada</span>
+                </div>
+              </div>
+              <div class="lsi-legend">
+                <div class="lsi-leg-item corrosiva">
+                  <span class="leg-range">&lt; -0.3</span>
+                  <span class="leg-label">Corrosiva</span>
+                </div>
+                <div class="lsi-leg-item equilibrada active-leg">
+                  <span class="leg-range">-0.3 a +0.5</span>
+                  <span class="leg-label">Equilibrada</span>
+                </div>
+                <div class="lsi-leg-item incrustante">
+                  <span class="leg-range">&gt; +0.5</span>
+                  <span class="leg-label">Incrustante</span>
+                </div>
+              </div>
+              <div id="lsiDiagnosis"></div>
+            </div>
+          </div>
+
+          <div class="flow-next-step">
+            <div class="fns-left">
+              <div class="fns-label">Siguiente paso</div>
+              <div class="fns-title">Calcular el riesgo sanitario (IRAPI)</div>
+              <div class="fns-desc">Con el equilibrio del agua calculado, completa el análisis evaluando el riesgo microbiológico y químico</div>
+            </div>
+            <button class="fns-btn" onclick="navigate('irapi', event)">
+              Ir a IRAPI
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- SECCION: IRAPI -->
+        <section class="page-section" id="section-irapi">
+          <div class="two-col-layout">
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <h3>% de mediciones fuera de norma</h3>
+              </div>
+              <div class="irapi-sliders">
+                <div class="irapi-slider-group irapi-micro-group">
+                  <div class="irapi-slider-header">
+                    <span>Microbiológico</span>
+                    <span class="irapi-weight">peso 45%</span>
+                  </div>
+
+                  <!-- Toggle modo -->
+                  <div class="micro-mode-toggle">
+                    <button class="micro-mode-btn active" id="btnMicroLab" onclick="setMicroMode('lab')">Laboratorio</button>
+                    <button class="micro-mode-btn" id="btnMicroEst" onclick="setMicroMode('estimacion')">Estimación guiada</button>
+                  </div>
+
+                  <!-- Modo laboratorio -->
+                  <div id="microLabMode" class="micro-panel">
+                    <p class="micro-panel-note">Ingresa el porcentaje de no conformidad que indica el resultado del análisis de laboratorio certificado.</p>
+                    <div class="micro-lab-row">
+                      <div class="input-unit" style="max-width:140px">
+                        <input type="number" class="form-input" id="microLabValue" min="0" max="100" placeholder="0" oninput="applyMicroLab()" />
+                        <span class="unit">%</span>
+                      </div>
+                      <span class="micro-lab-hint">% de parámetros no conformes</span>
+                    </div>
+                  </div>
+
+                  <!-- Modo estimación -->
+                  <div id="microEstMode" class="micro-panel" style="display:none">
+                    <div class="micro-est-banner">
+                      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      <div>
+                        <strong>Esta estimación NO reemplaza el análisis de laboratorio</strong>
+                        La Res. 234/2026 exige laboratorio certificado para el uso público. Este modo usa señales visuales y operacionales, no análisis químico. Resultado válido solo para orientación interna.
+                      </div>
+                    </div>
+                    <p class="micro-panel-note">Responde las preguntas según lo que observas en la piscina.</p>
+                    <div class="micro-questions">
+
+                      <div class="micro-q">
+                        <span class="micro-q-text">¿El agua tiene olor fuerte o irritante (a cloro quemado)?</span>
+                        <div class="micro-q-opts">
+                          <label><input type="radio" name="mq1" value="si" /> Sí</label>
+                          <label><input type="radio" name="mq1" value="no" checked /> No</label>
+                        </div>
+                      </div>
+
+                      <div class="micro-q">
+                        <span class="micro-q-text">¿El agua se ve turbia, verdosa o con espuma?</span>
+                        <div class="micro-q-opts">
+                          <label><input type="radio" name="mq2" value="si" /> Sí</label>
+                          <label><input type="radio" name="mq2" value="no" checked /> No</label>
+                        </div>
+                      </div>
+
+                      <div class="micro-q">
+                        <span class="micro-q-text">¿El cloro estuvo por debajo de 1 ppm en los últimos 7 días?</span>
+                        <div class="micro-q-opts">
+                          <label><input type="radio" name="mq3" value="si" /> Sí</label>
+                          <label><input type="radio" name="mq3" value="no" checked /> No</label>
+                          <label><input type="radio" name="mq3" value="ns" /> No sé</label>
+                        </div>
+                      </div>
+
+                      <div class="micro-q">
+                        <span class="micro-q-text">¿Ha habido más bañistas de lo usual recientemente?</span>
+                        <div class="micro-q-opts">
+                          <label><input type="radio" name="mq4" value="si" /> Sí</label>
+                          <label><input type="radio" name="mq4" value="no" checked /> No</label>
+                        </div>
+                      </div>
+
+                      <div class="micro-q">
+                        <span class="micro-q-text">¿Hace más de 30 días que no se realiza choque de cloro?</span>
+                        <div class="micro-q-opts">
+                          <label><input type="radio" name="mq5" value="si" /> Sí</label>
+                          <label><input type="radio" name="mq5" value="no" checked /> No</label>
+                          <label><input type="radio" name="mq5" value="ns" /> No sé</label>
+                        </div>
+                      </div>
+
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="calcMicroEstimacion()">Calcular estimación</button>
+                  </div>
+
+                  <!-- Slider compartido -->
+                  <input type="range" class="irapi-range" id="sliderMicro" min="0" max="100" value="0" oninput="calcIRAPI()" />
+                  <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valMicro">0%</span><span>100%</span></div>
+                </div>
+                <div class="irapi-slider-group">
+                  <div class="irapi-slider-header">
+                    <span>Cloro residual <span class="irapi-tag auto" id="tagCloro"></span></span>
+                    <span class="irapi-weight">peso 20%</span>
+                  </div>
+                  <input type="range" class="irapi-range" id="sliderCloro" min="0" max="100" value="10" oninput="calcIRAPI()" />
+                  <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valCloro">10%</span><span>100%</span></div>
+                </div>
+                <div class="irapi-slider-group">
+                  <div class="irapi-slider-header">
+                    <span>Alcalinidad / pH <span class="irapi-tag auto" id="tagAlk"></span></span>
+                    <span class="irapi-weight">peso 30%</span>
+                  </div>
+                  <input type="range" class="irapi-range" id="sliderAlk" min="0" max="100" value="15" oninput="calcIRAPI()" />
+                  <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valAlk">15%</span><span>100%</span></div>
+                </div>
+                <div class="irapi-slider-group">
+                  <div class="irapi-slider-header">
+                    <span>Transparencia y estabilizador (turbiedad, CYA) <span class="irapi-tag auto" id="tagOtros"></span></span>
+                    <span class="irapi-weight">peso 5%</span>
+                  </div>
+                  <input type="range" class="irapi-range" id="sliderOtros" min="0" max="100" value="0" oninput="calcIRAPI()" />
+                  <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valOtros">0%</span><span>100%</span></div>
+                </div>
+              </div>
+              <div class="irapi-bitacora-btn-wrap">
+                <button id="btnCalcIRAPIBitacora" class="btn btn-outline btn-full" onclick="calcIRAPIFromBitacora()" disabled>
+                  <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                  Calcular desde bitácora
+                </button>
+                <p class="irapi-bitacora-note" id="irapibitacoraNote">Mínimo 15 registros · tienes 0 de 15. Microbiológico requiere laboratorio.</p>
+              </div>
+            </div>
+            <div class="card">
+              <h3 class="card-title">Nivel de riesgo sanitario (IRAPI)</h3>
+              <div id="irapiDefaultNotice" class="default-notice">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Usando valores por defecto — mueve los sliders con tus datos reales para un resultado preciso
+              </div>
+              <div class="irapi-bar-wrap">
+                <div class="irapi-bar-track"><div class="irapi-bar-fill" id="irapiBarFill"></div></div>
+              </div>
+              <div class="irapi-score-label" id="irapiScoreLabel">Riesgo bajo</div>
+              <div class="irapi-action-phrase" id="irapiAction"></div>
+              <div class="irapi-est-note" id="irapiEstNote" style="display:none">
+                <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Incluye estimación microbiológica — no apto para registros oficiales
+              </div>
+              <div class="irapi-ranges">
+                <div class="irapi-range-item sin-riesgo"><span class="rng-range">0&ndash;10</span><span class="rng-label">Sin riesgo</span></div>
+                <div class="irapi-range-item bajo active-range"><span class="rng-range">10.1&ndash;35</span><span class="rng-label">Bajo</span></div>
+                <div class="irapi-range-item alto"><span class="rng-range">35.1&ndash;80</span><span class="rng-label">Alto</span></div>
+                <div class="irapi-range-item inviable"><span class="rng-range">&gt;80</span><span class="rng-label">Inviable</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-next-step">
+            <div class="fns-left">
+              <div class="fns-label">Análisis completo</div>
+              <div class="fns-title">Ver el estado global en el Dashboard</div>
+              <div class="fns-desc">El dashboard consolida cumplimiento, parámetros, ISL e IRAPI en una sola vista</div>
+            </div>
+            <button class="fns-btn" onclick="navigate('dashboard', event)">
+              Ir al dashboard
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- SECCION: BITACORA -->
+        <section class="page-section" id="section-bitacora">
+          <div class="card">
+            <div class="card-header">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <h3>Nueva medición</h3>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label class="form-label" for="logDate">FECHA</label>
+                <div class="input-unit"><input type="date" class="form-input" id="logDate" oninput="checkLogForm()" /></div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="logTime">HORA</label>
+                <div class="input-unit"><input type="time" class="form-input" id="logTime" oninput="checkLogForm()" /></div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="logOperador">OPERADOR</label>
+                <input type="text" class="form-input" id="logOperador" placeholder="" list="operadorList" autocomplete="off" />
+                <datalist id="operadorList"></datalist>
+              </div>
+            </div>
+            <div class="form-grid-4">
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logCloro">CLORO LIBRE <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logCloro')" aria-label="Ayuda: cloro libre">?</button> <span class="lsi-pbadge" id="logCloroBadge"></span></label>
+                <input type="number" class="form-input" id="logCloro" step="0.1" min="0" max="10" placeholder="ej. 1.5" oninput="clampInput(this,0,10);checkLogForm()" />
+                <div class="lsi-param-hint">2.0&ndash;4.0 ppm</div>
+                <div class="param-tooltip-card" id="tt-logCloro" hidden>
+                  <div class="tt-what">El desinfectante activo del agua. Mata bacterias, virus y hongos.</div>
+                  <div class="tt-equipo">Equipo: tiras reactivas de cloro (DPD-1) o fotómetro multiparamétrico</div>
+                  <div class="tt-range">Normal: 2.0–4.0 ppm &middot; Bajo 2 = riesgo sanitario &middot; Sobre 4 = puede irritar piel y ojos</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logPh">PH <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logPh')" aria-label="Ayuda: pH">?</button> <span class="lsi-pbadge" id="logPhBadge"></span></label>
+                <input type="number" class="form-input" id="logPh" step="0.1" min="0" max="14" placeholder="ej. 7.1" oninput="clampInput(this,0,14);checkLogForm()" />
+                <div class="lsi-param-hint">6.8&ndash;7.3</div>
+                <div class="param-tooltip-card" id="tt-logPh" hidden>
+                  <div class="tt-what">La acidez del agua. pH bajo corroe equipos; pH alto hace el cloro menos eficaz.</div>
+                  <div class="tt-equipo">Equipo: tiras de pH, fotómetro o pHmetro digital de bolsillo</div>
+                  <div class="tt-range">Normal: 6.8–7.3 (neutro) &middot; Ajustar antes de agregar cloro</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logAlc">ALCALINIDAD TOTAL <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logAlc')" aria-label="Ayuda: alcalinidad">?</button> <span class="lsi-pbadge" id="logAlcBadge"></span></label>
+                <input type="number" class="form-input" id="logAlc" min="0" max="200" placeholder="ej. 100" oninput="clampInput(this,0,200);checkLogForm()" />
+                <div class="lsi-param-hint">20&ndash;150 ppm</div>
+                <div class="param-tooltip-card" id="tt-logAlc" hidden>
+                  <div class="tt-what">La "amortiguación" del pH. Evita que el pH cambie bruscamente al agregar químicos.</div>
+                  <div class="tt-equipo">Equipo: kit de alcalinidad total o fotómetro (reactivo AT)</div>
+                  <div class="tt-range">Medir 1 vez por semana &middot; Normal: 20–150 ppm &middot; Varía poco día a día</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logCya">ESTABILIZADOR DE CLORO <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logCya')" aria-label="Ayuda: CYA estabilizador">?</button> <span class="lsi-pbadge" id="logCyaBadge"></span></label>
+                <input type="number" class="form-input" id="logCya" min="0" max="75" placeholder="ej. 30" oninput="clampInput(this,0,75);checkLogForm()" />
+                <div class="lsi-param-hint">Ácido cianúrico (CYA) &middot; 0&ndash;75 ppm</div>
+                <div class="param-tooltip-card" id="tt-logCya" hidden>
+                  <div class="tt-what">Protege el cloro de la luz solar para que no se evapore. Solo necesario en piscinas descubiertas.</div>
+                  <div class="tt-equipo">Equipo: test de disco (comparador de CYA) o fotómetro</div>
+                  <div class="tt-range">Medir 1 vez por semana &middot; Normal: 0–75 ppm &middot; Sobre 75 ppm el cloro pierde eficacia</div>
+                </div>
+              </div>
+            </div>
+            <div class="form-grid-4">
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logCloroComb">CLORO COMBINADO <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logCloroComb')" aria-label="Ayuda: cloro combinado">?</button> <span class="lsi-pbadge" id="logCloroCombBadge"></span></label>
+                <input type="number" class="form-input" id="logCloroComb" step="0.01" min="0" max="2" placeholder="ej. 0.1" oninput="clampInput(this,0,2);checkLogForm()" />
+                <div class="lsi-param-hint">M&aacute;x. 0.3 ppm &middot; Res. 234/2026</div>
+                <div class="param-tooltip-card" id="tt-logCloroComb" hidden>
+                  <div class="tt-what">El cloro "gastado" unido a sudor y materia orgánica. Causa el olor fuerte a piscina y la irritación de ojos.</div>
+                  <div class="tt-equipo">Equipo: fotómetro con reactivo DPD-3 (cloro total) menos DPD-1 (cloro libre). Algunas tiras lo incluyen.</div>
+                  <div class="tt-range">Normal: máx. 0.3 ppm &middot; Si está alto: hay exceso de contaminación orgánica o se necesita hiperclorar</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logTurb">TRANSPARENCIA DEL AGUA <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logTurb')" aria-label="Ayuda: turbiedad">?</button> <span class="lsi-pbadge" id="logTurbBadge"></span></label>
+                <input type="number" class="form-input" id="logTurb" step="0.01" min="0" max="2" placeholder="ej. 0.3" oninput="clampInput(this,0,2);checkLogForm()" />
+                <div class="lsi-param-hint">Menor valor = agua más clara &middot; Máx. 0.5 UNT</div>
+                <div class="param-tooltip-card" id="tt-logTurb" hidden>
+                  <div class="tt-what">La claridad del agua. 0 = cristalina. Agua turbia impide ver el fondo y puede ocultar a un bañista en peligro.</div>
+                  <div class="tt-equipo">Equipo: turbidímetro portátil. Sin equipo: si puede leer una placa a 2 m de profundidad, está bajo 0.5 UNT.</div>
+                  <div class="tt-range">Normal: máx. 0.5 UNT &middot; Si supera 0.5 UNT: cerrar la piscina hasta recuperar claridad</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logTemp">TEMPERATURA <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logTemp')" aria-label="Ayuda: temperatura">?</button> <span class="lsi-pbadge" id="logTempBadge"></span></label>
+                <input type="number" class="form-input" id="logTemp" min="0" max="40" placeholder="ej. 27" oninput="clampInput(this,0,40);checkLogForm()" />
+                <div class="lsi-param-hint">M&aacute;x. 40 °C</div>
+                <div class="param-tooltip-card" id="tt-logTemp" hidden>
+                  <div class="tt-what">La temperatura del agua. Agua muy caliente favorece la proliferación bacteriana y reduce la eficacia del cloro.</div>
+                  <div class="tt-equipo">Equipo: termómetro de agua flotante o de bolsillo (tipo piscina o spa)</div>
+                  <div class="tt-range">Normal: máx. 40 °C (Res. 234/2026)</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="logBanistas">BAÑISTAS</label>
+                <input type="number" class="form-input" id="logBanistas" placeholder="ej. 15" min="0" />
+              </div>
+            </div>
+            <div class="log-art16-section">
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <span class="log-art16-label">Art. 16 Res. 234/2026 &mdash; Registro operacional (recomendado completar diariamente)</span>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label class="form-label" for="logCaudal">CAUDAL DE CIRCULACIÓN</label>
+                <div class="input-unit">
+                  <input type="number" class="form-input" id="logCaudal" min="0" max="500" step="0.1" placeholder="ej. 45" oninput="clampInput(this,0,500)" />
+                  <span class="unit">m&sup3;/h</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="logHorasFun">HORAS DE FUNCIONAMIENTO</label>
+                <div class="input-unit">
+                  <input type="number" class="form-input" id="logHorasFun" min="0" max="24" step="0.5" placeholder="ej. 8" oninput="clampInput(this,0,24)" />
+                  <span class="unit">h</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="logAguaRep">AGUA REPUESTA</label>
+                <div class="input-unit">
+                  <input type="number" class="form-input" id="logAguaRep" min="0" max="9999" step="0.1" placeholder="ej. 2.5" oninput="clampInput(this,0,9999)" />
+                  <span class="unit">m&sup3;</span>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="logRetrolav">RETROLAVADOS REALIZADOS</label>
+                <input type="number" class="form-input" id="logRetrolav" min="0" max="20" step="1" placeholder="ej. 1" oninput="clampInput(this,0,20)" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="logProdQuim">PRODUCTOS QUÍMICOS DOSIFICADOS</label>
+              <input type="text" class="form-input" id="logProdQuim" placeholder="ej. Cloro granulado 200 g &middot; Lote CL-2026-A" maxlength="200" />
+              <div class="lsi-param-hint">Nombre del producto &middot; dosis &middot; N&ordm; de lote</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="logAverias">AVERÍAS Y MANTENIMIENTOS</label>
+              <textarea class="form-input form-textarea" id="logAverias" placeholder="Fallas detectadas, reparaciones y mantenimientos preventivos realizados"></textarea>
+            </div>
+            <div class="log-trim-section">
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span class="log-trim-label">Parámetros trimestrales &mdash; completar solo al realizar an&aacute;lisis con equipo o laboratorio certificado</span>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logOrp">ORP &middot; POTENCIAL REDOX <span class="lsi-pbadge" id="logOrpBadge"></span></label>
+                <div class="input-unit">
+                  <input type="number" class="form-input" id="logOrp" min="0" max="1000" placeholder="ej. 650" oninput="clampInput(this,0,1000);checkLogForm()" />
+                  <span class="unit">mV</span>
+                </div>
+                <div class="lsi-param-hint">M&aacute;x. 700 mV &middot; Opcional</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logTds">TDS &middot; S&Oacute;LIDOS DISUELTOS <span class="lsi-pbadge" id="logTdsBadge"></span></label>
+                <div class="input-unit">
+                  <input type="number" class="form-input" id="logTds" min="0" max="5000" step="1" placeholder="ej. 1100" oninput="clampInput(this,0,5000);checkLogForm()" />
+                  <span class="unit">mg/L</span>
+                </div>
+                <div class="lsi-param-hint">1000–1200 mg/L &middot; Opcional</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logCond">CONDUCTIVIDAD <span class="lsi-pbadge" id="logCondBadge"></span></label>
+                <div class="input-unit">
+                  <input type="number" class="form-input" id="logCond" min="0" max="8000" step="1" placeholder="ej. 2200" oninput="clampInput(this,0,8000);checkLogForm()" />
+                  <span class="unit">&mu;S/cm</span>
+                </div>
+                <div class="lsi-param-hint">2000–2400 &mu;S/cm &middot; Opcional</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="logNotas">NOTAS</label>
+              <textarea class="form-input form-textarea" id="logNotas" placeholder="Observaciones de la jornada"></textarea>
+            </div>
+            <div id="logComplianceBar" class="log-compliance-bar" style="display:none"></div>
+            <div class="form-footer">
+              <div id="logEditBanner" class="log-edit-banner" style="display:none">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Editando registro del <strong id="logEditDate"></strong>
+              </div>
+              <button class="btn btn-primary" id="btnSaveLog" onclick="saveLog()" disabled>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span id="btnSaveLogText">Guardar en bitácora</span>
+              </button>
+              <button class="btn btn-outline btn-danger-outline" id="btnCancelEdit" onclick="cancelEditLog()" style="display:none">
+                Cancelar edición
+              </button>
+              <span class="log-form-hint">* Completa todos los campos para habilitar el guardado</span>
+            </div>
+          </div>
+          <div class="card" style="margin-top:1.5rem">
+            <div class="card-header">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <h3>Histórico (<span id="logCount">0</span>)</h3>
+            </div>
+            <div class="log-filter-bar">
+              <div class="log-filter-group">
+                <label class="log-filter-label" for="filterDesde">Desde</label>
+                <input type="date" class="form-input log-filter-input" id="filterDesde" oninput="renderLog()" />
+              </div>
+              <div class="log-filter-group">
+                <label class="log-filter-label" for="filterHasta">Hasta</label>
+                <input type="date" class="form-input log-filter-input" id="filterHasta" oninput="renderLog()" />
+              </div>
+              <div class="log-filter-group" style="flex:1;min-width:140px">
+                <label class="log-filter-label" for="filterOperador">Operador / notas</label>
+                <input type="text" class="form-input log-filter-input" id="filterOperador" placeholder="Buscar..." oninput="renderLog()" />
+              </div>
+              <label class="log-filter-toggle">
+                <input type="checkbox" id="filterFueraRango" onchange="renderLog()" />
+                Solo fuera de rango
+              </label>
+              <button class="btn btn-outline" style="align-self:flex-end;font-size:0.8rem;padding:6px 12px" onclick="clearLogFilter()">Limpiar</button>
+            </div>
+            <div id="logTableWrap">
+              <p class="empty-state">Sin registros aún. Agregue la primera medición arriba.</p>
+            </div>
+          </div>
+
+          <div class="flow-next-step" id="fnsAfterBitacora" style="display:none">
+            <div class="fns-left">
+              <div class="fns-label">Siguiente paso</div>
+              <div class="fns-title">Calcular el equilibrio del agua (ISL)</div>
+              <div class="fns-desc">Con las mediciones guardadas, analiza si el agua está equilibrada, corrosiva o incrustante</div>
+            </div>
+            <button class="fns-btn" onclick="navigate('lsi', event)">
+              Ir a ISL
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- SECCION: PROTOCOLO AFR -->
+        <section class="page-section" id="section-protocolo">
+          <div class="two-col-layout">
+            <div class="card afr-card">
+              <div class="afr-emergency-banner" id="afrEmergencyBanner" hidden>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <div>
+                  EMERGENCIA SANITARIA &mdash; EVENTO DIARREICO<br>
+                  <span style="font-weight:400">Riesgo de Cryptosporidium &middot; Hipercloración 20 ppm &middot; Cierre mínimo <strong>13 horas</strong></span>
+                </div>
+              </div>
+              <div class="afr-step-indicator">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--destructive)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span id="afrStepLabel">Paso 1 de 7</span>
+              </div>
+              <div class="afr-type-toggle">
+                <button class="afr-type-btn active"              id="btnSolido"    onclick="setAFRType('solido')">Sólido</button>
+                <button class="afr-type-btn afr-btn-diarreico"   id="btnDiarreico" onclick="setAFRType('diarreico')">Diarreico</button>
+                <button class="afr-type-btn afr-btn-vomito"      id="btnVomito"    onclick="setAFRType('vomito')">Vómito</button>
+              </div>
+              <div class="afr-content" id="afrContent">
+                <h2 class="afr-step-title" id="afrTitle">Evacuar la piscina</h2>
+                <p class="afr-step-desc" id="afrDesc">Solicite a todos los bañistas salir del agua de inmediato. Restrinja el acceso.</p>
+                <div class="afr-dose-block" id="afrDoseBlock" hidden></div>
+              </div>
+              <div class="afr-nav">
+                <button class="btn btn-outline" id="afrPrev" onclick="afrStep(-1)">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                  Anterior
+                </button>
+                <div class="afr-dots" id="afrDots"></div>
+                <button class="btn btn-primary" id="afrNext" onclick="afrStep(1)">
+                  Siguiente
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              </div>
+              <div class="afr-footer">
+                <input type="text" class="form-input" id="afrOperador" placeholder="Nombre del operador a cargo" aria-label="Nombre del operador a cargo" />
+                <button class="btn btn-outline btn-danger-outline" onclick="resetAFR()">
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+                  Reiniciar
+                </button>
+              </div>
+            </div>
+            <div class="card">
+              <h3 class="card-title">Incidentes registrados</h3>
+              <div id="afrIncidents">
+                <p class="empty-state">Sin incidentes registrados.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCION: REPORTE -->
+        <section class="page-section" id="section-reporte">
+          <div class="two-col-layout">
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <h3>Datos del establecimiento</h3>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="repNombre">NOMBRE DE LA PISCINA</label>
+                  <input type="text" class="form-input" id="repNombre" value="Piscina Principal" oninput="saveReportFields()" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="repResponsable">RESPONSABLE</label>
+                  <input type="text" class="form-input" id="repResponsable" placeholder="Operador a cargo" oninput="saveReportFields()" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="repUbicacion">UBICACI&Oacute;N</label>
+                  <input type="text" class="form-input" id="repUbicacion" value="Bogotá, Colombia" oninput="saveReportFields()" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="repVolumen">VOLUMEN BASE (M³)</label>
+                  <input type="number" class="form-input" id="repVolumen" value="60" oninput="saveReportFields()" />
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <h3 class="card-title" id="repSummaryTitle">Resumen del periodo</h3>
+              <div class="report-summary" id="reportSummary">
+                <div class="summary-row"><span>Mediciones registradas</span><span id="repMediciones">0</span></div>
+                <div class="summary-row"><span>Incidentes AFR</span><span id="repIncidentes">0</span></div>
+                <div class="summary-row"><span>Cloro libre residual &mdash; % cumplimiento</span><span id="repCloro">&ndash;</span></div>
+                <div class="summary-row"><span>Cloro combinado &mdash; % cumplimiento</span><span id="repCloroComb">&ndash;</span></div>
+                <div class="summary-row"><span>Potencial redox (ORP) &mdash; % cumplimiento</span><span id="repOrp">&ndash;</span></div>
+                <div class="summary-row"><span>Sólidos disueltos (TDS) &mdash; % cumplimiento</span><span id="repTds">&ndash;</span></div>
+                <div class="summary-row"><span>Conductividad eléctrica &mdash; % cumplimiento</span><span id="repCond">&ndash;</span></div>
+                <div class="summary-row"><span>pH &mdash; % cumplimiento</span><span id="repPh">&ndash;</span></div>
+                <div class="summary-row"><span>Alcalinidad total &mdash; % cumplimiento</span><span id="repAlc">&ndash;</span></div>
+                <div class="summary-row"><span>Estabilizador (CYA) &mdash; % cumplimiento</span><span id="repCya">&ndash;</span></div>
+                <div class="summary-row"><span>Transparencia / Turbiedad &mdash; % cumplimiento</span><span id="repTurb">&ndash;</span></div>
+              </div>
+              <button class="btn btn-primary btn-full" id="btnGeneratePDF" onclick="generatePDF()" disabled>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Generar PDF oficial
+              </button>
+              <p class="irapi-bitacora-note" id="repPdfNote">Mínimo 15 registros · tienes 0 de 15.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCION: NORMATIVA -->
+        <section class="page-section" id="section-normativa">
+
+          <!-- Tarjeta principal: Anexo Técnico I completo -->
+          <div class="card norm-card-full">
+            <div class="card-header">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <h3>Resolución 234 de 2026 &mdash; Anexo Técnico I</h3>
+            </div>
+            <p class="norm-desc">Parámetros físicos, químicos y microbiológicos del agua en piscinas · <strong>Vigente desde 10 feb 2026</strong></p>
+
+            <!-- DIARIOS -->
+            <div class="norm-freq-group">
+              <div class="norm-freq-header">
+                <span class="norm-freq-badge norm-freq-daily">Diario</span>
+                <span class="norm-freq-note">Al inicio de la jornada y en horas de máxima ocupación</span>
+              </div>
+              <table class="norm-table norm-table-full">
+                <thead><tr><th>Parámetro</th><th>Mínimo</th><th>Ideal</th><th>Máximo</th><th>Unidad</th></tr></thead>
+                <tbody>
+                  <tr><td>pH</td><td>6.8</td><td>&mdash;</td><td>7.3</td><td>&mdash;</td></tr>
+                  <tr><td>Cloro libre residual (piscinas)</td><td>2.0</td><td>3.0</td><td>4.0</td><td>ppm</td></tr>
+                  <tr><td>Cloro combinado</td><td>0.0</td><td>0.0</td><td>0.3</td><td>ppm</td></tr>
+                  <tr><td>Temperatura</td><td>&mdash;</td><td>&mdash;</td><td>40</td><td>°C</td></tr>
+                  <tr><td>Alcalinidad total <span class="norm-tag-daily">Requerido diario &middot; Equilibrio agua - ISL (Art. 16)</span></td><td>20</td><td>&mdash;</td><td>150</td><td>ppm</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- SEMANALES -->
+            <div class="norm-freq-group">
+              <div class="norm-freq-header">
+                <span class="norm-freq-badge norm-freq-weekly">Semanal</span>
+                <span class="norm-freq-note">En horas de máxima ocupación</span>
+              </div>
+              <table class="norm-table norm-table-full">
+                <thead><tr><th>Parámetro</th><th>Mínimo</th><th>Ideal</th><th>Máximo</th><th>Unidad</th></tr></thead>
+                <tbody>
+                  <tr><td>Ácido cianúrico (CYA)</td><td>0</td><td>&mdash;</td><td>75</td><td>ppm</td></tr>
+                  <tr><td>Dureza cálcica (CaCO₃)</td><td>200</td><td>400</td><td>700</td><td>ppm</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- TRIMESTRALES -->
+            <div class="norm-freq-group">
+              <div class="norm-freq-header">
+                <span class="norm-freq-badge norm-freq-quarterly">Trimestral</span>
+                <span class="norm-freq-note">Con laboratorio certificado · en máxima ocupación</span>
+              </div>
+              <table class="norm-table norm-table-full">
+                <thead><tr><th>Parámetro</th><th>Mínimo</th><th>Ideal</th><th>Máximo</th><th>Unidad</th></tr></thead>
+                <tbody>
+                  <tr><td>Índice de Saturación Langelier (ISL)</td><td>-0.3</td><td>0</td><td>+0.5</td><td>&mdash;</td></tr>
+                  <tr><td>ORP (Potencial Oxidación-Reducción)</td><td>&mdash;</td><td>&mdash;</td><td>700</td><td>mV</td></tr>
+                  <tr><td>TDS (sólidos totales disueltos)</td><td>1000</td><td>&mdash;</td><td>1200</td><td>mg/L</td></tr>
+                  <tr><td>Conductividad</td><td>2000</td><td>&mdash;</td><td>2400</td><td>&micro;S/cm</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- MICROBIOLÓGICOS -->
+            <div class="norm-freq-group">
+              <div class="norm-freq-header">
+                <span class="norm-freq-badge norm-freq-lab">Lab · Trimestral</span>
+                <span class="norm-freq-note">Requiere laboratorio certificado — personal especializado</span>
+              </div>
+              <table class="norm-table norm-table-full norm-table-micro">
+                <thead><tr><th>Parámetro</th><th colspan="2">Valor aceptable</th></tr></thead>
+                <tbody>
+                  <tr><td>Heterótrofos</td><td colspan="2">&lt; 200 UFC / 100 mL</td></tr>
+                  <tr><td>Escherichia coli</td><td colspan="2">Ausencia · 0 UFC / 100 mL</td></tr>
+                  <tr><td>Coliformes termotolerantes</td><td colspan="2">Ausencia</td></tr>
+                  <tr><td>Pseudomonas aeruginosa</td><td colspan="2">Ausencia (estructuras similares)</td></tr>
+                  <tr><td>Legionella</td><td colspan="2">&lt; 9 UFC / Ausencia (piscinas climatizadas)</td></tr>
+                  <tr class="norm-row-event"><td>Cryptosporidium <span class="norm-tag-event">Ante evento fecal</span></td><td colspan="2">0 ooquistes / 1000 cm³</td></tr>
+                  <tr class="norm-row-event"><td>Giardia lamblia <span class="norm-tag-event">Ante evento fecal</span></td><td colspan="2">0 quistes / 1000 cm³</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="art-box">
+              <strong>Art. 16 &mdash;</strong> El registro de control debe incluir: volumen, caudal, productos químicos, retrolavados, averías, mantenimientos, agua repuesta, horas de funcionamiento, <strong>número de bañistas</strong>, desinfectante, pH, transparencia, residual desinfectante e ISL.
+            </div>
+          </div>
+
+          <!-- Tarjeta secundaria: Ley 1209 y datos adicionales -->
+          <div class="two-col-layout" style="margin-top:1.5rem">
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <h3>Ley 1209 de 2008 &mdash; Seguridad</h3>
+              </div>
+              <p class="norm-desc">Normas de seguridad para prevenir accidentes y ahogamientos en piscinas de uso colectivo y doméstico.</p>
+              <ul class="norm-list">
+                <li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Cerramientos perimetrales con altura mínima de 1.20 m.</li>
+                <li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Alarmas de inmersión funcionales y revisadas.</li>
+                <li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Botón de parada de emergencia accesible y señalizado.</li>
+                <li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Ganchos de rescate y aros salvavidas visibles.</li>
+                <li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Drenajes antiatrapamiento certificados.</li>
+                <li><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Salvavidas certificado durante el horario de uso.</li>
+              </ul>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <h3>Res. 234 / 2026 &mdash; Dotación emergencia</h3>
+              </div>
+              <p class="norm-desc">Art. 18 &mdash; Equipos obligatorios según el área del estanque.</p>
+              <table class="norm-table">
+                <tbody>
+                  <tr><td>DEA (desfibrilador)</td><td class="norm-val">Obligatorio</td></tr>
+                  <tr><td>Botiquín Tipo A</td><td class="norm-val">&lt; 500 m²</td></tr>
+                  <tr><td>Botiquín Tipo B</td><td class="norm-val">500 &ndash; 2000 m²</td></tr>
+                  <tr><td>Botiquín Tipo B × 2 o Tipo C</td><td class="norm-val">&gt; 2000 m²</td></tr>
+                  <tr><td>Flotadores circulares con cuerda</td><td class="norm-val">2 por estanque</td></tr>
+                  <tr><td>Gancho de rescate</td><td class="norm-val">1 por estanque</td></tr>
+                </tbody>
+              </table>
+              <div class="art-box" style="margin-top:1rem">
+                <strong>Art. 17 &mdash;</strong> El reporte mensual de calidad del agua debe exhibirse de forma visible en la zona de acceso a la piscina.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECCION: DOCUMENTOS -->
+        <section class="page-section" id="section-documentos">
+
+          <!-- Toggle perfil -->
+          <div class="docs-profile-toggle">
+            <button class="docs-profile-btn active" id="btnPublico" onclick="setDocsProfile('publico')">Uso público · Establecimiento</button>
+            <button class="docs-profile-btn" id="btnDomestico" onclick="setDocsProfile('domestico')">Uso doméstico</button>
+          </div>
+
+          <div class="two-col-layout">
+
+            <!-- Checklist -->
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 11 12 14 22 4"/>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                <h3>Checklist documental</h3>
+              </div>
+              <div id="docsChecklist"></div>
+              <div class="docs-progress-wrap">
+                <div class="docs-progress-label">
+                  <span>Progreso</span>
+                  <span id="docsProgressText">0 / 0</span>
+                </div>
+                <div class="docs-progress-track">
+                  <div class="docs-progress-fill" id="docsProgressFill"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna derecha -->
+            <div class="docs-right-col">
+
+              <!-- Vencimientos -->
+              <div class="card" id="cardVencimientos">
+                <div class="card-header">
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <h3>Vencimientos</h3>
+                </div>
+                <div class="docs-venc-item">
+                  <span class="docs-venc-label">Cert. salvavidas</span>
+                  <input type="date" class="form-input docs-venc-input" id="fechaSalvavidas" oninput="updateVencimientos()" />
+                  <span class="docs-venc-status" id="statusSalvavidas">&ndash;</span>
+                </div>
+                <div class="docs-venc-item">
+                  <span class="docs-venc-label">Concepto sanitario</span>
+                  <input type="date" class="form-input docs-venc-input" id="fechaConcepto" oninput="updateVencimientos()" />
+                  <span class="docs-venc-status" id="statusConcepto">&ndash;</span>
+                </div>
+              </div>
+
+              <!-- Referencias normativas -->
+              <div class="card">
+                <div class="card-header">
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                  </svg>
+                  <h3>Documentos normativos</h3>
+                </div>
+                <div class="docs-refs">
+                  <a class="docs-ref-item" href="https://www.alcaldiabogota.gov.co/sisjur/normas/Norma1.jsp?i=192135&dt=S" target="_blank" rel="noopener">
+                    <svg aria-hidden="true" class="docs-ref-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <div>
+                      <div class="docs-ref-title">Res. 234 de 2026</div>
+                      <div class="docs-ref-desc">Criterios sanitarios para piscinas · 3 Anexos Técnicos</div>
+                    </div>
+                  </a>
+                  <a class="docs-ref-item" href="https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=31442" target="_blank" rel="noopener">
+                    <svg aria-hidden="true" class="docs-ref-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <div>
+                      <div class="docs-ref-title">Ley 1209 de 2008</div>
+                      <div class="docs-ref-desc">Seguridad en piscinas</div>
+                    </div>
+                  </a>
+                  <a class="docs-ref-item" href="https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=77813" target="_blank" rel="noopener">
+                    <svg aria-hidden="true" class="docs-ref-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <div>
+                      <div class="docs-ref-title">Decreto 780 de 2016</div>
+                      <div class="docs-ref-desc">Sector salud</div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="Brazada.js"></script>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Confirm modal -->
+  <!-- Modal edición incidente AFR -->
+  <div id="afrEditOverlay" class="confirm-overlay" style="display:none" onclick="closeAFREdit(event)">
+    <div class="confirm-modal" style="max-width:380px;width:90%">
+      <h3 style="margin:0 0 16px;font-size:15px;font-weight:700;color:var(--text)">Editar incidente AFR</h3>
+      <div class="form-group">
+        <label class="form-label" for="afrEditTipo">TIPO DE INCIDENTE</label>
+        <select class="form-select" id="afrEditTipo">
+          <option value="solido">Sólido</option>
+          <option value="diarreico">Diarreico</option>
+          <option value="vomito">Vómito</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="afrEditFecha">FECHA</label>
+        <input type="date" class="form-input" id="afrEditFecha" />
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label class="form-label" for="afrEditOperador">OPERADOR</label>
+        <input type="text" class="form-input" id="afrEditOperador" placeholder="Nombre del operador" />
+      </div>
+      <div class="confirm-actions">
+        <button class="btn btn-outline" onclick="closeAFREdit()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveAFREdit()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+<div id="confirmOverlay" class="confirm-overlay" style="display:none" onclick="closeConfirmOverlay(event)">
+    <div class="confirm-modal">
+      <p class="confirm-body" id="confirmBody"></p>
+      <div class="confirm-actions">
+        <button class="btn btn-outline" onclick="closeConfirmOverlay()">Cancelar</button>
+        <button class="btn btn-danger" id="confirmOkBtn">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE BITÁCORA -->
+  <div id="logDetailOverlay" class="log-detail-overlay" style="display:none" onclick="closeLogDetail(event)" role="dialog" aria-modal="true" aria-label="Detalle del registro">
+    <div class="log-detail-modal">
+      <button class="log-detail-close" onclick="closeLogDetail()" aria-label="Cerrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="log-detail-header">
+        <div class="log-detail-title" id="logDetailTitle">Registro de medición</div>
+        <div class="log-detail-meta" id="logDetailMeta"></div>
+      </div>
+      <div class="log-detail-body" id="logDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- PRELOADER -->
+  <div id="preloader" class="preloader" role="dialog" aria-label="Pantalla de bienvenida" aria-modal="true">
+    <div class="preloader-inner">
+
+      <img src="Multimedia/Logo.png" alt="Brazada Aqua Tech" class="preloader-logo" />
+
+      <!-- Pantalla 1: Saludo de JG -->
+      <div id="preloaderScreen1" class="preloader-screen">
+        <div class="preloader-scene">
+          <video src="Multimedia/JG.mp4" class="preloader-avatar" autoplay muted playsinline disablepictureinpicture></video>
+          <div class="preloader-bubble">
+            <p class="preloader-greeting">¡Hola, bienvenido!</p>
+            <p class="preloader-text">
+              Soy <strong>JG</strong>, tu asistente experto en mantenimiento de piscinas.<br><br>
+              Estoy aquí para ayudarte a mantener el agua <strong>segura, limpia y en perfecto equilibrio</strong>,
+              cumpliendo siempre con la Resolución 234 de 2026.
+            </p>
+          </div>
+        </div>
+
+        <div class="preloader-dots" aria-hidden="true" id="preloaderDots">
+          <span></span><span></span><span></span>
+        </div>
+
+        <button class="preloader-btn" id="preloaderBtn" onclick="preloaderNext()">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          Comenzar
+        </button>
+      </div>
+
+      <!-- Pantalla 2: ¿Qué quieres hacer? -->
+      <div id="preloaderScreen2" class="preloader-screen" style="display:none" aria-hidden="true">
+        <div class="preloader-s2-header">
+          <div class="preloader-jg-chip">JG</div>
+          <div class="preloader-s2-bubble">
+            <p class="preloader-greeting" style="margin-bottom:4px">¿Qué quieres hacer hoy?</p>
+            <p class="preloader-text" style="margin:0">Elige una opción para ir directo a donde lo necesitas</p>
+          </div>
+        </div>
+
+        <div class="preloader-choices">
+          <button class="preloader-choice" onclick="dismissPreloader('bitacora')">
+            <div class="preloader-choice-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="preloader-choice-body">
+              <span class="preloader-choice-title">Registrar medición</span>
+              <span class="preloader-choice-desc">Guarda los parámetros del agua en la bitácora diaria</span>
+            </div>
+            <svg class="preloader-choice-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+
+          <button class="preloader-choice" onclick="dismissPreloader('calculadora')">
+            <div class="preloader-choice-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>
+            </div>
+            <div class="preloader-choice-body">
+              <span class="preloader-choice-title">Calcular dosis de productos</span>
+              <span class="preloader-choice-desc">Obtén la cantidad exacta de cloro y corrector de pH a agregar</span>
+            </div>
+            <svg class="preloader-choice-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+
+          <button class="preloader-choice" onclick="dismissPreloader('dashboard')">
+            <div class="preloader-choice-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+            </div>
+            <div class="preloader-choice-body">
+              <span class="preloader-choice-title">Ver el estado de la piscina</span>
+              <span class="preloader-choice-desc">Revisa el cumplimiento normativo e índices de riesgo</span>
+            </div>
+            <svg class="preloader-choice-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
