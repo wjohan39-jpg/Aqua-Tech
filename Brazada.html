@@ -107,7 +107,7 @@
                 <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
                 <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
               </svg>
-              <span class="nav-text">Reporte Semanal</span>
+              <span class="nav-text">Reporte Mensual</span>
             </button>
           </li>
 
@@ -469,24 +469,24 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiPh">PH <span class="lsi-pbadge" id="lsiPhBadge"></span></label>
-                  <input type="number" class="form-input" id="lsiPh" placeholder="ej. 7.1" step="0.1" min="0" max="14" oninput="clampInput(this,0,14);calcLSI()" />
+                  <input type="number" class="form-input" id="lsiPh" placeholder="ej. 7.1" step="0.1" min="0" max="14" oninput="clampInput(this,0,14);_lsiFromBitacora=false;calcLSI()" />
                   <div class="lsi-param-hint">Res. 234/2026 &middot; 6.8&ndash;7.3</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiTemp">TEMPERATURA <span class="lsi-pbadge" id="lsiTempBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiTemp" placeholder="ej. 27" min="0" max="40" oninput="clampInput(this,0,40);calcLSI()" /><span class="unit">°C</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiTemp" placeholder="ej. 27" min="0" max="40" oninput="clampInput(this,0,40);_lsiFromBitacora=false;calcLSI()" /><span class="unit">°C</span></div>
                   <div class="lsi-param-hint">M&aacute;x. 40 °C</div>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiHard">DUREZA CÁLCICA <span class="lsi-pbadge" id="lsiHardBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiHard" placeholder="ej. 250" min="0" max="700" oninput="clampInput(this,0,700);calcLSI()" /><span class="unit">ppm</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiHard" placeholder="ej. 250" min="0" max="700" oninput="clampInput(this,0,700);_lsiFromBitacora=false;calcLSI()" /><span class="unit">ppm</span></div>
                   <div class="lsi-param-hint">Res. 234/2026 &middot; 200&ndash;700 ppm</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiAlk">ALCALINIDAD TOTAL <span class="lsi-pbadge" id="lsiAlkBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiAlk" placeholder="ej. 100" min="0" max="150" oninput="clampInput(this,0,150);calcLSI()" /><span class="unit">ppm</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiAlk" placeholder="ej. 100" min="0" max="150" oninput="clampInput(this,0,150);_lsiFromBitacora=false;calcLSI()" /><span class="unit">ppm</span></div>
                   <div class="lsi-param-hint">Res. 234/2026 &middot; 20&ndash;150 ppm</div>
                 </div>
               </div>
@@ -667,7 +667,7 @@
                   <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
                   Calcular desde bitácora
                 </button>
-                <p class="irapi-bitacora-note" id="irapibitacoraNote">Mínimo 15 registros · tienes 0 de 15. Microbiológico requiere laboratorio.</p>
+                <p class="irapi-bitacora-note" id="irapibitacoraNote">Mínimo 20 registros · tienes 0 de 20. Microbiológico requiere laboratorio.</p>
               </div>
             </div>
             <div class="card">
@@ -1052,7 +1052,7 @@
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Generar PDF oficial
               </button>
-              <p class="irapi-bitacora-note" id="repPdfNote">Mínimo 15 registros · tienes 0 de 15.</p>
+              <p class="irapi-bitacora-note" id="repPdfNote">Mínimo 20 registros · tienes 0 de 20.</p>
             </div>
           </div>
         </section>

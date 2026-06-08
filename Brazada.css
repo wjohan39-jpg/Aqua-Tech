@@ -1381,7 +1381,7 @@ input, select, textarea { font-family: inherit; }
 @media (max-width: 640px) {
   .log-table-scroll { overflow-x: hidden; width: 100%; }
   .log-table,
-  .log-table tbody  { display: block; width: 100%; box-sizing: border-box; }
+  .log-table tbody  { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
   .log-table thead  { display: none; }
 
   .log-table tr {

@@ -1192,6 +1192,7 @@ function _setLsiPBadge(id, ok, textOk, textOut) {
 
 const LSI_DEFAULTS  = { lsiPh: 7.4, lsiTemp: 27, lsiHard: 250, lsiAlk: 100 };
 const IRAPI_DEFAULTS = { sliderMicro: 0, sliderCloro: 10, sliderAlk: 15, sliderOtros: 0 };
+let _lsiFromBitacora = false;
 
 function updateDefaultNotice(noticeId, defaults) {
   const notice = document.getElementById(noticeId);
@@ -1204,6 +1205,8 @@ function updateDefaultNotice(noticeId, defaults) {
 }
 
 function _lsiClearResult() {
+  const notice = document.getElementById('lsiDefaultNotice');
+  if (notice) notice.classList.add('default-notice-hidden');
   const valEl = document.getElementById('lsiValue');
   const stEl  = document.getElementById('lsiStatus');
   if (valEl) { valEl.textContent = '–'; valEl.style.color = ''; }
@@ -1225,8 +1228,15 @@ function calcLSI() {
   const hard = _r('lsiHard');
   const alk  = _r('lsiAlk');
 
-  // Si algún campo está vacío → no calcular
-  if (pH === null || temp === null || hard === null || alk === null) { _lsiClearResult(); return; }
+  // Si algún campo está vacío → no calcular y ocultar aviso
+  const lsiNotice = document.getElementById('lsiDefaultNotice');
+  if (pH === null || temp === null || hard === null || alk === null) {
+    if (lsiNotice) lsiNotice.classList.add('default-notice-hidden');
+    _lsiClearResult();
+    return;
+  }
+  // Mostrar aviso solo si el usuario escribió manualmente (no desde bitácora)
+  if (lsiNotice) lsiNotice.classList.toggle('default-notice-hidden', _lsiFromBitacora);
 
   // Coeficientes exactos de la Tabla Res. 234/2026: ISL = pH + CT + CD + CA − 12.1
   const CT = _lsiInterp(_LSI_TEMP, temp);
@@ -1385,6 +1395,7 @@ function calcLSIFromBitacora() {
   if (alc  !== null) { const el = document.getElementById('lsiAlk');  el.value = alc;  clampInput(el, 0, 150); }
   { const el = document.getElementById('lsiHard'); el.value = hard; clampInput(el, 0, 700); }
 
+  _lsiFromBitacora = true;
   calcLSI();
 
   const parts = [];
@@ -2531,7 +2542,7 @@ function restoreReportFields() {
 }
 
 function updateReportSummary() {
-  const log = getLog().slice(0, 15);
+  const log = getLog().slice(0, 20);
 
   const titleEl = document.getElementById('repSummaryTitle');
   if (titleEl) {
@@ -2542,7 +2553,7 @@ function updateReportSummary() {
         ? `Resumen · ${desde}`
         : `Resumen · ${desde} al ${hasta}`;
     } else {
-      titleEl.textContent = 'Resumen · últimos 15 registros';
+      titleEl.textContent = 'Resumen · últimos 20 registros';
     }
   }
 
@@ -2591,14 +2602,14 @@ function updateReportSummary() {
 function updateDashReportBtn() {
   const btn = document.getElementById('btnDashReport');
   if (!btn) return;
-  const ready = getLog().length >= 15;
+  const ready = getLog().length >= 20;
   btn.classList.toggle('btn-locked', !ready);
   btn.setAttribute('aria-disabled', String(!ready));
 }
 
 function dashboardReportClick() {
-  if (getLog().length < 15) {
-    showToast('Completa el registro semanal', 'info');
+  if (getLog().length < 20) {
+    showToast('Completa el registro mensual (mínimo 20 mediciones)', 'info');
     return;
   }
   navigate('reporte');
@@ -2609,12 +2620,12 @@ function updateReportBtn() {
   const note = document.getElementById('repPdfNote');
   if (!btn) return;
   const count = getLog().length;
-  const ready = count >= 15;
+  const ready = count >= 20;
   btn.disabled = !ready;
   if (note) {
     note.textContent = ready
-      ? `${count} registros · se usarán los últimos 15`
-      : `Mínimo 15 registros · tienes ${count} de 15`;
+      ? `${count} registros · se usarán los últimos 20`
+      : `Mínimo 20 registros · tienes ${count} de 20`;
   }
 }
 
@@ -2685,7 +2696,7 @@ function __buildPDF(logoB64) {
   const responsable = document.getElementById('repResponsable').value  || '–';
   const ubicacion   = document.getElementById('repUbicacion').value   || '–';
   const volumen     = document.getElementById('repVolumen').value      || '–';
-  const log    = getLog().slice(0, 15);
+  const log    = getLog().slice(0, 20);
   const desde  = log.length ? log[log.length - 1].fecha : null;
   const hasta  = log.length ? log[0].fecha : null;
   const allAfr = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
@@ -2722,7 +2733,7 @@ function __buildPDF(logoB64) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.text('Reporte Semanal de Calidad del Agua', 105, 34, { align: 'center' });
+  doc.text('Reporte Mensual de Calidad del Agua', 105, 34, { align: 'center' });
 
   // ── Datos del establecimiento ────────────────────────────
   doc.setTextColor(30, 41, 59);
@@ -2817,7 +2828,7 @@ function __buildPDF(logoB64) {
     margin: { left: 14, right: 14 },
   });
 
-  // ── IRAPI 2026 — calculado desde los 15 registros ────────
+  // ── IRAPI 2026 — calculado desde los 20 registros ────────
   {
     const n       = log.length;
     const ncCloro = log.filter(e =>
@@ -2972,7 +2983,7 @@ function __buildPDF(logoB64) {
     );
   }
 
-  doc.save(`Reporte_Semanal_${nombre.replace(/\s+/g, '_')}_${desde || 'sin-fecha'}.pdf`);
+  doc.save(`Reporte_Mensual_${nombre.replace(/\s+/g, '_')}_${desde || 'sin-fecha'}.pdf`);
   showToast('PDF generado correctamente.', 'success');
 }
 
