@@ -1428,12 +1428,8 @@ input, select, textarea { font-family: inherit; }
     white-space: nowrap;
   }
 
-  /* Acciones (editar / eliminar) */
-  .log-table td:last-child {
-    display: flex;
-    padding: 0;
-    flex-shrink: 0;
-  }
+  /* Acciones en fila ocultas en mobile — están dentro del modal */
+  .log-table td:last-child { display: none; }
 
   /* Punto rojo si algún parámetro está fuera de rango */
   .log-table tr:has(.cell-out-range)::before {
