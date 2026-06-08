@@ -2146,13 +2146,6 @@ function setAFRType(type) {
   document.getElementById('btnSolido').classList.toggle('active',    type === 'solido');
   document.getElementById('btnDiarreico').classList.toggle('active', type === 'diarreico');
   document.getElementById('btnVomito').classList.toggle('active',    type === 'vomito');
-
-  const banner = document.getElementById('afrEmergencyBanner');
-  if (banner) banner.hidden = type !== 'diarreico';
-
-  const card = document.querySelector('.afr-card');
-  if (card) card.classList.toggle('afr-emergency', type === 'diarreico');
-
   renderAFR();
 }
 
@@ -2201,9 +2194,18 @@ function _afrFechaDisplay(i) {
   return '–';
 }
 
+function _updateAFRBanner(incidents) {
+  const hasDiar = incidents.some(i => i.tipo === 'diarreico');
+  const banner  = document.getElementById('afrEmergencyBanner');
+  const card    = document.querySelector('.afr-card');
+  if (banner) banner.style.display = hasDiar ? 'flex' : 'none';
+  if (card)   card.classList.toggle('afr-emergency', hasDiar);
+}
+
 function renderAFRIncidents() {
   const incidents = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
   const el = document.getElementById('afrIncidents');
+  _updateAFRBanner(incidents);
   if (!incidents.length) {
     el.innerHTML = '<p class="empty-state">Sin incidentes registrados.</p>';
     return;
@@ -2211,13 +2213,12 @@ function renderAFRIncidents() {
   el.innerHTML = incidents.map(i => {
     const isDiar = i.tipo === 'diarreico';
     const isVom  = i.tipo === 'vomito';
-    const tipoLabel  = isDiar ? 'Diarreico' : isVom ? 'Vómito' : 'Sólido';
     const incClass   = isDiar ? 'afr-inc-diarreico' : isVom ? 'afr-inc-vomito' : 'afr-inc-solido';
     const badgeClass = isDiar ? 'afr-inc-badge-emergencia' : isVom ? 'afr-inc-badge-vomito' : 'afr-inc-badge-solido';
     const badgeText  = isDiar ? 'EMERGENCIA' : isVom ? 'Vómito' : 'Sólido';
     const iconColor  = isDiar ? '#dc2626' : isVom ? '#d97706' : 'var(--warning)';
     return `
-    <div class="afr-incident-item ${incClass}">
+    <div class="afr-incident-item ${incClass}" onclick="viewAFRIncident(${i.ts})" title="Ver detalle del incidente">
       <div class="afr-incident-info">
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" style="flex-shrink:0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <div>
@@ -2226,7 +2227,7 @@ function renderAFRIncidents() {
           <span style="font-size:13px;color:var(--text-muted)">Operador: ${i.operador || '–'}</span>
         </div>
       </div>
-      <div class="afr-incident-actions">
+      <div class="afr-incident-actions" onclick="event.stopPropagation()">
         <button class="btn-edit-log" onclick="editAFRIncident(${i.ts})" title="Editar incidente" aria-label="Editar incidente">
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
@@ -2262,6 +2263,68 @@ function closeAFREdit(e) {
   if (e && e.target !== document.getElementById('afrEditOverlay')) return;
   document.getElementById('afrEditOverlay').style.display = 'none';
   _afrEditTs = null;
+}
+
+function viewAFRIncident(ts) {
+  const incidents = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
+  const i = incidents.find(x => x.ts === ts);
+  if (!i) return;
+
+  const isDiar = i.tipo === 'diarreico';
+  const isVom  = i.tipo === 'vomito';
+  const tipoLabel  = isDiar ? 'Diarreico' : isVom ? 'Vómito' : 'Sólido';
+  const badgeClass = isDiar ? 'afr-inc-badge-emergencia' : isVom ? 'afr-inc-badge-vomito' : 'afr-inc-badge-solido';
+  const badgeText  = isDiar ? 'EMERGENCIA' : isVom ? 'Vómito' : 'Sólido';
+  const protDesc   = isDiar
+    ? 'Hipercloración a 20 ppm · Cierre mínimo 13 horas · Riesgo de Cryptosporidium. Se requiere notificación a autoridad sanitaria.'
+    : isVom
+    ? 'Ajuste de cloro libre a 2 ppm · Inspección y limpieza inmediata del área afectada.'
+    : 'Extracción física del material · Sin cierre obligatorio · Verificar niveles de cloro residual.';
+
+  document.getElementById('afrDetailTitle').innerHTML =
+    `Incidente AFR <span class="afr-inc-badge ${badgeClass}" style="font-size:11px">${badgeText}</span>`;
+  document.getElementById('afrDetailMeta').textContent =
+    `${i.fecha || '–'} · ${i.hora || ''} · ${i.operador || 'Sin operador'}`;
+
+  document.getElementById('afrDetailBody').innerHTML = `
+    <div class="log-detail-section">
+      <div class="log-detail-section-title">Información del incidente</div>
+      <div class="log-detail-param">
+        <span class="log-detail-param-label">Tipo de incidente</span>
+        <span class="log-detail-param-val">${tipoLabel}</span>
+      </div>
+      <div class="log-detail-param">
+        <span class="log-detail-param-label">Fecha</span>
+        <span class="log-detail-param-val">${i.fecha || '–'}</span>
+      </div>
+      <div class="log-detail-param">
+        <span class="log-detail-param-label">Hora</span>
+        <span class="log-detail-param-val">${i.hora || '–'}</span>
+      </div>
+      <div class="log-detail-param">
+        <span class="log-detail-param-label">Operador a cargo</span>
+        <span class="log-detail-param-val">${i.operador || '–'}</span>
+      </div>
+    </div>
+    <div class="log-detail-section">
+      <div class="log-detail-section-title">Protocolo aplicado (Res. 234/2026)</div>
+      <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin:0">${protDesc}</p>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:20px">
+      <button class="btn btn-outline" style="flex:1" onclick="closeAFRDetail();editAFRIncident(${i.ts})">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Editar
+      </button>
+      <button class="btn btn-primary" style="flex:1" onclick="closeAFRDetail()">Cerrar</button>
+    </div>
+  `;
+
+  document.getElementById('afrDetailOverlay').style.display = 'flex';
+}
+
+function closeAFRDetail(e) {
+  if (e && e.target !== document.getElementById('afrDetailOverlay')) return;
+  document.getElementById('afrDetailOverlay').style.display = 'none';
 }
 
 function saveAFREdit() {

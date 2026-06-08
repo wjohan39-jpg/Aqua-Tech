@@ -1374,43 +1374,69 @@ input, select, textarea { font-family: inherit; }
 
 @media (max-width: 640px) {
   .log-table-scroll { overflow-x: unset; }
-  .log-table, .log-table tbody, .log-table tr, .log-table td { display: block; width: 100%; }
-  .log-table thead { display: none; }
+  .log-table,
+  .log-table tbody  { display: block; width: 100%; }
+  .log-table thead  { display: none; }
 
   .log-table tr {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 10px;
-    padding: 4px 0;
-    background: var(--surface);
-    box-shadow: 0 1px 4px rgba(0,0,0,.05);
-    min-width: unset;
-  }
-  .log-table tr:hover td { background: unset; }
-
-  .log-table td {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 7px 14px;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.85rem;
+    gap: 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    padding: 10px 12px;
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
     min-width: unset;
+    cursor: pointer;
   }
-  .log-table td:last-child { border-bottom: none; justify-content: flex-end; padding-top: 10px; }
-  .log-table td::before {
-    content: attr(data-label);
+  .log-table tr:hover { background: var(--muted); }
+
+  /* Ocultar todas las celdas por defecto */
+  .log-table td            { display: none; min-width: unset; padding: 0; border: none; }
+  .log-table td::before    { display: none; }
+  .log-table tr:hover td   { background: unset; }
+
+  /* Fecha */
+  .log-table td:nth-child(1) {
+    display: block;
+    font-size: 0.78rem;
     font-weight: 600;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-muted);
-    margin-right: 12px;
+    color: var(--text);
+    white-space: nowrap;
     flex-shrink: 0;
-    min-width: 78px;
   }
-  .log-table td[data-label=""]::before { display: none; }
-  .log-table td.cell-out-range { background: #fff1f2; border-radius: 0; }
+
+  /* Operador */
+  .log-table td:nth-child(3) {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Acciones (editar / eliminar) */
+  .log-table td:last-child {
+    display: flex;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  /* Punto rojo si algún parámetro está fuera de rango */
+  .log-table tr:has(.cell-out-range)::before {
+    content: '';
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: #ef4444;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .log-table td.cell-out-range { background: unset; }
 }
 
 /* ── AFR STEPPER ─────────────────────────────────────── */
@@ -1457,6 +1483,7 @@ input, select, textarea { font-family: inherit; }
 }
 
 /* Emergency banner — diarreico */
+.afr-emergency-banner[hidden] { display: none !important; }
 .afr-emergency-banner {
   display: flex;
   align-items: flex-start;
@@ -1845,6 +1872,10 @@ input, select, textarea { font-family: inherit; }
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
+
+  /* AFR nav — los dots suben a su propia fila para que los botones quepan */
+  .afr-nav { flex-wrap: wrap; }
+  .afr-dots { order: -1; width: 100%; justify-content: center; }
 
   /* Espaciado general */
   .content-area { padding: 14px; }
@@ -3229,7 +3260,10 @@ a.docs-ref-item:hover { background: var(--border); }
   border-radius: 8px;
   margin-bottom: 8px;
   background: var(--surface);
+  cursor: pointer;
+  transition: var(--transition);
 }
+.afr-incident-item:hover { filter: brightness(0.96); }
 
 .afr-incident-info {
   display: flex;
@@ -3279,10 +3313,42 @@ a.docs-ref-item:hover { background: var(--border); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
+.preloader-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
 .preloader-logo {
-  height: 64px;
+  height: 88px;
   width: auto;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.12));
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,0.15));
+}
+
+.preloader-brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1;
+}
+
+.preloader-brand-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.5px;
+}
+
+.preloader-brand-sub {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 /* Fila avatar + burbuja */
@@ -3380,10 +3446,12 @@ a.docs-ref-item:hover { background: var(--border); }
 }
 
 @media (max-width: 560px) {
-  .preloader-scene   { flex-direction: column; align-items: center; }
-  .preloader-bubble  { border-radius: 4px 16px 16px 16px; }
-  .preloader-avatar  { width: 110px; }
-  .preloader-logo    { height: 52px; }
+  .preloader-scene        { flex-direction: column; align-items: center; }
+  .preloader-bubble       { border-radius: 4px 16px 16px 16px; }
+  .preloader-avatar       { width: 110px; }
+  .preloader-logo         { height: 72px; }
+  .preloader-brand-name   { font-size: 22px; }
+  .preloader-brand-sub    { font-size: 10px; }
 }
 
 /* ── PRELOADER PANTALLAS ────────────────────────────────── */
@@ -3654,9 +3722,16 @@ a.docs-ref-item:hover { background: var(--border); }
 [data-theme="dark"] .btn-danger-outline:hover { background: #450a0a !important; }
 
 /* ── Formularios ── */
-[data-theme="dark"] .form-input,
-[data-theme="dark"] .form-select           { background: #0f172a; color: #e2e8f0; border-color: #334155; }
-[data-theme="dark"] .form-select          { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); }
+[data-theme="dark"] .form-input           { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+[data-theme="dark"] .form-select {
+  background-color: #0f172a;
+  color: #e2e8f0;
+  border-color: #334155;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 12px;
+}
 [data-theme="dark"] .form-input:focus,
 [data-theme="dark"] .form-select:focus     { border-color: #38bdf8; box-shadow: 0 0 0 3px rgba(56,189,248,.15); }
 [data-theme="dark"] .input-unit           { border-color: #334155; background: #0f172a; }
