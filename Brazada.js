@@ -1134,7 +1134,7 @@ function calcDosificacion() {
         ]);
       } else {
         body = _buildChems([
-          { name: 'Hipoclorito de calcio 65% (granulado/pastilla)', dose: _fmtMass(abs * vol * 1.54), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} Δppm × 1.54 g/m³` },
+          { name: 'Hipoclorito de calcio 70% (granulado/pastilla)', dose: _fmtMass(abs * vol * 1.43), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} Δppm × 1.43 g/m³` },
           { name: 'Hipoclorito de sodio 12% (líquido)', dose: _fmtVol(abs * vol * 7.1), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} Δppm × 7.1 ml/m³`, warning: 'Asume NaClO comercial al 12% (densidad ≈ 1.17 g/mL). Verifique la concentración en la etiqueta — blanqueador doméstico (2–5%) requiere un volumen entre 4× y 15× mayor.' },
         ]);
       }
@@ -2284,7 +2284,7 @@ function calcAFRDose(volArg, targetArg, cloroArg) {
     return;
   }
 
-  const caclo = Math.round(delta * vol * 1.54);
+  const caclo = Math.round(delta * vol * 1.43);
   const naclo = Math.round(delta * vol * 7.1);
 
   const deltaRow = (lastCloro !== null)
@@ -2294,9 +2294,9 @@ function calcAFRDose(volArg, targetArg, cloroArg) {
     ${deltaRow}
     <div class="afr-dose-products">
       <div class="afr-dose-product">
-        <span class="afr-dose-prod-name">Hipoclorito de calcio 65%</span>
+        <span class="afr-dose-prod-name">Hipoclorito de calcio 70%</span>
         <span class="afr-dose-prod-qty">${caclo.toLocaleString('es-CO')} g</span>
-        <span class="afr-dose-prod-form">${vol.toFixed(1)} m³ × ${delta.toFixed(1)} ppm × 1.54 g/m³·ppm</span>
+        <span class="afr-dose-prod-form">${vol.toFixed(1)} m³ × ${delta.toFixed(1)} ppm × 1.43 g/m³·ppm</span>
       </div>
       <div class="afr-dose-product">
         <span class="afr-dose-prod-name">Hipoclorito de sodio 12%</span>
@@ -2540,10 +2540,18 @@ function saveReportFields() {
 function restoreReportFields() {
   try {
     const data = JSON.parse(localStorage.getItem('aqua_reporte')) || {};
+    // Eliminar valores que coincidan con los antiguos defaults hardcodeados
+    const OLD_VOLS = ['48', '48.0', '60'];
+    if (data.repNombre === 'Piscina Principal')  delete data.repNombre;
+    if (data.repUbicacion === 'Bogotá, Colombia') delete data.repUbicacion;
+    if (OLD_VOLS.includes(String(data.repVolumen))) delete data.repVolumen;
+
     if (data.repNombre)      document.getElementById('repNombre').value      = data.repNombre;
     if (data.repResponsable) document.getElementById('repResponsable').value = data.repResponsable;
     if (data.repUbicacion)   document.getElementById('repUbicacion').value   = data.repUbicacion;
     if (data.repVolumen)     document.getElementById('repVolumen').value      = data.repVolumen;
+
+    localStorage.setItem('aqua_reporte', JSON.stringify(data));
   } catch {}
 }
 
