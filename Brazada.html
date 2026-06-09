@@ -7,8 +7,8 @@
   <meta name="description" content="Sistema de gestión de piscinas bajo Resolución 234/2026 · Colombia" />
 
   <!-- Favicon y PWA icons -->
-  <link rel="icon" type="image/png" href="Multimedia/Logo.png" />
-  <link rel="apple-touch-icon" href="Multimedia/Logo.png" />
+  <link rel="icon" type="image/png" href="Multimedia/logo1.png" />
+  <link rel="apple-touch-icon" href="Multimedia/logo1.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Brazada Aqua Tech" />
@@ -30,7 +30,7 @@
 
       <!-- Logo / Brand -->
       <div class="sidebar-brand">
-        <img src="Multimedia/Logo.png" alt="Aqua Tech" class="brand-logo-img" />
+        <img src="Multimedia/logo1.png" alt="Aqua Tech" class="brand-logo-img" />
         <div class="brand-text">
           <span class="brand-name">Brazada Aqua Tech</span>
           <span class="brand-sub">RES. 234 / 2026</span>
@@ -148,7 +148,7 @@
             <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>
           </svg>
         </button>
-        <img src="Multimedia/Logo.png" alt="Aqua Tech" class="topbar-logo" />
+        <img src="Multimedia/logo1.png" alt="Aqua Tech" class="topbar-logo" />
         <div class="topbar-status">
           <span class="status-dot"></span>
           <span class="status-text">Sistema operativo · Colombia</span>
@@ -813,6 +813,18 @@
                 </div>
               </div>
             </div>
+            <div class="photo-capture-wrap">
+              <button type="button" class="btn-photo-capture" onclick="triggerPhoto('fotoAgua')" aria-label="Tomar foto del estado del agua">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                Foto del estado del agua
+              </button>
+              <div class="photo-preview-wrap" id="photo-preview-fotoAgua" hidden>
+                <img class="photo-thumb" id="photo-thumb-fotoAgua" alt="Foto del agua" />
+                <button type="button" class="photo-remove" onclick="removePhoto('fotoAgua')" aria-label="Eliminar foto del agua">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
             <div class="log-art16-section">
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               <span class="log-art16-label">Art. 16 Res. 234/2026 &mdash; Registro operacional (recomendado completar diariamente)</span>
@@ -858,6 +870,18 @@
             <div class="form-group">
               <label class="form-label" for="logAverias">AVERÍAS Y MANTENIMIENTOS</label>
               <textarea class="form-input form-textarea" id="logAverias" placeholder="Fallas detectadas, reparaciones y mantenimientos preventivos realizados"></textarea>
+              <div class="photo-capture-wrap" style="margin-top:8px">
+                <button type="button" class="btn-photo-capture" onclick="triggerPhoto('fotoAveria')" aria-label="Tomar foto de la avería o equipo">
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  Foto del equipo / avería
+                </button>
+                <div class="photo-preview-wrap" id="photo-preview-fotoAveria" hidden>
+                  <img class="photo-thumb" id="photo-thumb-fotoAveria" alt="Foto avería" />
+                  <button type="button" class="photo-remove" onclick="removePhoto('fotoAveria')" aria-label="Eliminar foto de avería">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="log-trim-section">
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -989,6 +1013,18 @@
               </div>
               <div class="afr-footer">
                 <input type="text" class="form-input" id="afrOperador" placeholder="Nombre del operador a cargo" aria-label="Nombre del operador a cargo" />
+                <div class="photo-capture-wrap">
+                  <button type="button" class="btn-photo-capture" onclick="triggerPhoto('afrFoto')" aria-label="Tomar foto del incidente">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Foto del incidente (opcional)
+                  </button>
+                  <div class="photo-preview-wrap" id="photo-preview-afrFoto" hidden>
+                    <img class="photo-thumb" id="photo-thumb-afrFoto" alt="Foto del incidente" />
+                    <button type="button" class="photo-remove" onclick="removePhoto('afrFoto')" aria-label="Eliminar foto del incidente">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  </div>
+                </div>
                 <button class="btn btn-outline btn-danger-outline" onclick="resetAFR()">
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
                   Reiniciar
@@ -1232,10 +1268,19 @@
                   <input type="date" class="form-input docs-venc-input" id="fechaSalvavidas" oninput="updateVencimientos()" />
                   <span class="docs-venc-status" id="statusSalvavidas">&ndash;</span>
                 </div>
-                <div class="docs-venc-item">
+                <div class="docs-venc-item docs-venc-concepto">
                   <span class="docs-venc-label">Concepto sanitario</span>
-                  <input type="date" class="form-input docs-venc-input" id="fechaConcepto" oninput="updateVencimientos()" />
-                  <span class="docs-venc-status" id="statusConcepto">&ndash;</span>
+                  <div class="concepto-selector" id="conceptoSelector">
+                    <button type="button" class="concepto-opt concepto-verde" data-val="verde" onclick="selectConcepto('verde')">
+                      <span class="concepto-circle"></span>Favorable
+                    </button>
+                    <button type="button" class="concepto-opt concepto-amarillo" data-val="amarillo" onclick="selectConcepto('amarillo')">
+                      <span class="concepto-circle"></span>Con Requerimientos
+                    </button>
+                    <button type="button" class="concepto-opt concepto-rojo" data-val="rojo" onclick="selectConcepto('rojo')">
+                      <span class="concepto-circle"></span>Desfavorable
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1362,7 +1407,7 @@
     <div class="preloader-inner">
 
       <div class="preloader-brand">
-        <img src="Multimedia/Logo.png" alt="Brazada Aqua Tech" class="preloader-logo" />
+        <img src="Multimedia/logo1.png" alt="Brazada Aqua Tech" class="preloader-logo" />
         <div class="preloader-brand-text">
           <span class="preloader-brand-name">Brazada</span>
           <span class="preloader-brand-sub">Aqua Tech</span>

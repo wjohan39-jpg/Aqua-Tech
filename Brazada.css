@@ -2077,9 +2077,171 @@ input, select, textarea { font-family: inherit; }
   text-align: right;
 }
 
+/* ── CONCEPTO SANITARIO SELECTOR ─────────────────────── */
+.docs-venc-concepto { flex-wrap: wrap; }
+
+.concepto-selector {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.concepto-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: var(--muted);
+  color: var(--text-muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.concepto-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.concepto-verde .concepto-circle    { background: #16a34a; opacity: 0.4; }
+.concepto-amarillo .concepto-circle { background: #d97706; opacity: 0.4; }
+.concepto-rojo .concepto-circle     { background: #dc2626; opacity: 0.4; }
+
+.concepto-verde:hover .concepto-circle,
+.concepto-verde.active .concepto-circle    { opacity: 1; }
+.concepto-amarillo:hover .concepto-circle,
+.concepto-amarillo.active .concepto-circle { opacity: 1; }
+.concepto-rojo:hover .concepto-circle,
+.concepto-rojo.active .concepto-circle     { opacity: 1; }
+
+.concepto-verde:hover,
+.concepto-verde.active    { background: #dcfce7; color: #166534; border-color: #16a34a; }
+.concepto-amarillo:hover,
+.concepto-amarillo.active { background: #fef3c7; color: #92400e; border-color: #d97706; }
+.concepto-rojo:hover,
+.concepto-rojo.active     { background: #fee2e2; color: #991b1b; border-color: #dc2626; }
+
 .status-ok      { color: var(--success); }
 .status-warning { color: var(--warning); }
 .status-danger  { color: var(--destructive); }
+
+/* ── FOTO CAPTURA ─────────────────────────────────────── */
+.photo-capture-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.btn-photo-capture {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: var(--radius-sm);
+  border: 1.5px dashed var(--border);
+  background: var(--muted);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 500;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.btn-photo-capture:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--surface);
+}
+
+.photo-preview-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.photo-preview-wrap:not([hidden]) {
+  display: inline-block;
+}
+
+.photo-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  display: block;
+}
+
+.photo-remove {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--destructive);
+  color: #fff;
+  border: 2px solid var(--surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Fotos en el detalle del registro */
+.log-detail-fotos {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.log-detail-foto-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.log-detail-foto-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.log-detail-foto-img {
+  max-width: 220px;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  cursor: zoom-in;
+}
+
+/* Ícono cámara en tabla */
+.btn-cam-log {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.btn-cam-log:hover { background: #bfdbfe; }
 
 .docs-refs { display: flex; flex-direction: column; gap: 0.65rem; }
 
@@ -3714,6 +3876,9 @@ a.docs-ref-item:hover { background: var(--border); }
 [data-theme="dark"] .sidebar-brand         { border-color: rgba(255,255,255,.06); }
 [data-theme="dark"] .topbar                { background: #1e293b; border-color: #334155; }
 [data-theme="dark"] .sidebar-toggle:hover  { background: #334155; }
+[data-theme="dark"] .brand-logo-img,
+[data-theme="dark"] .topbar-logo,
+[data-theme="dark"] .preloader-logo        { filter: brightness(0) invert(1); }
 
 /* ── Cards ── */
 [data-theme="dark"] .card,
@@ -3772,6 +3937,24 @@ a.docs-ref-item:hover { background: var(--border); }
 [data-theme="dark"] .lsi-leg-item.equilibrada            { background: #1e293b; color: #94a3b8; }
 [data-theme="dark"] .lsi-leg-item.equilibrada.active-leg { background: #052e16; color: #34d399; }
 [data-theme="dark"] .lsi-leg-item.incrustante            { background: #451a03; color: #fbbf24; }
+
+/* ── FOTO CAPTURA ── */
+[data-theme="dark"] .btn-photo-capture          { background: #1e293b; border-color: #334155; color: #94a3b8; }
+[data-theme="dark"] .btn-photo-capture:hover    { border-color: #38bdf8; color: #38bdf8; background: #0f172a; }
+[data-theme="dark"] .photo-thumb                { border-color: #334155; }
+[data-theme="dark"] .photo-remove               { border-color: #1e293b; }
+[data-theme="dark"] .log-detail-foto-img        { border-color: #334155; }
+[data-theme="dark"] .btn-cam-log                { background: #1e3a5f; color: #60a5fa; }
+[data-theme="dark"] .btn-cam-log:hover          { background: #1e40af; }
+
+/* ── CONCEPTO SANITARIO ── */
+[data-theme="dark"] .concepto-opt { background: #1e293b; border-color: #334155; color: #94a3b8; }
+[data-theme="dark"] .concepto-verde:hover,
+[data-theme="dark"] .concepto-verde.active    { background: #052e16; color: #6ee7b7; border-color: #16a34a; }
+[data-theme="dark"] .concepto-amarillo:hover,
+[data-theme="dark"] .concepto-amarillo.active { background: #451a03; color: #fbbf24; border-color: #d97706; }
+[data-theme="dark"] .concepto-rojo:hover,
+[data-theme="dark"] .concepto-rojo.active     { background: #450a0a; color: #fca5a5; border-color: #dc2626; }
 
 /* ── IRAPI ── */
 [data-theme="dark"] .irapi-bar-track                           { background: #334155; }

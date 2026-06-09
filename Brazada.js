@@ -548,19 +548,22 @@ function renderDashboardVencimientos() {
   if (profile !== 'publico') { el.style.display = 'none'; return; }
 
   const dates = JSON.parse(localStorage.getItem('aqua_docs_dates') || '{}');
-  const items = [
-    { key: 'fechaSalvavidas', label: 'Certificación del salvavidas' },
-    { key: 'fechaConcepto',   label: 'Concepto sanitario' },
-  ];
 
   const alerts = [];
-  items.forEach(({ key, label }) => {
-    const val = dates[key];
-    if (!val) return;
+
+  const val = dates['fechaSalvavidas'];
+  if (val) {
     const days = Math.ceil((new Date(val + 'T00:00:00') - new Date()) / 86400000);
-    if (days > 30) return;
-    alerts.push({ label, days });
-  });
+    if (days <= 30) {
+      const cls = days < 0 || days <= 10 ? 'venc-danger' : 'venc-warning';
+      const msg = days < 0 ? 'VENCIDO' : `Vence en ${days} día${days === 1 ? '' : 's'}`;
+      alerts.push({ label: 'Certificación del salvavidas', msg, cls });
+    }
+  }
+
+  const concepto = dates['concepto'];
+  if (concepto === 'rojo')    alerts.push({ label: 'Concepto sanitario', msg: 'Desfavorable',          cls: 'venc-danger'  });
+  else if (concepto === 'amarillo') alerts.push({ label: 'Concepto sanitario', msg: 'Con Requerimientos', cls: 'venc-warning' });
 
   if (!alerts.length) { el.style.display = 'none'; return; }
 
@@ -572,11 +575,9 @@ function renderDashboardVencimientos() {
         <strong>Documentos con vencimiento próximo</strong>
         <button class="btn btn-sm btn-outline" onclick="goToVencimientos(event)" style="margin-left:auto;font-size:0.78rem;padding:4px 10px">Ver vencimientos</button>
       </div>
-      ${alerts.map(({ label, days }) => {
-        const cls = days < 0 ? 'venc-danger' : days <= 10 ? 'venc-danger' : 'venc-warning';
-        const msg = days < 0 ? 'VENCIDO' : `Vence en ${days} día${days === 1 ? '' : 's'}`;
-        return `<div class="dash-venc-item ${cls}"><span>${label}</span><span class="venc-badge">${msg}</span></div>`;
-      }).join('')}
+      ${alerts.map(({ label, msg, cls }) =>
+        `<div class="dash-venc-item ${cls}"><span>${label}</span><span class="venc-badge">${msg}</span></div>`
+      ).join('')}
     </div>
   `;
 }
@@ -1747,6 +1748,52 @@ function _lastDureza() {
   return found ? +found.dureza : 250;
 }
 
+// ── FOTOS ─────────────────────────────────────────────────
+const _photos = { fotoAgua: null, fotoAveria: null, afrFoto: null };
+
+function triggerPhoto(key) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    _compressPhoto(file, b64 => _applyPhoto(key, b64));
+  };
+  input.click();
+}
+
+function removePhoto(key) { _applyPhoto(key, null); }
+
+function _applyPhoto(key, b64) {
+  _photos[key] = b64;
+  const wrap  = document.getElementById('photo-preview-' + key);
+  const thumb = document.getElementById('photo-thumb-'   + key);
+  if (!wrap || !thumb) return;
+  wrap.hidden = !b64;
+  thumb.src   = b64 || '';
+}
+
+function _compressPhoto(file, cb) {
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const MAX = 600;
+    let w = img.width, h = img.height;
+    if (w > MAX || h > MAX) {
+      if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+      else       { w = Math.round(w * MAX / h); h = MAX; }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(canvas.toDataURL('image/jpeg', 0.65));
+  };
+  img.src = url;
+}
+
 function clearLogForm() {
   const now  = new Date();
   document.getElementById('logDate').value      = localDateStr(now);
@@ -1771,6 +1818,8 @@ function clearLogForm() {
   document.getElementById('logProdQuim').value  = '';
   document.getElementById('logAverias').value   = '';
   document.getElementById('logNotas').value     = '';
+  _applyPhoto('fotoAgua',   null);
+  _applyPhoto('fotoAveria', null);
   checkLogForm();
 }
 
@@ -1800,6 +1849,8 @@ function editLog(ts) {
   document.getElementById('logProdQuim').value  = entry.prodQuim  || '';
   document.getElementById('logAverias').value   = entry.averias   || '';
   document.getElementById('logNotas').value     = entry.notas     || '';
+  _applyPhoto('fotoAgua',   entry.fotoAgua   || null);
+  _applyPhoto('fotoAveria', entry.fotoAveria || null);
   document.getElementById('btnSaveLogText').textContent   = 'Actualizar registro';
   document.getElementById('logEditDate').textContent      = entry.fecha || '';
   document.getElementById('logEditBanner').style.display  = '';
@@ -1846,10 +1897,12 @@ function saveLog() {
     horasFun:  isNaN(horasFunRaw)  ? null : horasFunRaw,
     aguaRep:   isNaN(aguaRepRaw)   ? null : aguaRepRaw,
     retrolav:  isNaN(retrolavRaw)  ? null : retrolavRaw,
-    prodQuim:  document.getElementById('logProdQuim').value.trim(),
-    averias:   document.getElementById('logAverias').value.trim(),
-    notas:     document.getElementById('logNotas').value,
-    ts:        editingLogTs || Date.now(),
+    prodQuim:   document.getElementById('logProdQuim').value.trim(),
+    averias:    document.getElementById('logAverias').value.trim(),
+    notas:      document.getElementById('logNotas').value,
+    fotoAgua:   _photos.fotoAgua   || null,
+    fotoAveria: _photos.fotoAveria || null,
+    ts:         editingLogTs || Date.now(),
   };
 
   // Calcular ISL automáticamente para este registro
@@ -1985,6 +2038,7 @@ function renderLog() {
             <td data-label="Bañistas">${e.banistas ?? '–'}</td>
             <td data-label="">
               <div class="log-row-actions" onclick="event.stopPropagation()">
+                ${(e.fotoAgua || e.fotoAveria) ? `<button class="btn-cam-log" onclick="viewLog(${e.ts})" title="Ver foto adjunta" aria-label="Ver foto del registro"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>` : ''}
                 <button class="btn-edit-log" onclick="editLog(${e.ts})" title="Editar registro" aria-label="Editar registro del ${e.fecha}">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -2101,6 +2155,15 @@ function viewLog(ts) {
     </div>`;
   }
 
+  const fotosHTML = (entry.fotoAgua || entry.fotoAveria) ? `
+    <div class="log-detail-section">
+      <div class="log-detail-section-title">Evidencia fotográfica</div>
+      <div class="log-detail-fotos">
+        ${entry.fotoAgua   ? `<div class="log-detail-foto-item"><span class="log-detail-foto-label">Estado del agua</span><img class="log-detail-foto-img" src="${entry.fotoAgua}" alt="Foto del agua" /></div>` : ''}
+        ${entry.fotoAveria ? `<div class="log-detail-foto-item"><span class="log-detail-foto-label">Avería / equipo</span><img class="log-detail-foto-img" src="${entry.fotoAveria}" alt="Foto avería" /></div>` : ''}
+      </div>
+    </div>` : '';
+
   body.innerHTML = `
     ${islHTML}
     <div class="log-detail-section">
@@ -2109,6 +2172,7 @@ function viewLog(ts) {
     </div>
     ${art16HTML}
     ${extraHTML}
+    ${fotosHTML}
     <div style="display:flex;gap:8px;margin-top:20px">
       <button class="btn btn-outline btn-danger-outline" style="flex:1" onclick="closeLogDetail();deleteLog(${entry.ts})">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -2354,13 +2418,15 @@ function finishAFR() {
   const incidents = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
   const now = new Date();
   incidents.unshift({
-    tipo: APP.afrType,
+    tipo:     APP.afrType,
     operador,
-    fecha: localDateStr(now),
-    hora:  now.toLocaleTimeString('es-CO'),
-    ts:    Date.now(),
+    fecha:    localDateStr(now),
+    hora:     now.toLocaleTimeString('es-CO'),
+    ts:       Date.now(),
+    foto:     _photos.afrFoto || null,
   });
   localStorage.setItem('aqua_afr', JSON.stringify(incidents));
+  _applyPhoto('afrFoto', null);
   renderAFRIncidents();
   APP.afrStep = 0;
   renderAFR();
@@ -2493,6 +2559,12 @@ function viewAFRIncident(ts) {
       <div class="log-detail-section-title">Protocolo aplicado (Res. 234/2026)</div>
       <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin:0">${protDesc}</p>
     </div>
+    ${i.foto ? `<div class="log-detail-section">
+      <div class="log-detail-section-title">Evidencia fotográfica</div>
+      <div class="log-detail-fotos">
+        <div class="log-detail-foto-item"><span class="log-detail-foto-label">Foto del incidente</span><img class="log-detail-foto-img" src="${i.foto}" alt="Foto del incidente AFR" /></div>
+      </div>
+    </div>` : ''}
     <div style="display:flex;gap:8px;margin-top:20px">
       <button class="btn btn-outline" style="flex:1" onclick="closeAFRDetail();editAFRIncident(${i.ts})">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -2693,7 +2765,7 @@ async function _doPDF() {
   const btn = document.getElementById('btnGeneratePDF');
   if (btn) { btn.disabled = true; btn.dataset.orig = btn.dataset.orig || btn.innerHTML; btn.innerHTML = '⏳ Generando PDF…'; }
   try {
-    const logoB64 = await _loadImgB64('Multimedia/Logo.png').catch(() => null);
+    const logoB64 = await _loadImgB64('Multimedia/logo1.png').catch(() => null);
     __buildPDF(logoB64);
   } catch (err) {
     showToast('Error al generar el PDF. Intenta de nuevo.', 'error');
@@ -3074,13 +3146,26 @@ function renderDocs() {
   if (textEl) textEl.textContent = `${checked} / ${visible.length}`;
 }
 
+function applyConcepto(val) {
+  document.querySelectorAll('.concepto-opt').forEach(b => {
+    b.classList.toggle('active', b.dataset.val === val);
+  });
+}
+
+function selectConcepto(val) {
+  const dates = JSON.parse(localStorage.getItem('aqua_docs_dates') || '{}');
+  dates['concepto'] = val;
+  localStorage.setItem('aqua_docs_dates', JSON.stringify(dates));
+  applyConcepto(val);
+  renderDashboardVencimientos();
+}
+
 function updateVencimientos() {
   const pairs = [
     { inputId: 'fechaSalvavidas', statusId: 'statusSalvavidas' },
-    { inputId: 'fechaConcepto',   statusId: 'statusConcepto'   },
   ];
 
-  const dates = {};
+  const dates = JSON.parse(localStorage.getItem('aqua_docs_dates') || '{}');
   pairs.forEach(({ inputId }) => {
     const el = document.getElementById(inputId);
     if (el) dates[inputId] = el.value;
@@ -3125,6 +3210,7 @@ function initDocs() {
       const el = document.getElementById(id);
       if (el) el.value = val;
     });
+    if (dates['concepto']) applyConcepto(dates['concepto']);
   } catch {}
 
   renderDocs();
