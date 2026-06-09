@@ -1,11 +1,11 @@
-const CACHE = 'brazada-v1';
+const CACHE = 'brazada-v2';
 
 const PRECACHE = [
   './Brazada.html',
   './Brazada.css',
   './Brazada.js',
   './manifest.json',
-  './Multimedia/Logo.png',
+  './Multimedia/logo1.png',
 ];
 
 // Instalar: pre-cachear app shell
