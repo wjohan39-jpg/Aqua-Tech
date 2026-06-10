@@ -1,4 +1,4 @@
-const CACHE = 'brazada-v3';
+const CACHE = 'brazada-v4';
 
 const PRECACHE = [
   './Brazada.html',
@@ -9,7 +9,13 @@ const PRECACHE = [
   './Multimedia/logo1.png',
 ];
 
-// Instalar: pre-cachear app shell
+// Archivos de app shell — siempre red primero, caché como respaldo offline
+const NETWORK_FIRST = [
+  'Brazada.html',
+  'Brazada.css',
+  'Brazada.js',
+];
+
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
@@ -18,7 +24,6 @@ self.addEventListener('install', e => {
   );
 });
 
-// Activar: eliminar caches viejos
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
@@ -29,25 +34,38 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Fetch: stale-while-revalidate
-// — sirve cache inmediatamente si existe, actualiza cache desde red en background
-// — si no hay cache, espera la red
-// — solo cachea respuestas 200 completas (no 206 partial content de videos/streams)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
-  e.respondWith(
-    caches.open(CACHE).then(cache =>
-      cache.match(e.request).then(cached => {
-        const networkFetch = fetch(e.request)
-          .then(res => {
-            if (res && res.status === 200) cache.put(e.request, res.clone());
-            return res;
-          })
-          .catch(() => null);
+  const url = e.request.url;
+  const isNetworkFirst = NETWORK_FIRST.some(f => url.includes(f));
 
-        return cached || networkFetch;
-      })
-    )
-  );
+  if (isNetworkFirst) {
+    // Network-first: siempre intenta la red; si falla (offline) usa caché
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          if (res && res.status === 200) {
+            caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+  } else {
+    // Cache-first para imágenes y recursos estáticos
+    e.respondWith(
+      caches.open(CACHE).then(cache =>
+        cache.match(e.request).then(cached => {
+          const networkFetch = fetch(e.request)
+            .then(res => {
+              if (res && res.status === 200) cache.put(e.request, res.clone());
+              return res;
+            })
+            .catch(() => null);
+          return cached || networkFetch;
+        })
+      )
+    );
+  }
 });
