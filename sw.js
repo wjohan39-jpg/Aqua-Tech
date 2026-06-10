@@ -1,10 +1,11 @@
-const CACHE = 'brazada-v2';
+const CACHE = 'brazada-v3';
 
 const PRECACHE = [
   './Brazada.html',
   './Brazada.css',
   './Brazada.js',
   './manifest.json',
+  './Multimedia/logo1.webp',
   './Multimedia/logo1.png',
 ];
 
@@ -31,6 +32,7 @@ self.addEventListener('activate', e => {
 // Fetch: stale-while-revalidate
 // — sirve cache inmediatamente si existe, actualiza cache desde red en background
 // — si no hay cache, espera la red
+// — solo cachea respuestas 200 completas (no 206 partial content de videos/streams)
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
@@ -39,7 +41,7 @@ self.addEventListener('fetch', e => {
       cache.match(e.request).then(cached => {
         const networkFetch = fetch(e.request)
           .then(res => {
-            if (res && res.ok) cache.put(e.request, res.clone());
+            if (res && res.status === 200) cache.put(e.request, res.clone());
             return res;
           })
           .catch(() => null);

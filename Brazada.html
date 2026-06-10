@@ -17,8 +17,11 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" />
+  <link rel="preload" href="Multimedia/logo1.webp" as="image" type="image/webp" fetchpriority="high" />
   <link rel="stylesheet" href="Brazada.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" /></noscript>
+  <script src="Brazada.js" defer></script>
 </head>
 <body>
 
@@ -30,7 +33,10 @@
 
       <!-- Logo / Brand -->
       <div class="sidebar-brand">
-        <img src="Multimedia/logo1.png" alt="Aqua Tech" class="brand-logo-img" />
+        <picture>
+          <source srcset="Multimedia/logo1.webp" type="image/webp" />
+          <img src="Multimedia/logo1.png" alt="Aqua Tech" class="brand-logo-img" width="42" height="62" />
+        </picture>
         <div class="brand-text">
           <span class="brand-name">Brazada Aqua Tech</span>
           <span class="brand-sub">RES. 234 / 2026</span>
@@ -148,7 +154,10 @@
             <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>
           </svg>
         </button>
-        <img src="Multimedia/logo1.png" alt="Aqua Tech" class="topbar-logo" />
+        <picture>
+          <source srcset="Multimedia/logo1.webp" type="image/webp" />
+          <img src="Multimedia/logo1.png" alt="Aqua Tech" class="topbar-logo" width="44" height="65" />
+        </picture>
         <div class="topbar-status">
           <span class="status-dot"></span>
           <span class="status-text">Sistema operativo · Colombia</span>
@@ -1363,8 +1372,6 @@
     </div>
   </div>
 
-  <script src="Brazada.js"></script>
-
   <!-- Toast container -->
   <div id="toastContainer" class="toast-container"></div>
 
@@ -1445,7 +1452,10 @@
     <div class="preloader-inner">
 
       <div class="preloader-brand">
-        <img src="Multimedia/logo1.png" alt="Brazada Aqua Tech" class="preloader-logo" />
+        <picture>
+          <source srcset="Multimedia/logo1.webp" type="image/webp" fetchpriority="high" />
+          <img src="Multimedia/logo1.png" alt="Brazada Aqua Tech" class="preloader-logo" width="59" height="88" fetchpriority="high" />
+        </picture>
         <div class="preloader-brand-text">
           <span class="preloader-brand-name">Brazada</span>
           <span class="preloader-brand-sub">Aqua Tech</span>
@@ -1455,7 +1465,7 @@
       <!-- Pantalla 1: Saludo de JG -->
       <div id="preloaderScreen1" class="preloader-screen">
         <div class="preloader-scene">
-          <video src="Multimedia/JG.mp4" class="preloader-avatar" autoplay muted playsinline disablepictureinpicture></video>
+          <video src="Multimedia/JG.mp4" class="preloader-avatar" poster="Multimedia/logo1.webp" autoplay muted playsinline disablepictureinpicture></video>
           <div class="preloader-bubble">
             <p class="preloader-greeting">¡Hola, bienvenido!</p>
             <p class="preloader-text">
