@@ -88,6 +88,15 @@ function _fmtAge(minutes) {
   return `hace ${d} día${d > 1 ? 's' : ''}`;
 }
 
+function fmt12h(t, fallback = '–') {
+  if (!t) return fallback;
+  const [h, m] = t.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return t;
+  const suffix = h < 12 ? 'AM' : 'PM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${suffix}`;
+}
+
 function clampInput(el, min, max) {
   const v = parseFloat(el.value);
   if (isNaN(v)) return;
@@ -622,7 +631,7 @@ function renderDashboardGauges() {
   if (pt) {
     const quien   = last.operador ? ` · ${last.operador}` : '';
     const ageText = isFinite(ageMin) ? ` · ${_fmtAge(ageMin)}` : '';
-    pt.textContent = `Parámetros del agua · ${last.fecha || ''} ${last.hora || ''}${quien}${ageText}`;
+    pt.textContent = `Parámetros del agua · ${last.fecha || ''} ${fmt12h(last.hora, '')}${quien}${ageText}`;
   }
 
   grid.innerHTML = '';
@@ -759,7 +768,7 @@ function compartirEstado() {
     : (isNonCompliant ? 'No cumple Resolución 234/2026' : 'Cumple Resolución 234/2026');
 
   const fecha = last.fecha || '–';
-  const hora  = last.hora  ? ` · ${last.hora}`           : '';
+  const hora  = last.hora  ? ` · ${fmt12h(last.hora)}`    : '';
   const op    = last.operador ? `\nOperador: ${last.operador}` : '';
 
   const paramLines = PARAM_DEFS
@@ -2020,7 +2029,7 @@ function renderLog() {
         ${log.map(e => `
           <tr class="log-row-clickable" data-ts="${e.ts}" onclick="viewLog(${e.ts})" title="Ver detalle del registro">
             <td data-label="Fecha">${e.fecha || '–'}</td>
-            <td data-label="Hora">${e.hora || '–'}</td>
+            <td data-label="Hora">${fmt12h(e.hora)}</td>
             <td data-label="Operador">${e.operador || '–'}</td>
             <td data-label="Cl. Libre"${cc('cloro',     e.cloro    )}>${e.cloro     ?? '–'} ppm</td>
             <td data-label="Cl. Comb" ${cc('clorocomb', e.clorocomb)}>${e.clorocomb != null && !isNaN(e.clorocomb) ? e.clorocomb + ' ppm' : '–'}</td>
@@ -2077,7 +2086,7 @@ function viewLog(ts) {
   const body    = document.getElementById('logDetailBody');
 
   title.textContent = `Registro del ${entry.fecha || '–'}`;
-  meta.textContent  = `${entry.hora || ''} · ${entry.operador || 'Sin operador'}`;
+  meta.textContent  = `${fmt12h(entry.hora, '')} · ${entry.operador || 'Sin operador'}`;
 
   const paramRows = [
     { key: 'cloro',     label: 'Cloro libre residual',  unit: 'ppm',   normMin: 2.0,  normMax: 4.0  },
@@ -2471,7 +2480,7 @@ function renderAFRIncidents() {
       <div class="afr-incident-info">
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" style="flex-shrink:0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <div>
-          <strong>${_afrFechaDisplay(i)} · ${i.hora || ''}</strong>
+          <strong>${_afrFechaDisplay(i)} · ${fmt12h(i.hora, '')}</strong>
           <span class="afr-inc-badge ${badgeClass}">${badgeText}</span><br>
           <span style="font-size:13px;color:var(--text-muted)">Operador: ${i.operador || '–'}</span>
         </div>
@@ -2533,7 +2542,7 @@ function viewAFRIncident(ts) {
   document.getElementById('afrDetailTitle').innerHTML =
     `Incidente AFR <span class="afr-inc-badge ${badgeClass}" style="font-size:11px">${badgeText}</span>`;
   document.getElementById('afrDetailMeta').textContent =
-    `${i.fecha || '–'} · ${i.hora || ''} · ${i.operador || 'Sin operador'}`;
+    `${i.fecha || '–'} · ${fmt12h(i.hora, '')} · ${i.operador || 'Sin operador'}`;
 
   document.getElementById('afrDetailBody').innerHTML = `
     <div class="log-detail-section">
@@ -2548,7 +2557,7 @@ function viewAFRIncident(ts) {
       </div>
       <div class="log-detail-param">
         <span class="log-detail-param-label">Hora</span>
-        <span class="log-detail-param-val">${i.hora || '–'}</span>
+        <span class="log-detail-param-val">${fmt12h(i.hora)}</span>
       </div>
       <div class="log-detail-param">
         <span class="log-detail-param-label">Operador a cargo</span>
@@ -2628,7 +2637,7 @@ function restoreReportFields() {
 }
 
 function updateReportSummary() {
-  const log = getLog().slice(0, 20);
+  const log = getLog().slice(0, 10);
 
   const titleEl = document.getElementById('repSummaryTitle');
   if (titleEl) {
@@ -2639,7 +2648,7 @@ function updateReportSummary() {
         ? `Resumen · ${desde}`
         : `Resumen · ${desde} al ${hasta}`;
     } else {
-      titleEl.textContent = 'Resumen · últimos 20 registros';
+      titleEl.textContent = 'Resumen · últimos 10 registros';
     }
   }
 
@@ -2688,14 +2697,14 @@ function updateReportSummary() {
 function updateDashReportBtn() {
   const btn = document.getElementById('btnDashReport');
   if (!btn) return;
-  const ready = getLog().length >= 20;
+  const ready = getLog().length >= 10;
   btn.classList.toggle('btn-locked', !ready);
   btn.setAttribute('aria-disabled', String(!ready));
 }
 
 function dashboardReportClick() {
-  if (getLog().length < 20) {
-    showToast('Completa el registro mensual (mínimo 20 mediciones)', 'info');
+  if (getLog().length < 10) {
+    showToast('Completa el registro mensual (mínimo 10 mediciones)', 'info');
     return;
   }
   navigate('reporte');
@@ -2706,12 +2715,12 @@ function updateReportBtn() {
   const note = document.getElementById('repPdfNote');
   if (!btn) return;
   const count = getLog().length;
-  const ready = count >= 20;
+  const ready = count >= 10;
   btn.disabled = !ready;
   if (note) {
     note.textContent = ready
-      ? `${count} registros · se usarán los últimos 20`
-      : `Mínimo 20 registros · tienes ${count} de 20`;
+      ? `${count} registros · se usarán los últimos 10`
+      : `Mínimo 10 registros · tienes ${count} de 10`;
   }
 }
 
@@ -2782,7 +2791,7 @@ function __buildPDF(logoB64) {
   const responsable = document.getElementById('repResponsable').value  || '–';
   const ubicacion   = document.getElementById('repUbicacion').value   || '–';
   const volumen     = document.getElementById('repVolumen').value      || '–';
-  const log    = getLog().slice(0, 20);
+  const log    = getLog().slice(0, 10);
   const desde  = log.length ? log[log.length - 1].fecha : null;
   const hasta  = log.length ? log[0].fecha : null;
   const allAfr = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
@@ -2951,9 +2960,9 @@ function __buildPDF(logoB64) {
       head: [['Parámetro', '% No conformidad', 'Peso', 'Aporte al score']],
       body: [
         ['Microbiológico *', 'No determinado', '45%', '–'],
-        ['Cloro residual',   pCloro + '%',    '20% → 36%', (pCloro * (20/55)).toFixed(1)],
-        ['Alcalinidad / pH', pAlk   + '%',    '30% → 55%', (pAlk   * (30/55)).toFixed(1)],
-        ['Otros parámetros', pOtros + '%',    '5%  →  9%', (pOtros * (5/55)).toFixed(1)],
+        ['Cloro residual',   pCloro + '%',    '20% > 36%', (pCloro * (20/55)).toFixed(1)],
+        ['Alcalinidad / pH', pAlk   + '%',    '30% > 55%', (pAlk   * (30/55)).toFixed(1)],
+        ['Otros parámetros', pOtros + '%',    '5%  >  9%', (pOtros * (5/55)).toFixed(1)],
         ['Nivel de riesgo (parcial)', irapiScore.toString(), '', irapiLabel],
       ],
       theme: 'grid',
@@ -2991,7 +3000,7 @@ function __buildPDF(logoB64) {
       head: [['Fecha', 'Hora', 'Operador', 'Cl.Libre', 'Cl.Comb', 'pH', 'Alc.', 'CYA', 'Turb.', 'Temp.', 'ORP', 'Bañistas', 'Notas']],
       body: log.map(e => [
         e.fecha    || '–',
-        e.hora     || '–',
+        fmt12h(e.hora),
         e.operador || '–',
         (e.cloro     ?? '–') + ' ppm',
         (e.clorocomb != null && !isNaN(e.clorocomb) ? e.clorocomb + ' ppm' : '–'),
@@ -3033,7 +3042,7 @@ function __buildPDF(logoB64) {
       head: [['Fecha', 'Hora', 'Tipo / Severidad', 'Operador']],
       body: incidents.map(i => [
         i.fecha    || '–',
-        i.hora     || '–',
+        fmt12h(i.hora),
         i.tipo === 'diarreico' ? 'Diarreico — EMERGENCIA (Cryptosporidium)' : i.tipo === 'vomito' ? 'Vómito' : 'Sólido',
         i.operador || '–',
       ]),
