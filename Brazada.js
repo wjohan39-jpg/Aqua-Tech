@@ -1991,6 +1991,9 @@ function renderLog() {
   const opQuery   = (document.getElementById('filterOperador')?.value || '').toLowerCase().trim();
   const soloFuera = document.getElementById('filterFueraRango')?.checked || false;
 
+  const btnClear = document.getElementById('btnClearFilter');
+  if (btnClear) btnClear.disabled = !desde && !hasta && !opQuery && !soloFuera;
+
   if (desde)     log = log.filter(e => e.fecha >= desde);
   if (hasta)     log = log.filter(e => e.fecha <= hasta);
   if (opQuery)   log = log.filter(e =>
@@ -2212,6 +2215,7 @@ function clearLogFilter() {
   const cb = document.getElementById('filterFueraRango');
   if (cb) cb.checked = false;
   renderLog();
+  showToast('Filtros limpiados', 'success');
 }
 
 // ── PROTOCOLO AFR ─────────────────────────────────────────

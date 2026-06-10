@@ -947,15 +947,15 @@
                 <label class="log-filter-label" for="filterHasta">Hasta</label>
                 <input type="date" class="form-input log-filter-input" id="filterHasta" oninput="renderLog()" />
               </div>
-              <div class="log-filter-group" style="flex:1;min-width:140px">
+              <div class="log-filter-group--wide">
                 <label class="log-filter-label" for="filterOperador">Operador / notas</label>
-                <input type="text" class="form-input log-filter-input" id="filterOperador" placeholder="Buscar..." oninput="renderLog()" />
+                <input type="text" class="form-input log-filter-input" id="filterOperador" placeholder="Buscar por operador o notas..." oninput="renderLog()" />
               </div>
               <label class="log-filter-toggle">
                 <input type="checkbox" id="filterFueraRango" onchange="renderLog()" />
                 Solo fuera de rango
               </label>
-              <button class="btn btn-outline" style="align-self:flex-end;font-size:0.8rem;padding:6px 12px" onclick="clearLogFilter()">Limpiar</button>
+              <button id="btnClearFilter" class="btn btn-outline" style="align-self:flex-end;font-size:0.8rem;padding:6px 12px" onclick="clearLogFilter()" disabled>Limpiar</button>
             </div>
             <div id="logTableWrap">
               <p class="empty-state">Sin registros aún. Agregue la primera medición arriba.</p>

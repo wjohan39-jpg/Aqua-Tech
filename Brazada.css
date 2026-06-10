@@ -2811,15 +2811,18 @@ a.docs-ref-item:hover { background: var(--border); }
 .calc-target-hint { color: var(--text-muted); font-size: 12px; margin-top: 6px; }
 
 .log-filter-bar {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  grid-template-rows: auto auto;
   gap: 10px;
-  align-items: flex-end;
+  align-items: end;
   padding: 12px 0 14px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 4px;
 }
-.log-filter-group {
+.log-filter-group { display: flex; flex-direction: column; gap: 4px; }
+.log-filter-group--wide {
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -2830,6 +2833,9 @@ a.docs-ref-item:hover { background: var(--border); }
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .log-filter-input { padding: 5px 8px; font-size: 0.82rem; }
 .log-filter-toggle {
@@ -2839,10 +2845,21 @@ a.docs-ref-item:hover { background: var(--border); }
   font-size: 0.82rem;
   color: var(--text-muted);
   cursor: pointer;
-  align-self: flex-end;
+  align-self: end;
   padding-bottom: 6px;
 }
 .log-filter-toggle input { cursor: pointer; }
+
+@media (max-width: 520px) {
+  .log-filter-bar {
+    grid-template-columns: 1fr 1fr;
+  }
+  .log-filter-group--wide {
+    grid-column: 1 / -1;
+  }
+  .log-filter-toggle { grid-column: 1; }
+  #btnClearFilter  { grid-column: 2; justify-self: end; }
+}
 
 .cell-out-range {
   color: var(--destructive);
