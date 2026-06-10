@@ -420,6 +420,38 @@
                 <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; Rango: 6.8&ndash;7.3</div>
               </div>
 
+              <div class="calc-param-block">
+                <div class="calc-param-title">Alcalinidad total</div>
+                <div class="calc-param-pair">
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label">ACTUAL (ppm)</label>
+                    <input type="number" class="form-input" id="calcAlcActual" step="1" min="0" max="300" placeholder="ej. 80" oninput="clampInput(this,0,300);calcDosificacion()" />
+                  </div>
+                  <span class="calc-arrow-sep">&rarr;</span>
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label">OBJETIVO (ppm)</label>
+                    <input type="number" class="form-input" id="calcAlcObj" step="1" min="20" max="150" value="100" oninput="clampInput(this,20,150);calcDosificacion()" />
+                  </div>
+                </div>
+                <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; Rango: 20&ndash;150 ppm</div>
+              </div>
+
+              <div class="calc-param-block">
+                <div class="calc-param-title">Estabilizador CYA</div>
+                <div class="calc-param-pair">
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label">ACTUAL (ppm)</label>
+                    <input type="number" class="form-input" id="calcCyaActual" step="1" min="0" max="150" placeholder="ej. 30" oninput="clampInput(this,0,150);calcDosificacion()" />
+                  </div>
+                  <span class="calc-arrow-sep"></span>
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label">M&Aacute;X. NORMATIVO</label>
+                    <input type="number" class="form-input" id="calcCyaMax" value="75" disabled style="opacity:0.6" />
+                  </div>
+                </div>
+                <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; M&aacute;x. 75 ppm &mdash; sobre 75 ppm requiere dilución</div>
+              </div>
+
               <div class="calc-priority-note">
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 El ajuste de <strong>pH se calcula primero</strong>. Art.&nbsp;5: no dosificar con ba&ntilde;istas en el agua.
@@ -1088,7 +1120,7 @@
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Generar PDF oficial
               </button>
-              <p class="irapi-bitacora-note" id="repPdfNote">Mínimo 20 registros · tienes 0 de 20.</p>
+              <p class="irapi-bitacora-note" id="repPdfNote">Mínimo 10 registros · tienes 0 de 10.</p>
             </div>
           </div>
         </section>
@@ -1349,9 +1381,15 @@
           <option value="vomito">Vómito</option>
         </select>
       </div>
-      <div class="form-group">
-        <label class="form-label" for="afrEditFecha">FECHA</label>
-        <input type="date" class="form-input" id="afrEditFecha" />
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label" for="afrEditFecha">FECHA</label>
+          <input type="date" class="form-input" id="afrEditFecha" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label" for="afrEditHora">HORA</label>
+          <input type="time" class="form-input" id="afrEditHora" />
+        </div>
       </div>
       <div class="form-group" style="margin-bottom:20px">
         <label class="form-label" for="afrEditOperador">OPERADOR</label>

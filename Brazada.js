@@ -131,19 +131,16 @@ document.addEventListener('click', e => {
 });
 
 function navigateCalcToBitacora(event) {
-  const cloro  = document.getElementById('calcCloroActual')?.value;
-  const ph     = document.getElementById('calcPhActual')?.value;
-  const param  = APP.currentParam;
-  const paramV = document.getElementById('paramActual')?.value;
-  const PARAM_TO_LOG = { alcalinidad: 'logAlc', cya: 'logCya' };
+  const cloro = document.getElementById('calcCloroActual')?.value;
+  const ph    = document.getElementById('calcPhActual')?.value;
+  const alc   = document.getElementById('calcAlcActual')?.value;
+  const cya   = document.getElementById('calcCyaActual')?.value;
   navigate('bitacora', event);
   setTimeout(() => {
     if (cloro) { const el = document.getElementById('logCloro'); if (el && !el.value) el.value = cloro; }
     if (ph)    { const el = document.getElementById('logPh');    if (el && !el.value) el.value = ph; }
-    if (paramV && PARAM_TO_LOG[param]) {
-      const el = document.getElementById(PARAM_TO_LOG[param]);
-      if (el && !el.value) el.value = paramV;
-    }
+    if (alc)   { const el = document.getElementById('logAlc');   if (el && !el.value) el.value = alc; }
+    if (cya)   { const el = document.getElementById('logCya');   if (el && !el.value) el.value = cya; }
     checkLogForm();
   }, 220);
 }
@@ -928,8 +925,9 @@ function saveCalcFields() {
     cloroObj:    document.getElementById('calcCloroObj')?.value    || '3.0',
     phActual:    document.getElementById('calcPhActual')?.value    || '',
     phObj:       document.getElementById('calcPhObj')?.value       || '7.1',
-    paramParam:  APP.currentParam || '',
-    paramActual: document.getElementById('paramActual')?.value     || '',
+    alcActual:   document.getElementById('calcAlcActual')?.value   || '',
+    alcObj:      document.getElementById('calcAlcObj')?.value      || '100',
+    cyaActual:   document.getElementById('calcCyaActual')?.value   || '',
   }));
 }
 
@@ -941,15 +939,17 @@ function restoreCalcFields() {
     const coEl = document.getElementById('calcCloroObj');
     const paEl = document.getElementById('calcPhActual');
     const poEl = document.getElementById('calcPhObj');
+    const aaEl = document.getElementById('calcAlcActual');
+    const aoEl = document.getElementById('calcAlcObj');
+    const cyEl = document.getElementById('calcCyaActual');
     if (caEl && m.cloroActual) caEl.value = m.cloroActual;
     if (coEl && m.cloroObj)    coEl.value = m.cloroObj;
     if (paEl && m.phActual)    paEl.value = m.phActual;
     if (poEl && m.phObj)       poEl.value = m.phObj;
-    if (m.paramParam && PARAM_CONFIG[m.paramParam]) {
-      if (m.paramParam !== APP.currentParam) selectParam(m.paramParam);
-      const pEl = document.getElementById('paramActual');
-      if (pEl && m.paramActual) { pEl.value = m.paramActual; calcDose(); }
-    }
+    if (aaEl && m.alcActual)   aaEl.value = m.alcActual;
+    if (aoEl && m.alcObj)      aoEl.value = m.alcObj;
+    if (cyEl && m.cyaActual)   cyEl.value = m.cyaActual;
+    calcDosificacion();
   }
 }
 
@@ -977,7 +977,7 @@ function calcDose() {
     if (param === 'cloro') {
       doseText = (delta * vol * 1.43).toFixed(0) + ' g';
     } else if (param === 'alcalinidad') {
-      doseText = (delta * vol * 16.8).toFixed(0) + ' g';
+      doseText = (delta * vol * 1.68).toFixed(0) + ' g';
     } else if (param === 'ph') {
       doseText = (delta * vol * 22).toFixed(0) + ' g carbonato de sodio';
     } else {
@@ -1057,17 +1057,21 @@ function calcDosificacion() {
   const cloroT   = parseFloat(document.getElementById('calcCloroObj')?.value)    || 3.0;
   const phA      = parseFloat(document.getElementById('calcPhActual')?.value);
   const phT      = parseFloat(document.getElementById('calcPhObj')?.value)       || 7.1;
+  const alcA     = parseFloat(document.getElementById('calcAlcActual')?.value);
+  const alcT     = parseFloat(document.getElementById('calcAlcObj')?.value)      || 100;
+  const cyaA     = parseFloat(document.getElementById('calcCyaActual')?.value);
 
   if (!vol) {
     resultEl.innerHTML = `<div class="calc-placeholder"><p>Ingresa las dimensiones del estanque en el <strong>Paso 1</strong> para calcular el volumen.</p></div>`;
     return;
   }
-  if (isNaN(cloroA) && isNaN(phA)) {
+  if (isNaN(cloroA) && isNaN(phA) && isNaN(alcA) && isNaN(cyaA)) {
     resultEl.innerHTML = `<div class="calc-placeholder"><p>Ingresa las mediciones actuales del agua en el <strong>Paso 2</strong>.</p></div>`;
     return;
   }
 
   const CMIN = 2.0, CMAX = 4.0, PMIN = 6.8, PMAX = 7.3;
+  const AMIN = 20, AMAX = 150, CYAMAX = 75;
 
   // Validar que el objetivo esté dentro del rango normativo
   const targetErrors = [];
@@ -1155,6 +1159,54 @@ function calcDosificacion() {
       badge: cloroOk ? 'En rango ✓' : (over ? `Exceso · ${cloroA} ppm — CERRAR` : `Bajo · ${cloroA} ppm`),
       badgeCls: cloroOk ? 'calc-badge-ok' : 'calc-badge-danger',
       closureAlert: over, body, showArt5: !cloroOk && !over,
+    });
+  }
+
+  // ── Alcalinidad ──────────────────────────────────────────
+  if (!isNaN(alcA)) {
+    const alcOk = alcA >= AMIN && alcA <= AMAX;
+    const diff  = alcT - alcA;
+    const abs   = Math.abs(diff);
+    let body = '';
+    if (!alcOk) {
+      if (alcA < AMIN) {
+        body = _buildChems([
+          { name: 'Bicarbonato de sodio (NaHCO₃)', dose: _fmtMass(abs * vol * 1.68),
+            formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(0)} Δppm × 1.68 g/m³`,
+            warning: 'Disolver antes de agregar al agua. Reevaluar en 4–6 horas. No dosificar con bañistas.' },
+        ]);
+      } else {
+        body = _buildChems([
+          { name: 'Dilución con agua fresca', dose: 'Ver nota', formula: '',
+            warning: 'Para bajar alcalinidad alta: reemplazar parte del agua de la piscina por agua fresca. Calcular volumen a vaciar según % de exceso.' },
+        ]);
+      }
+    }
+    html += _buildCalcBlock({
+      title: 'Alcalinidad total', inRange: alcOk, rangeText: `${AMIN}–${AMAX} ppm`,
+      actual: alcA + ' ppm', target: alcT + ' ppm', delta: diff.toFixed(0) + ' ppm',
+      badge: alcOk ? 'En rango ✓' : (alcA < AMIN ? `Baja · ${alcA} ppm` : `Alta · ${alcA} ppm`),
+      badgeCls: alcOk ? 'calc-badge-ok' : 'calc-badge-warning',
+      body, showArt5: !alcOk && alcA < AMIN,
+    });
+  }
+
+  // ── CYA ───────────────────────────────────────────────────
+  if (!isNaN(cyaA)) {
+    const cyaOk = cyaA <= CYAMAX;
+    let body = '';
+    if (!cyaOk) {
+      body = _buildChems([
+        { name: 'Dilución con agua fresca', dose: 'Ver nota', formula: '',
+          warning: `CYA en ${cyaA} ppm supera el máximo (${CYAMAX} ppm). Vaciar una parte del agua y reemplazar con agua sin estabilizador. El porcentaje a reemplazar es aprox. ${Math.round((1 - CYAMAX / cyaA) * 100)}% del volumen total.` },
+      ]);
+    }
+    html += _buildCalcBlock({
+      title: 'Estabilizador (CYA)', inRange: cyaOk, rangeText: `0–${CYAMAX} ppm`,
+      actual: cyaA + ' ppm', target: CYAMAX + ' ppm (máx.)', delta: (CYAMAX - cyaA).toFixed(0) + ' ppm',
+      badge: cyaOk ? 'En rango ✓' : `Exceso · ${cyaA} ppm`,
+      badgeCls: cyaOk ? 'calc-badge-ok' : 'calc-badge-danger',
+      body, showArt5: false,
     });
   }
 
@@ -2517,6 +2569,7 @@ function editAFRIncident(ts) {
   _afrEditTs = ts;
   document.getElementById('afrEditTipo').value     = i.tipo     || 'solido';
   document.getElementById('afrEditFecha').value    = i.fecha    || '';
+  document.getElementById('afrEditHora').value     = i.hora     || '';
   document.getElementById('afrEditOperador').value = i.operador || '';
   document.getElementById('afrEditOverlay').style.display = 'flex';
 }
@@ -2602,6 +2655,7 @@ function saveAFREdit() {
     ...i,
     tipo:     document.getElementById('afrEditTipo').value,
     fecha:    document.getElementById('afrEditFecha').value,
+    hora:     document.getElementById('afrEditHora').value,
     operador: document.getElementById('afrEditOperador').value,
   });
   localStorage.setItem('aqua_afr', JSON.stringify(incidents));
@@ -3238,11 +3292,8 @@ function initDateTimeFields() {
 
   const dateEl = document.getElementById('logDate');
   const timeEl = document.getElementById('logTime');
-  const mesEl  = document.getElementById('repMes');
-
   if (dateEl) dateEl.value = date;
   if (timeEl) timeEl.value = time;
-  if (mesEl)  mesEl.value  = date.slice(0, 7);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
