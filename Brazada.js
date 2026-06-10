@@ -1477,11 +1477,7 @@ function calcLSIFromBitacora() {
 // ── IRAPI 2026 ────────────────────────────────────────────
 
 function hasTrimestreData() {
-  const log = getLog();
-  if (!log.length) return false;
-  const oldest = new Date(log[log.length - 1].fecha + 'T00:00:00');
-  const today  = new Date(); today.setHours(0, 0, 0, 0);
-  return Math.floor((today - oldest) / 86400000) >= 90;
+  return getLog().length >= 1;
 }
 
 function _diasParaTrimestre() {
@@ -1609,46 +1605,9 @@ function calcIRAPI() {
   sessionStorage.setItem('aqua_irapi_result',  JSON.stringify({ score, label }));
 }
 
-function setMicroMode(mode) {
-  const isEst = mode === 'estimacion';
-  document.getElementById('microLabMode').style.display = isEst ? 'none' : '';
-  document.getElementById('microEstMode').style.display = isEst ? ''     : 'none';
-  document.getElementById('btnMicroLab').classList.toggle('active', !isEst);
-  document.getElementById('btnMicroEst').classList.toggle('active',  isEst);
-  const note = document.getElementById('irapiEstNote');
-  if (note) note.style.display = isEst ? 'flex' : 'none';
-  localStorage.setItem('aqua_micro_mode', mode);
-}
-
 function applyMicroLab() {
   const val = Math.min(100, Math.max(0, parseInt(document.getElementById('microLabValue').value) || 0));
   document.getElementById('sliderMicro').value = val;
-  calcIRAPI();
-}
-
-function calcMicroEstimacion() {
-  const get = name => {
-    const el = document.querySelector(`input[name="${name}"]:checked`);
-    return el ? el.value : 'no';
-  };
-
-  const scores = {
-    mq1: { si: 20, no: 0,  ns: 10 },
-    mq2: { si: 30, no: 0,  ns: 10 },
-    mq3: { si: 30, no: 0,  ns: 15 },
-    mq4: { si: 10, no: 0,  ns: 5  },
-    mq5: { si: 20, no: 0,  ns: 10 },
-  };
-
-  let total = 0;
-  ['mq1','mq2','mq3','mq4','mq5'].forEach(q => {
-    total += scores[q][get(q)] || 0;
-  });
-
-  const pct = Math.min(100, total);
-  document.getElementById('sliderMicro').value = pct;
-  const note = document.getElementById('irapiEstNote');
-  if (note) note.style.display = 'flex';
   calcIRAPI();
 }
 
@@ -1668,26 +1627,20 @@ function restoreIRAPISliders() {
     } catch {}
   }
 
-  const mode = localStorage.getItem('aqua_micro_mode') || 'lab';
-  setMicroMode(mode);
 }
 
 function updateIRAPIBitacoraBtn() {
   const btn  = document.getElementById('btnCalcIRAPIBitacora');
   const note = document.getElementById('irapibitacoraNote');
   if (!btn) return;
-  const ready  = hasTrimestreData();
-  const log    = getLog();
+  const ready = hasTrimestreData();
+  const log   = getLog();
   btn.disabled = !ready;
   if (note) {
     if (ready) {
-      const today  = new Date(); today.setHours(23, 59, 59, 999);
-      const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 90);
-      const trimLog = log.filter(e => new Date(e.fecha + 'T00:00:00') >= cutoff);
-      note.textContent = `${trimLog.length} registro${trimLog.length !== 1 ? 's' : ''} del último trimestre · Microbiológico requiere laboratorio certificado.`;
+      note.textContent = `${log.length} registro${log.length !== 1 ? 's' : ''} disponibles · Microbiológico requiere laboratorio certificado.`;
     } else {
-      const faltan = _diasParaTrimestre();
-      note.textContent = `IRAPI trimestral (Art. 9 Res. 234/2026) · Faltan ${faltan} día${faltan !== 1 ? 's' : ''} para completar el primer trimestre de operación.`;
+      note.textContent = 'Sin registros en la bitácora. Agrega mediciones para habilitar el cálculo automático.';
     }
   }
 }
@@ -1695,37 +1648,41 @@ function updateIRAPIBitacoraBtn() {
 function calcIRAPIFromBitacora() {
   if (!hasTrimestreData()) return;
 
-  const today  = new Date(); today.setHours(23, 59, 59, 999);
-  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 90);
-  const log    = getLog().filter(e => new Date(e.fecha + 'T00:00:00') >= cutoff);
+  const log = getLog();
   if (!log.length) return;
 
   const total   = log.length;
   const ncCloro = log.filter(e =>
-    e.cloro < 2.0 || e.cloro > 4.0 ||
+    (e.cloro != null && !isNaN(e.cloro) && (e.cloro < 2.0 || e.cloro > 4.0)) ||
     (e.clorocomb != null && !isNaN(e.clorocomb) && e.clorocomb > 0.3)
   ).length;
-  const ncAlk   = log.filter(e => e.alc < 20 || e.alc > 150 || e.ph < 6.8 || e.ph > 7.3).length;
+  const ncAlk   = log.filter(e =>
+    (e.alc  != null && !isNaN(e.alc)  && (e.alc < 20  || e.alc > 150)) ||
+    (e.ph   != null && !isNaN(e.ph)   && (e.ph  < 6.8 || e.ph  > 7.3))
+  ).length;
   const ncOtros = log.filter(e =>
-    e.turb > 0.5 || e.cya > 75 ||
-    (e.orp != null && !isNaN(e.orp) && e.orp > 700)
+    (e.turb != null && !isNaN(e.turb) && e.turb > 0.5) ||
+    (e.cya  != null && !isNaN(e.cya)  && e.cya  > 75)  ||
+    (e.orp  != null && !isNaN(e.orp)  && e.orp  > 700)
   ).length;
 
   const pctCloro = Math.round((ncCloro / total) * 100);
   const pctAlk   = Math.round((ncAlk   / total) * 100);
   const pctOtros = Math.round((ncOtros / total) * 100);
 
+  // Microbiológico no se puede derivar de la bitácora: se deja en 0 (requiere laboratorio)
+  document.getElementById('sliderMicro').value = 0;
   document.getElementById('sliderCloro').value = pctCloro;
   document.getElementById('sliderAlk').value   = pctAlk;
   document.getElementById('sliderOtros').value = pctOtros;
 
   ['tagCloro', 'tagAlk', 'tagOtros'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.textContent = `Trimestre (${total} reg.)`; el.style.display = 'inline'; }
+    if (el) { el.textContent = `Auto (${total} reg.)`; el.style.display = 'inline'; }
   });
 
   calcIRAPI();
-  showToast(`IRAPI trimestral calculado desde ${total} registros de los últimos 90 días.`, 'success');
+  showToast(`IRAPI calculado desde ${total} registro${total !== 1 ? 's' : ''} de la bitácora.`, 'success');
 }
 
 // ── BITÁCORA ──────────────────────────────────────────────
@@ -2985,13 +2942,17 @@ function __buildPDF(logoB64) {
   {
     const n       = log.length;
     const ncCloro = log.filter(e =>
-      e.cloro < 2.0 || e.cloro > 4.0 ||
+      (e.cloro != null && !isNaN(e.cloro) && (e.cloro < 2.0 || e.cloro > 4.0)) ||
       (e.clorocomb != null && !isNaN(e.clorocomb) && e.clorocomb > 0.3)
     ).length;
-    const ncAlk   = log.filter(e => e.alc  < 20  || e.alc  > 150 || e.ph < 6.8 || e.ph > 7.3).length;
+    const ncAlk   = log.filter(e =>
+      (e.alc != null && !isNaN(e.alc) && (e.alc < 20  || e.alc > 150)) ||
+      (e.ph  != null && !isNaN(e.ph)  && (e.ph  < 6.8 || e.ph  > 7.3))
+    ).length;
     const ncOtros = log.filter(e =>
-      e.turb > 0.5 || e.cya > 75 ||
-      (e.orp != null && !isNaN(e.orp) && e.orp > 700)
+      (e.turb != null && !isNaN(e.turb) && e.turb > 0.5) ||
+      (e.cya  != null && !isNaN(e.cya)  && e.cya  > 75)  ||
+      (e.orp  != null && !isNaN(e.orp)  && e.orp  > 700)
     ).length;
     const pCloro  = Math.round((ncCloro / n) * 100);
     const pAlk    = Math.round((ncAlk   / n) * 100);

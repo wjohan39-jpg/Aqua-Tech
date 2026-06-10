@@ -598,12 +598,6 @@
                     <span class="irapi-weight">peso 45%</span>
                   </div>
 
-                  <!-- Toggle modo -->
-                  <div class="micro-mode-toggle">
-                    <button class="micro-mode-btn active" id="btnMicroLab" onclick="setMicroMode('lab')">Laboratorio</button>
-                    <button class="micro-mode-btn" id="btnMicroEst" onclick="setMicroMode('estimacion')">Estimación guiada</button>
-                  </div>
-
                   <!-- Modo laboratorio -->
                   <div id="microLabMode" class="micro-panel">
                     <p class="micro-panel-note">Ingresa el porcentaje de no conformidad que indica el resultado del análisis de laboratorio certificado.</p>
@@ -614,64 +608,6 @@
                       </div>
                       <span class="micro-lab-hint">% de parámetros no conformes</span>
                     </div>
-                  </div>
-
-                  <!-- Modo estimación -->
-                  <div id="microEstMode" class="micro-panel" style="display:none">
-                    <div class="micro-est-banner">
-                      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                      <div>
-                        <strong>Esta estimación NO reemplaza el análisis de laboratorio</strong>
-                        La Res. 234/2026 exige laboratorio certificado para el uso público. Este modo usa señales visuales y operacionales, no análisis químico. Resultado válido solo para orientación interna.
-                      </div>
-                    </div>
-                    <p class="micro-panel-note">Responde las preguntas según lo que observas en la piscina.</p>
-                    <div class="micro-questions">
-
-                      <div class="micro-q">
-                        <span class="micro-q-text">¿El agua tiene olor fuerte o irritante (a cloro quemado)?</span>
-                        <div class="micro-q-opts">
-                          <label><input type="radio" name="mq1" value="si" /> Sí</label>
-                          <label><input type="radio" name="mq1" value="no" checked /> No</label>
-                        </div>
-                      </div>
-
-                      <div class="micro-q">
-                        <span class="micro-q-text">¿El agua se ve turbia, verdosa o con espuma?</span>
-                        <div class="micro-q-opts">
-                          <label><input type="radio" name="mq2" value="si" /> Sí</label>
-                          <label><input type="radio" name="mq2" value="no" checked /> No</label>
-                        </div>
-                      </div>
-
-                      <div class="micro-q">
-                        <span class="micro-q-text">¿El cloro estuvo por debajo de 1 ppm en los últimos 7 días?</span>
-                        <div class="micro-q-opts">
-                          <label><input type="radio" name="mq3" value="si" /> Sí</label>
-                          <label><input type="radio" name="mq3" value="no" checked /> No</label>
-                          <label><input type="radio" name="mq3" value="ns" /> No sé</label>
-                        </div>
-                      </div>
-
-                      <div class="micro-q">
-                        <span class="micro-q-text">¿Ha habido más bañistas de lo usual recientemente?</span>
-                        <div class="micro-q-opts">
-                          <label><input type="radio" name="mq4" value="si" /> Sí</label>
-                          <label><input type="radio" name="mq4" value="no" checked /> No</label>
-                        </div>
-                      </div>
-
-                      <div class="micro-q">
-                        <span class="micro-q-text">¿Hace más de 30 días que no se realiza choque de cloro?</span>
-                        <div class="micro-q-opts">
-                          <label><input type="radio" name="mq5" value="si" /> Sí</label>
-                          <label><input type="radio" name="mq5" value="no" checked /> No</label>
-                          <label><input type="radio" name="mq5" value="ns" /> No sé</label>
-                        </div>
-                      </div>
-
-                    </div>
-                    <button class="btn btn-primary btn-sm" onclick="calcMicroEstimacion()">Calcular estimación</button>
                   </div>
 
                   <!-- Slider compartido -->
@@ -722,10 +658,6 @@
               </div>
               <div class="irapi-score-label" id="irapiScoreLabel">Riesgo bajo</div>
               <div class="irapi-action-phrase" id="irapiAction"></div>
-              <div class="irapi-est-note" id="irapiEstNote" style="display:none">
-                <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                Incluye estimación microbiológica — no apto para registros oficiales
-              </div>
               <div class="irapi-ranges">
                 <div class="irapi-range-item sin-riesgo"><span class="rng-range">0&ndash;10</span><span class="rng-label">Sin riesgo</span></div>
                 <div class="irapi-range-item bajo"><span class="rng-range">10.1&ndash;35</span><span class="rng-label">Bajo</span></div>

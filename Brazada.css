@@ -242,22 +242,24 @@ input, select, textarea { font-family: inherit; }
   height: 68px;
   background: white;
   border-bottom: 1px solid var(--border);
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: 12px;
   padding: 0 20px;
   position: sticky;
   top: 0;
   z-index: 50;
 }
 
+.topbar > picture {
+  display: flex;
+  justify-content: center;
+}
+
 .topbar-logo {
   height: 65px;
   width: auto;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  pointer-events: none;
+  display: block;
 }
 
 .sidebar-toggle {
@@ -279,7 +281,7 @@ input, select, textarea { font-family: inherit; }
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
+  justify-self: end;
 }
 
 .status-dot {
@@ -2309,30 +2311,6 @@ a.docs-ref-item:hover { background: var(--border); }
 /* ── Microbiológico asistente ───────────────────────────── */
 .irapi-micro-group { border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
 
-.micro-mode-toggle {
-  display: flex;
-  gap: 0.3rem;
-  background: var(--muted);
-  border-radius: 8px;
-  padding: 0.25rem;
-  margin: 0.65rem 0;
-  width: fit-content;
-}
-
-.micro-mode-btn {
-  padding: 0.35rem 0.9rem;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-.micro-mode-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-
 .micro-panel { margin-bottom: 0.75rem; }
 
 .micro-panel-note {
@@ -2346,32 +2324,6 @@ a.docs-ref-item:hover { background: var(--border); }
 
 .micro-lab-hint { font-size: 0.78rem; color: var(--text-muted); }
 
-.micro-questions { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.75rem; }
-
-.micro-q {
-  background: var(--muted);
-  border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-}
-
-.micro-q-text {
-  display: block;
-  font-size: 0.845rem;
-  color: var(--text);
-  margin-bottom: 0.4rem;
-  line-height: 1.35;
-}
-
-.micro-q-opts { display: flex; gap: 1rem; }
-
-.micro-q-opts label {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.82rem;
-  color: var(--text);
-  cursor: pointer;
-}
 
 .btn-sm { padding: 0.4rem 0.9rem; font-size: 0.82rem; }
 
@@ -3803,36 +3755,6 @@ a.docs-ref-item:hover { background: var(--border); }
 }
 
 /* Banner prominente — estimación guiada */
-.micro-est-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 11px 13px;
-  background: var(--warning-light);
-  border: 1.5px solid #fbbf24;
-  border-radius: var(--radius-md);
-  font-size: 12px;
-  line-height: 1.5;
-  color: #78350f;
-  margin-bottom: 14px;
-}
-.micro-est-banner svg { flex-shrink: 0; margin-top: 1px; color: #d97706; }
-.micro-est-banner strong { display: block; margin-bottom: 2px; font-size: 12.5px; color: #92400e; }
-
-/* Nota en el score IRAPI cuando hay estimación activa */
-.irapi-est-note {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  background: var(--warning-light);
-  border: 1px solid #fbbf24;
-  border-radius: var(--radius);
-  font-size: 11px;
-  font-weight: 500;
-  color: #92400e;
-  margin-bottom: 12px;
-}
 
 /* ═══════════════════════════════════════════════════════
    MODO OSCURO — prefers-color-scheme: dark
@@ -3983,13 +3905,10 @@ a.docs-ref-item:hover { background: var(--border); }
 [data-theme="dark"] .irapi-range-item.alto.active-range        { background: #450a0a; color: #fca5a5; }
 [data-theme="dark"] .irapi-tag.manual                          { background: #3b1a00; color: #fde68a; }
 [data-theme="dark"] .irapi-tag.auto                            { background: #052e16; color: #6ee7b7; }
-[data-theme="dark"] .irapi-est-note                            { background: #3b1a00; border-color: #78350f; color: #fde68a; }
 [data-theme="dark"] .irapi-action-sin-riesgo { background: #052e16; color: #6ee7b7; }
 [data-theme="dark"] .irapi-action-bajo       { background: #451a03; color: #fde68a; }
 [data-theme="dark"] .irapi-action-medio      { background: #431407; color: #fdba74; }
 [data-theme="dark"] .irapi-action-alto       { background: #450a0a; color: #fca5a5; }
-[data-theme="dark"] .micro-est-banner                          { background: #3b1a00; border-color: #78350f; color: #fde68a; }
-[data-theme="dark"] .micro-mode-btn.active                     { background: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
 
 /* ── Log compliance bar ── */
 [data-theme="dark"] .log-comp-ok  { background: #052e16; border-color: #065f46; color: #6ee7b7; }
