@@ -353,7 +353,7 @@
                 <label class="form-label" for="poolShape">FORMA</label>
                 <select class="form-select" id="poolShape" onchange="updateShapeFields()">
                   <option value="rectangular">Rectangular</option>
-                  <option value="oval">Ovalada</option>
+                  <option value="oval">Ovalada (tipo estadio)</option>
                   <option value="circular">Circular</option>
                 </select>
               </div>
@@ -454,11 +454,26 @@
                   </div>
                   <span class="calc-arrow-sep"></span>
                   <div class="form-group" style="flex:1">
-                    <label class="form-label">M&Aacute;X. NORMATIVO</label>
-                    <input type="number" class="form-input" id="calcCyaMax" value="75" disabled style="opacity:0.6" />
+                    <label class="form-label">OBJETIVO (ppm)</label>
+                    <input type="number" class="form-input" id="calcCyaObj" step="1" min="0" max="75" value="40" oninput="clampInput(this,0,75);calcDosificacion()" />
                   </div>
                 </div>
-                <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; M&aacute;x. 75 ppm &mdash; sobre 75 ppm requiere dilución</div>
+                <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; M&aacute;x. 75 ppm &middot; Objetivo sugerido: 30–50 ppm (piscinas descubiertas)</div>
+              </div>
+
+              <div class="calc-param-block">
+                <div class="calc-param-title">Cloro combinado <span style="font-weight:400;font-size:11px;color:var(--text-muted)">(opcional &middot; activa cloración de choque)</span></div>
+                <div class="calc-param-pair">
+                  <div class="form-group" style="flex:1">
+                    <label class="form-label">ACTUAL (ppm)</label>
+                    <input type="number" class="form-input" id="calcCloroCombActual" step="0.01" min="0" max="5" placeholder="ej. 0.2" oninput="clampInput(this,0,5);calcDosificacion()" />
+                  </div>
+                  <span class="calc-arrow-sep"></span>
+                  <div class="form-group" style="flex:1">
+                    <div style="padding:9px 12px;font-size:12px;color:var(--text-muted);line-height:1.4">Si &gt; 0.3 ppm:<br>cloración de choque — objetivo = 10&times; el combinado</div>
+                  </div>
+                </div>
+                <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; M&aacute;x. 0.3 ppm</div>
               </div>
 
               <div class="calc-priority-note">
@@ -516,7 +531,7 @@
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiTemp">TEMPERATURA <span class="lsi-pbadge" id="lsiTempBadge"></span></label>
                   <div class="input-unit"><input type="number" class="form-input" id="lsiTemp" placeholder="ej. 27" min="0" max="40" oninput="clampInput(this,0,40);_lsiFromBitacora=false;calcLSI()" /><span class="unit">°C</span></div>
-                  <div class="lsi-param-hint">M&aacute;x. 40 °C</div>
+                  <div class="lsi-param-hint">M&aacute;x. 40 °C &middot; Tabla coeficientes: 5–38 °C</div>
                 </div>
               </div>
               <div class="form-row">
@@ -527,8 +542,8 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiAlk">ALCALINIDAD TOTAL <span class="lsi-pbadge" id="lsiAlkBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiAlk" placeholder="ej. 100" min="0" max="150" oninput="clampInput(this,0,150);_lsiFromBitacora=false;calcLSI()" /><span class="unit">ppm</span></div>
-                  <div class="lsi-param-hint">Res. 234/2026 &middot; 20&ndash;150 ppm</div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiAlk" placeholder="ej. 100" min="0" max="200" oninput="clampInput(this,0,200);_lsiFromBitacora=false;calcLSI()" /><span class="unit">ppm</span></div>
+                  <div class="lsi-param-hint">Res. 234/2026 &middot; 20&ndash;150 ppm &middot; hasta 200 para diagnóstico</div>
                 </div>
               </div>
               <div class="irapi-bitacora-btn-wrap">
@@ -543,7 +558,7 @@
               <h3 class="card-title">Índice de Saturación Langelier — ISL</h3>
               <div id="lsiDefaultNotice" class="default-notice">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                Usando valores por defecto — ingresa tus mediciones reales para un resultado preciso
+                Valores de ejemplo cargados &mdash; ingresa las mediciones reales de tu piscina para un ISL preciso
               </div>
               <div class="lsi-gauge-wrap">
                 <canvas id="lsiGaugeCanvas" width="300" height="180"></canvas>
@@ -611,8 +626,12 @@
                   </div>
 
                   <!-- Slider compartido -->
-                  <input type="range" class="irapi-range" id="sliderMicro" min="0" max="100" value="0" oninput="calcIRAPI()" />
+                  <input type="range" class="irapi-range" id="sliderMicro" min="0" max="100" value="0" oninput="calcIRAPI(); hideMicroReminder()" />
                   <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valMicro">0%</span><span>100%</span></div>
+                  <div id="microLabReminder" class="micro-lab-reminder" hidden>
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>Bitácora cargada. El dato <strong>microbiológico</strong> requiere laboratorio certificado — ingrésalo desde tu último análisis trimestral (Res. 234/2026).</span>
+                  </div>
                 </div>
                 <div class="irapi-slider-group">
                   <div class="irapi-slider-header">
@@ -644,14 +663,14 @@
                   <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
                   Calcular desde bitácora
                 </button>
-                <p class="irapi-bitacora-note" id="irapibitacoraNote">Mínimo 10 registros · tienes 0 de 10. Microbiológico requiere laboratorio.</p>
+                <p class="irapi-bitacora-note" id="irapibitacoraNote">Sin registros en la bitácora. Agrega mediciones para habilitar el cálculo automático.</p>
               </div>
             </div>
             <div class="card">
               <h3 class="card-title">Nivel de riesgo sanitario (IRAPI)</h3>
               <div id="irapiDefaultNotice" class="default-notice">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                Usando valores por defecto — mueve los sliders con tus datos reales para un resultado preciso
+                Todos los sliders en cero — ingresa el porcentaje de registros fuera de rango de cada parámetro
               </div>
               <div class="irapi-bar-wrap">
                 <div class="irapi-bar-track"><div class="irapi-bar-fill" id="irapiBarFill"></div></div>
@@ -724,7 +743,7 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logAlc">ALCALINIDAD TOTAL <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logAlc')" aria-label="Ayuda: alcalinidad">?</button> <span class="lsi-pbadge" id="logAlcBadge"></span></label>
+                <label class="form-label lsi-plabel" for="logAlc">ALCALINIDAD TOTAL <span class="freq-badge-daily"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Diario</span> <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logAlc')" aria-label="Ayuda: alcalinidad">?</button> <span class="lsi-pbadge" id="logAlcBadge"></span></label>
                 <input type="number" class="form-input" id="logAlc" min="0" max="200" placeholder="ej. 100" oninput="clampInput(this,0,200);checkLogForm()" />
                 <div class="lsi-param-hint">20&ndash;150 ppm</div>
                 <div class="param-tooltip-card" id="tt-logAlc" hidden>
@@ -734,7 +753,7 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logCya">ESTABILIZADOR DE CLORO <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logCya')" aria-label="Ayuda: CYA estabilizador">?</button> <span class="lsi-pbadge" id="logCyaBadge"></span></label>
+                <label class="form-label lsi-plabel" for="logCya">ESTABILIZADOR DE CLORO <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logCya')" aria-label="Ayuda: CYA estabilizador">?</button> <span class="lsi-pbadge" id="logCyaBadge"></span></label>
                 <input type="number" class="form-input" id="logCya" min="0" max="75" placeholder="ej. 30" oninput="clampInput(this,0,75);checkLogForm()" />
                 <div class="lsi-param-hint">Ácido cianúrico (CYA) &middot; 0&ndash;75 ppm</div>
                 <div class="param-tooltip-card" id="tt-logCya" hidden>
@@ -1044,6 +1063,17 @@
             </div>
             <div class="card">
               <h3 class="card-title" id="repSummaryTitle">Resumen del periodo</h3>
+              <div class="rep-range-row">
+                <div class="form-group" style="flex:1;min-width:0">
+                  <label class="form-label" for="repDesde">DESDE</label>
+                  <input type="date" class="form-input" id="repDesde" onchange="onRepRangeChange()" />
+                </div>
+                <div class="form-group" style="flex:1;min-width:0">
+                  <label class="form-label" for="repHasta">HASTA</label>
+                  <input type="date" class="form-input" id="repHasta" onchange="onRepRangeChange()" />
+                </div>
+                <button class="btn btn-outline" id="btnClearRepRange" onclick="clearRepRange()" style="align-self:flex-end;padding:8px 14px;font-size:12px" disabled>Limpiar</button>
+              </div>
               <div class="report-summary" id="reportSummary">
                 <div class="summary-row"><span>Mediciones registradas</span><span id="repMediciones">0</span></div>
                 <div class="summary-row"><span>Incidentes AFR</span><span id="repIncidentes">0</span></div>
@@ -1056,12 +1086,14 @@
                 <div class="summary-row"><span>Alcalinidad total &mdash; % cumplimiento</span><span id="repAlc">&ndash;</span></div>
                 <div class="summary-row"><span>Estabilizador (CYA) &mdash; % cumplimiento</span><span id="repCya">&ndash;</span></div>
                 <div class="summary-row"><span>Transparencia / Turbiedad &mdash; % cumplimiento</span><span id="repTurb">&ndash;</span></div>
+                <div class="summary-row"><span>Temperatura &mdash; % registros &le; 40 &deg;C</span><span id="repTemp">&ndash;</span></div>
+                <div class="summary-row"><span>Dureza c&aacute;lcica &mdash; % cumplimiento</span><span id="repDureza">&ndash;</span></div>
               </div>
               <button class="btn btn-primary btn-full" id="btnGeneratePDF" onclick="generatePDF()" disabled>
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Generar PDF oficial
               </button>
-              <p class="irapi-bitacora-note" id="repPdfNote">Mínimo 10 registros · tienes 0 de 10.</p>
+              <p class="irapi-bitacora-note" id="repPdfNote">Sin registros en la bitácora.</p>
             </div>
           </div>
         </section>
@@ -1091,6 +1123,7 @@
                   <tr><td>Cloro combinado</td><td>0.0</td><td>0.0</td><td>0.3</td><td>ppm</td></tr>
                   <tr><td>Temperatura</td><td>&mdash;</td><td>&mdash;</td><td>40</td><td>°C</td></tr>
                   <tr><td>Alcalinidad total <span class="norm-tag-daily">Requerido diario &middot; Equilibrio agua - ISL (Art. 16)</span></td><td>20</td><td>&mdash;</td><td>150</td><td>ppm</td></tr>
+                  <tr><td>Transparencia (turbiedad) <span class="norm-tag-daily">Requerido diario &middot; Art. 16 Res. 234/2026</span></td><td>0</td><td>&mdash;</td><td>0.5</td><td>UNT</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1330,9 +1363,34 @@
           <input type="time" class="form-input" id="afrEditHora" />
         </div>
       </div>
-      <div class="form-group" style="margin-bottom:20px">
+      <div class="form-group">
         <label class="form-label" for="afrEditOperador">OPERADOR</label>
         <input type="text" class="form-input" id="afrEditOperador" placeholder="Nombre del operador" />
+      </div>
+      <div style="margin:16px 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-top:1px solid var(--border);padding-top:14px">Cierre del protocolo (completar tras rehabilitar el agua)</div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label" for="afrEditCloroFinal">CLORO LIBRE FINAL (ppm)</label>
+          <input type="number" class="form-input" id="afrEditCloroFinal" step="0.1" min="0" max="20" placeholder="ej. 3.0" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label" for="afrEditPhFinal">pH FINAL</label>
+          <input type="number" class="form-input" id="afrEditPhFinal" step="0.1" min="0" max="14" placeholder="ej. 7.2" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label" for="afrEditTurbFinal">TURBIEDAD FINAL (UNT)</label>
+          <input type="number" class="form-input" id="afrEditTurbFinal" step="0.01" min="0" max="5" placeholder="ej. 0.3" />
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom:20px">
+        <div class="form-group" style="flex:1">
+          <label class="form-label" for="afrEditFechaReapertura">FECHA REAPERTURA</label>
+          <input type="date" class="form-input" id="afrEditFechaReapertura" />
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label" for="afrEditHoraReapertura">HORA REAPERTURA</label>
+          <input type="time" class="form-input" id="afrEditHoraReapertura" />
+        </div>
       </div>
       <div class="confirm-actions">
         <button class="btn btn-outline" onclick="closeAFREdit()">Cancelar</button>
@@ -1468,7 +1526,7 @@
   </div>
 
 <script>
-  if ('serviceWorker' in navigator) {
+  if ('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     });

@@ -2,7 +2,7 @@
   "name": "Brazada Aqua Tech",
   "short_name": "Brazada",
   "description": "Sistema de gestión de piscinas · Resolución 234/2026 · Colombia",
-  "start_url": "Brazada.html",
+  "start_url": "./Brazada.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1e293b",
@@ -10,16 +10,22 @@
   "lang": "es",
   "icons": [
     {
-      "src": "Multimedia/logo1.png",
+      "src": "Multimedia/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "Multimedia/logo1.png",
+      "src": "Multimedia/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "Multimedia/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

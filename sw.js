@@ -1,4 +1,4 @@
-const CACHE = 'brazada-v4';
+const CACHE = 'brazada-v5';
 
 const PRECACHE = [
   './Brazada.html',
@@ -7,6 +7,9 @@ const PRECACHE = [
   './manifest.json',
   './Multimedia/logo1.webp',
   './Multimedia/logo1.png',
+  './Multimedia/icon-192.png',
+  './Multimedia/icon-512.png',
+  './Multimedia/icon-512-maskable.png',
 ];
 
 // Archivos de app shell — siempre red primero, caché como respaldo offline

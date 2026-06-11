@@ -131,16 +131,18 @@ document.addEventListener('click', e => {
 });
 
 function navigateCalcToBitacora(event) {
-  const cloro = document.getElementById('calcCloroActual')?.value;
-  const ph    = document.getElementById('calcPhActual')?.value;
-  const alc   = document.getElementById('calcAlcActual')?.value;
-  const cya   = document.getElementById('calcCyaActual')?.value;
+  const cloro    = document.getElementById('calcCloroActual')?.value;
+  const ph       = document.getElementById('calcPhActual')?.value;
+  const alc      = document.getElementById('calcAlcActual')?.value;
+  const cya      = document.getElementById('calcCyaActual')?.value;
+  const clorocomb= document.getElementById('calcCloroCombActual')?.value;
   navigate('bitacora', event);
   setTimeout(() => {
-    if (cloro) { const el = document.getElementById('logCloro'); if (el && !el.value) el.value = cloro; }
-    if (ph)    { const el = document.getElementById('logPh');    if (el && !el.value) el.value = ph; }
-    if (alc)   { const el = document.getElementById('logAlc');   if (el && !el.value) el.value = alc; }
-    if (cya)   { const el = document.getElementById('logCya');   if (el && !el.value) el.value = cya; }
+    if (cloro)    { const el = document.getElementById('logCloro');    if (el && !el.value) el.value = cloro; }
+    if (ph)       { const el = document.getElementById('logPh');       if (el && !el.value) el.value = ph; }
+    if (alc)      { const el = document.getElementById('logAlc');      if (el && !el.value) el.value = alc; }
+    if (cya)      { const el = document.getElementById('logCya');      if (el && !el.value) el.value = cya; }
+    if (clorocomb){ const el = document.getElementById('logCloroComb');if (el && !el.value) el.value = clorocomb; }
     checkLogForm();
   }, 220);
 }
@@ -344,7 +346,7 @@ const PARAM_DEFS = [
     icon: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>' },
   { id: 'g-temp',      key: 'temp',      label: 'Temperatura',             unit: '°C',    min: 15, max: 45,   range: 'Máx. 40 °C',        normMin: 0,    normMax: 40,
     icon: '<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>' },
-  { id: 'g-orp',       key: 'orp',       label: 'Oxidación (ORP)',         unit: 'mV',    min: 0,  max: 900,  range: 'Máx. 700 mV',       normMin: 0,    normMax: 700,
+  { id: 'g-orp',       key: 'orp',       label: 'Oxidación (ORP)',         unit: 'mV',    min: 0,  max: 900,  range: 'Óptimo: 650–700 mV', normMin: 0,    normMax: 700,  warnBelow: 650,
     icon: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>' },
   { id: 'g-tds',       key: 'tds',       label: 'Sólidos disueltos (TDS)', unit: 'mg/L',  min: 0,  max: 3000, range: '1000–1200 mg/L',    normMin: 1000, normMax: 1200,
     icon: '<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>' },
@@ -457,9 +459,10 @@ function renderTrendChart() {
   data.forEach((e, i) => {
     const x = toX(i), y = toY(e[_trendParam]);
     const inRange = e[_trendParam] >= paramDef.normMin && e[_trendParam] <= paramDef.normMax;
+    const isWarn  = inRange && paramDef.warnBelow !== undefined && e[_trendParam] < paramDef.warnBelow;
     ctx.beginPath();
     ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = inRange ? '#0cb86a' : '#ef4444';
+    ctx.fillStyle = !inRange ? '#ef4444' : isWarn ? '#f59e0b' : '#0cb86a';
     ctx.strokeStyle = dotBorder; ctx.lineWidth = 1.5;
     ctx.fill(); ctx.stroke();
     if (data.length <= 10 || i % labelStep === 0 || i === data.length - 1) {
@@ -638,8 +641,9 @@ function renderDashboardGauges() {
     const value     = last[p.key] ?? null;
     const prevValue = prev ? (prev[p.key] ?? null) : null;
     const cumple    = value !== null && value >= p.normMin && value <= p.normMax;
+    const warn      = cumple && p.warnBelow !== undefined && value < p.warnBelow;
     if (value !== null && !cumple) allCumple = false;
-    const color   = value === null ? '#94a3b8' : cumple ? '#0cb86a' : '#ef4444';
+    const color   = value === null ? '#94a3b8' : !cumple ? '#ef4444' : warn ? '#f59e0b' : '#0cb86a';
     const display = value !== null ? value : '–';
 
     let trendHtml = '';
@@ -670,8 +674,8 @@ function renderDashboardGauges() {
       </div>
       <div class="gauge-range">${p.range}</div>
       <div class="gauge-badge">
-        <span class="badge ${value === null ? 'badge-warning' : cumple ? 'badge-success' : 'badge-danger'}">
-          ${value === null ? '– Sin dato' : cumple ? '&#10003; Cumple' : '&#10007; No cumple'}
+        <span class="badge ${value === null ? 'badge-warning' : !cumple ? 'badge-danger' : warn ? 'badge-warning' : 'badge-success'}">
+          ${value === null ? '– Sin dato' : !cumple ? '&#10007; No cumple' : warn ? '&#9888; Eficacia baja' : '&#10003; Cumple'}
         </span>
       </div>
       ${trendHtml}
@@ -684,7 +688,8 @@ function renderDashboardGauges() {
       const value  = last[p.key] ?? null;
       if (value === null) { drawGauge(p.id, p.min, p.min, p.max, '#cbd5e1'); return; }
       const cumple = value >= p.normMin && value <= p.normMax;
-      drawGauge(p.id, value, p.min, p.max, cumple ? '#0cb86a' : '#ef4444');
+      const warn   = cumple && p.warnBelow !== undefined && value < p.warnBelow;
+      drawGauge(p.id, value, p.min, p.max, !cumple ? '#ef4444' : warn ? '#f59e0b' : '#0cb86a');
     });
     renderTrendChart();
   }, 50);
@@ -921,13 +926,15 @@ function switchParam(param, btn) {
 
 function saveCalcFields() {
   sessionStorage.setItem('aqua_calc_medicion', JSON.stringify({
-    cloroActual: document.getElementById('calcCloroActual')?.value || '',
-    cloroObj:    document.getElementById('calcCloroObj')?.value    || '3.0',
-    phActual:    document.getElementById('calcPhActual')?.value    || '',
-    phObj:       document.getElementById('calcPhObj')?.value       || '7.1',
-    alcActual:   document.getElementById('calcAlcActual')?.value   || '',
-    alcObj:      document.getElementById('calcAlcObj')?.value      || '100',
-    cyaActual:   document.getElementById('calcCyaActual')?.value   || '',
+    cloroActual:    document.getElementById('calcCloroActual')?.value    || '',
+    cloroObj:       document.getElementById('calcCloroObj')?.value       || '3.0',
+    phActual:       document.getElementById('calcPhActual')?.value       || '',
+    phObj:          document.getElementById('calcPhObj')?.value          || '7.1',
+    alcActual:      document.getElementById('calcAlcActual')?.value      || '',
+    alcObj:         document.getElementById('calcAlcObj')?.value         || '100',
+    cyaActual:      document.getElementById('calcCyaActual')?.value      || '',
+    cyaObj:         document.getElementById('calcCyaObj')?.value         || '40',
+    cloroCombActual:document.getElementById('calcCloroCombActual')?.value || '',
   }));
 }
 
@@ -935,20 +942,24 @@ function restoreCalcFields() {
   updateShapeFields();
   const m = JSON.parse(sessionStorage.getItem('aqua_calc_medicion') || 'null');
   if (m) {
-    const caEl = document.getElementById('calcCloroActual');
-    const coEl = document.getElementById('calcCloroObj');
-    const paEl = document.getElementById('calcPhActual');
-    const poEl = document.getElementById('calcPhObj');
-    const aaEl = document.getElementById('calcAlcActual');
-    const aoEl = document.getElementById('calcAlcObj');
-    const cyEl = document.getElementById('calcCyaActual');
-    if (caEl && m.cloroActual) caEl.value = m.cloroActual;
-    if (coEl && m.cloroObj)    coEl.value = m.cloroObj;
-    if (paEl && m.phActual)    paEl.value = m.phActual;
-    if (poEl && m.phObj)       poEl.value = m.phObj;
-    if (aaEl && m.alcActual)   aaEl.value = m.alcActual;
-    if (aoEl && m.alcObj)      aoEl.value = m.alcObj;
-    if (cyEl && m.cyaActual)   cyEl.value = m.cyaActual;
+    const caEl  = document.getElementById('calcCloroActual');
+    const coEl  = document.getElementById('calcCloroObj');
+    const paEl  = document.getElementById('calcPhActual');
+    const poEl  = document.getElementById('calcPhObj');
+    const aaEl  = document.getElementById('calcAlcActual');
+    const aoEl  = document.getElementById('calcAlcObj');
+    const cyEl  = document.getElementById('calcCyaActual');
+    const cyoEl = document.getElementById('calcCyaObj');
+    const ccEl  = document.getElementById('calcCloroCombActual');
+    if (caEl && m.cloroActual)     caEl.value  = m.cloroActual;
+    if (coEl && m.cloroObj)        coEl.value  = m.cloroObj;
+    if (paEl && m.phActual)        paEl.value  = m.phActual;
+    if (poEl && m.phObj)           poEl.value  = m.phObj;
+    if (aaEl && m.alcActual)       aaEl.value  = m.alcActual;
+    if (aoEl && m.alcObj)          aoEl.value  = m.alcObj;
+    if (cyEl  && m.cyaActual)      cyEl.value  = m.cyaActual;
+    if (cyoEl && m.cyaObj)         cyoEl.value = m.cyaObj;
+    if (ccEl  && m.cloroCombActual)ccEl.value  = m.cloroCombActual;
     calcDosificacion();
   }
 }
@@ -959,7 +970,15 @@ function calcDose() {
   const cfg    = PARAM_CONFIG[param];
   const actual = parseFloat(document.getElementById('paramActual').value) || 0;
   const target = parseFloat(document.getElementById('paramTarget').value) || 0;
-  const vol    = APP.volume || 48;
+  const vol    = APP.volume || 0;
+  if (!vol) {
+    const dN = document.getElementById('doseNote');
+    const dV = document.getElementById('doseValue');
+    if (dN) dN.textContent = 'Ingresa las dimensiones del estanque en el Paso 1.';
+    if (dV) dV.textContent = '–';
+    saveCalcFields();
+    return;
+  }
   const delta  = target - actual;
 
   // Gauge mini
@@ -1005,10 +1024,22 @@ function calcDose() {
 
 // ── CALCULADORA: NUEVA DOSIFICACIÓN ──────────────────────
 function _fmtMass(g) {
-  return g >= 1000 ? (g / 1000).toFixed(2) + ' kg' : Math.round(g) + ' g';
+  if (g >= 1000000) return (g / 1000000).toFixed(2) + ' t';
+  if (g >= 1000) {
+    const kg = g / 1000;
+    if (kg >= 10) return kg.toFixed(1) + ' kg';
+    return kg.toFixed(2) + ' kg';
+  }
+  return Math.round(g) + ' g';
 }
 function _fmtVol(ml) {
-  return ml >= 1000 ? (ml / 1000).toFixed(2) + ' L' : Math.round(ml) + ' ml';
+  if (ml >= 1000000) return (ml / 1000000).toFixed(2) + ' m³';
+  if (ml >= 1000) {
+    const L = ml / 1000;
+    if (L >= 10) return L.toFixed(1) + ' L';
+    return L.toFixed(2) + ' L';
+  }
+  return Math.round(ml) + ' ml';
 }
 
 function _buildChems(chems) {
@@ -1060,6 +1091,7 @@ function calcDosificacion() {
   const alcA     = parseFloat(document.getElementById('calcAlcActual')?.value);
   const alcT     = parseFloat(document.getElementById('calcAlcObj')?.value)      || 100;
   const cyaA     = parseFloat(document.getElementById('calcCyaActual')?.value);
+  const cyaT     = parseFloat(document.getElementById('calcCyaObj')?.value)      || 40;
 
   if (!vol) {
     resultEl.innerHTML = `<div class="calc-placeholder"><p>Ingresa las dimensiones del estanque en el <strong>Paso 1</strong> para calcular el volumen.</p></div>`;
@@ -1091,14 +1123,18 @@ function calcDosificacion() {
   const phOk    = !isNaN(phA)    && phA    >= PMIN && phA    <= PMAX;
   const cloroOk = !isNaN(cloroA) && cloroA >= CMIN && cloroA <= CMAX;
 
-  // Estado óptimo
-  if (!isNaN(phA) && !isNaN(cloroA) && phOk && cloroOk) {
+  // Estado óptimo — solo si TODOS los parámetros ingresados están en rango
+  const cloroCombA = parseFloat(document.getElementById('calcCloroCombActual')?.value);
+  const alcInRange = isNaN(alcA)      || (alcA >= AMIN && alcA <= AMAX);
+  const cyaInRange = isNaN(cyaA)      || cyaA <= CYAMAX;
+  const ccInRange  = isNaN(cloroCombA)|| cloroCombA <= 0.3;
+  if (!isNaN(phA) && !isNaN(cloroA) && phOk && cloroOk && alcInRange && cyaInRange && ccInRange) {
     resultEl.innerHTML = `<div class="calc-all-ok">
       <svg aria-hidden="true" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#0cb86a" stroke-width="2.5">
         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>
       </svg>
       <div><strong>Agua en estado óptimo · Sin acción requerida</strong><br>
-      <span>pH ${phA} · Cloro ${cloroA} ppm — ambos dentro de los rangos Res. 234/2026.</span></div>
+      <span>pH ${phA} · Cloro ${cloroA} ppm — todos los parámetros dentro de los rangos Res. 234/2026.</span></div>
     </div>`;
     return;
   }
@@ -1118,8 +1154,8 @@ function calcDosificacion() {
       } else {
         const mlHCl = abs * vol * 15;
         body = _buildChems([
-          { name: 'Ácido muriático HCl 33%', dose: _fmtVol(mlHCl), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} ΔpH × 15 ml/m³`,
-            warning: (mlHCl > 7000 ? '⚠ Supera 7 L — aplicar en varias dosis separadas. Máx. 7–8 L por aplicación. ' : '') + 'La dosis real varía con la alcalinidad: alta alcalinidad (>100 ppm) puede requerir hasta 3× más. Reevaluar tras 6 h.' },
+          { name: 'Ácido muriático HCl 31%', dose: _fmtVol(mlHCl), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} ΔpH × 15 ml/m³`,
+            warning: (mlHCl > 7000 ? '⚠ Supera 7 L — aplicar en varias dosis separadas. Máx. 7–8 L por aplicación. ' : '') + 'Dosis inicial conservadora (factor de arranque). La cantidad real depende de la alcalinidad: a 80–120 ppm de alcalinidad puede necesitarse hasta 5–8× esta dosis. Para correcciones > 0.5 unidades de pH, reduce primero la Alcalinidad Total con ácido (usa la calculadora de Alcalinidad: 2.03 ml/m³·ppm) para bajar el buffer antes de reajustar pH. Siempre reevaluar tras 6 h.' },
           { name: 'Bisulfato de sodio (NaHSO₄)', dose: _fmtMass(abs * vol * 18), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} ΔpH × 18 g/m³` },
         ]);
       }
@@ -1142,14 +1178,14 @@ function calcDosificacion() {
     if (!cloroOk) {
       if (over) {
         body = _buildChems([
-          { name: 'Tiosulfato de sodio (Na₂S₂O₃) — solo urgente', dose: _fmtMass(abs * vol * 7),
-            formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} Δppm × 7 g/m³`,
+          { name: 'Tiosulfato de sodio (Na₂S₂O₃) — solo urgente', dose: _fmtMass(abs * vol * 3.5),
+            formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} Δppm × 3.5 g/m³`,
             warning: 'Alternativa preferible: dilución con agua fresca y aguardar disipación natural.', urgent: true },
         ]);
       } else {
         body = _buildChems([
           { name: 'Hipoclorito de calcio 70% (granulado/pastilla)', dose: _fmtMass(abs * vol * 1.43), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} Δppm × 1.43 g/m³` },
-          { name: 'Hipoclorito de sodio 12% (líquido)', dose: _fmtVol(abs * vol * 7.1), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} Δppm × 7.1 ml/m³`, warning: 'Asume NaClO comercial al 12% (densidad ≈ 1.17 g/mL). Verifique la concentración en la etiqueta — blanqueador doméstico (2–5%) requiere un volumen entre 4× y 15× mayor.' },
+          { name: 'Hipoclorito de sodio 15% (líquido)', dose: _fmtVol(abs * vol * 5.78), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} Δppm × 5.78 ml/m³`, warning: 'Factor para NaClO al 15% en masa (densidad ≈ 1.21 g/mL). Si la etiqueta indica "15% de cloro activo disponible" o "150 g Cl₂/L" (convención común en productos colombianos para piscinas), use 6.67 ml/m³·ppm (≈ 21% más). Blanqueador doméstico (2–5%) requiere entre 3× y 7× más volumen.' },
         ]);
       }
     }
@@ -1159,6 +1195,36 @@ function calcDosificacion() {
       badge: cloroOk ? 'En rango ✓' : (over ? `Exceso · ${cloroA} ppm — CERRAR` : `Bajo · ${cloroA} ppm`),
       badgeCls: cloroOk ? 'calc-badge-ok' : 'calc-badge-danger',
       closureAlert: over, body, showArt5: !cloroOk && !over,
+    });
+  }
+
+  // ── Cloro combinado (breakpoint) ─────────────────────────
+  if (!isNaN(cloroCombA)) {
+    const ccOk = cloroCombA <= 0.3;
+    let body = '';
+    if (!ccOk) {
+      const bpTarget   = +(cloroCombA * 10).toFixed(1);
+      const actualCloro = isNaN(cloroA) ? 0 : cloroA;
+      const bpDelta    = Math.max(0, bpTarget - actualCloro);
+      if (bpDelta > 0) {
+        body = _buildChems([
+          { name: 'Hipoclorito de calcio 70%', dose: _fmtMass(bpDelta * vol * 1.43),
+            formula: `${vol.toFixed(1)} m³ × ${bpDelta.toFixed(1)} Δppm × 1.43 g/m³`,
+            warning: `Cloración de choque: elevar el cloro total a ${bpTarget} ppm (= 10 × ${cloroCombA} ppm combinado) para oxidar y eliminar el cloro combinado (cloraminas). Reapertura cuando cloro libre regrese a 2–4 ppm. No dosar con bañistas.` },
+          { name: 'Hipoclorito de sodio 15%', dose: _fmtVol(bpDelta * vol * 5.78),
+            formula: `${vol.toFixed(1)} m³ × ${bpDelta.toFixed(1)} Δppm × 5.78 ml/m³` },
+        ]);
+      } else {
+        body = `<div class="calc-noaction" style="background:#fef3c7;border-color:#fde68a"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          El cloro libre actual (${actualCloro} ppm) ya supera el objetivo de cloración de choque (${bpTarget} ppm). Aguardar disipación natural.</div>`;
+      }
+    }
+    html += _buildCalcBlock({
+      title: 'Cloro combinado', inRange: ccOk, rangeText: '≤ 0.3 ppm',
+      actual: cloroCombA + ' ppm', target: '≤ 0.3 ppm', delta: (cloroCombA - 0.3).toFixed(2) + ' ppm',
+      badge: ccOk ? 'En rango ✓' : `Exceso · ${cloroCombA} ppm`,
+      badgeCls: ccOk ? 'calc-badge-ok' : 'calc-badge-danger',
+      body, showArt5: !ccOk,
     });
   }
 
@@ -1172,13 +1238,14 @@ function calcDosificacion() {
       if (alcA < AMIN) {
         body = _buildChems([
           { name: 'Bicarbonato de sodio (NaHCO₃)', dose: _fmtMass(abs * vol * 1.68),
-            formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(0)} Δppm × 1.68 g/m³`,
+            formula: `${abs.toFixed(0)} Δppm × ${vol.toFixed(1)} m³ × 1.68 g/m³`,
             warning: 'Disolver antes de agregar al agua. Reevaluar en 4–6 horas. No dosificar con bañistas.' },
         ]);
       } else {
         body = _buildChems([
-          { name: 'Dilución con agua fresca', dose: 'Ver nota', formula: '',
-            warning: 'Para bajar alcalinidad alta: reemplazar parte del agua de la piscina por agua fresca. Calcular volumen a vaciar según % de exceso.' },
+          { name: 'Ácido muriático HCl 31%', dose: _fmtVol(abs * vol * 2.03),
+            formula: `(${alcA} − ${alcT.toFixed(0)}) Δppm × ${vol.toFixed(1)} m³ × 2.03 mL/m³`,
+            warning: 'Diluir en agua antes de agregar. Aplicar con bomba en circulación. No dosificar con bañistas. Reevaluar en 4–6 h.' },
         ]);
       }
     }
@@ -1196,16 +1263,18 @@ function calcDosificacion() {
     const cyaOk = cyaA <= CYAMAX;
     let body = '';
     if (!cyaOk) {
+      const vVaciar = vol * (1 - cyaT / cyaA);
       body = _buildChems([
-        { name: 'Dilución con agua fresca', dose: 'Ver nota', formula: '',
-          warning: `CYA en ${cyaA} ppm supera el máximo (${CYAMAX} ppm). Vaciar una parte del agua y reemplazar con agua sin estabilizador. El porcentaje a reemplazar es aprox. ${Math.round((1 - CYAMAX / cyaA) * 100)}% del volumen total.` },
+        { name: 'Dilución con agua fresca', dose: `${vVaciar.toFixed(1)} m³ a vaciar`,
+          formula: `${vol.toFixed(1)} × (1 − ${cyaT}/${cyaA})`,
+          warning: `CYA en ${cyaA} ppm supera el máximo normativo (${CYAMAX} ppm). Vaciar aprox. ${vVaciar.toFixed(1)} m³ y reponer con agua sin estabilizador. No existe producto químico que elimine el CYA — la dilución es el único método confiable. Productos enzimáticos especiales ofrecen reducción parcial y lenta (alto costo).` },
       ]);
     }
     html += _buildCalcBlock({
       title: 'Estabilizador (CYA)', inRange: cyaOk, rangeText: `0–${CYAMAX} ppm`,
-      actual: cyaA + ' ppm', target: CYAMAX + ' ppm (máx.)', delta: (CYAMAX - cyaA).toFixed(0) + ' ppm',
-      badge: cyaOk ? 'En rango ✓' : `Exceso · ${cyaA} ppm`,
-      badgeCls: cyaOk ? 'calc-badge-ok' : 'calc-badge-danger',
+      actual: cyaA + ' ppm', target: cyaT + ' ppm', delta: '',
+      badge: !cyaOk ? `Exceso · ${cyaA} ppm` : 'En rango ✓',
+      badgeCls: !cyaOk ? 'calc-badge-danger' : 'calc-badge-ok',
       body, showArt5: false,
     });
   }
@@ -1258,8 +1327,8 @@ function _setLsiPBadge(id, ok, textOk, textOut) {
   el.className   = 'lsi-pbadge ' + (ok ? 'lsi-pbadge-ok' : 'lsi-pbadge-out');
 }
 
-const LSI_DEFAULTS  = { lsiPh: 7.4, lsiTemp: 27, lsiHard: 250, lsiAlk: 100 };
-const IRAPI_DEFAULTS = { sliderMicro: 0, sliderCloro: 10, sliderAlk: 15, sliderOtros: 0 };
+const LSI_DEFAULTS  = { lsiPh: 7.2, lsiTemp: 27, lsiHard: 250, lsiAlk: 100 };
+const IRAPI_DEFAULTS = { sliderMicro: 0, sliderCloro: 0, sliderAlk: 0, sliderOtros: 0 };
 let _lsiFromBitacora = false;
 
 function updateDefaultNotice(noticeId, defaults) {
@@ -1303,8 +1372,14 @@ function calcLSI() {
     _lsiClearResult();
     return;
   }
-  // Mostrar aviso solo si el usuario escribió manualmente (no desde bitácora)
-  if (lsiNotice) lsiNotice.classList.toggle('default-notice-hidden', _lsiFromBitacora);
+  // Aviso: desde bitácora → siempre oculto; manual → solo si coincide con defaults
+  if (lsiNotice) {
+    if (_lsiFromBitacora) {
+      lsiNotice.classList.add('default-notice-hidden');
+    } else {
+      updateDefaultNotice('lsiDefaultNotice', LSI_DEFAULTS);
+    }
+  }
 
   // Coeficientes exactos de la Tabla Res. 234/2026: ISL = pH + CT + CD + CA − 12.1
   const CT = _lsiInterp(_LSI_TEMP, temp);
@@ -1460,7 +1535,7 @@ function calcLSIFromBitacora() {
 
   if (ph   !== null) { const el = document.getElementById('lsiPh');   el.value = ph;   clampInput(el, 0, 14);  }
   if (temp !== null) { const el = document.getElementById('lsiTemp'); el.value = temp; clampInput(el, 0, 40);  }
-  if (alc  !== null) { const el = document.getElementById('lsiAlk');  el.value = alc;  clampInput(el, 0, 150); }
+  if (alc  !== null) { const el = document.getElementById('lsiAlk');  el.value = alc;  clampInput(el, 0, 200); }
   { const el = document.getElementById('lsiHard'); el.value = hard; clampInput(el, 0, 700); }
 
   _lsiFromBitacora = true;
@@ -1477,7 +1552,11 @@ function calcLSIFromBitacora() {
 // ── IRAPI 2026 ────────────────────────────────────────────
 
 function hasTrimestreData() {
-  return getLog().length >= 1;
+  const log = getLog();
+  if (log.length < 10) return false;
+  const dates = log.map(e => +new Date(e.fecha + 'T00:00:00')).filter(d => !isNaN(d));
+  if (dates.length < 2) return true;
+  return (Math.max(...dates) - Math.min(...dates)) / 86400000 >= 30;
 }
 
 function _diasParaTrimestre() {
@@ -1589,7 +1668,12 @@ function calcIRAPI() {
     otros: 'Múltiples factores de riesgo activos. Evalúa cierre preventivo y revisa todos los parámetros.',
   };
   let phrase = '';
-  if (cls === 'sin-riesgo') phrase = 'Agua en condiciones óptimas. Mantén el monitoreo diario según Res. 234/2026.';
+  if (cls === 'sin-riesgo') {
+    const allZero = micro === 0 && cloro === 0 && alk === 0 && otros === 0;
+    phrase = allZero
+      ? 'Ajusta los porcentajes de cumplimiento según tus registros trimestrales para calcular el IRAPI real.'
+      : 'Agua en condiciones óptimas. Mantén el monitoreo diario según Res. 234/2026.';
+  }
   else if (cls === 'bajo')  phrase = ACTION_BAJO[dominant];
   else if (cls === 'medio') phrase = ACTION_MEDIO[dominant];
   else                      phrase = ACTION_ALTO[dominant];
@@ -1605,9 +1689,15 @@ function calcIRAPI() {
   sessionStorage.setItem('aqua_irapi_result',  JSON.stringify({ score, label }));
 }
 
+function hideMicroReminder() {
+  const el = document.getElementById('microLabReminder');
+  if (el) el.hidden = true;
+}
+
 function applyMicroLab() {
   const val = Math.min(100, Math.max(0, parseInt(document.getElementById('microLabValue').value) || 0));
   document.getElementById('sliderMicro').value = val;
+  hideMicroReminder();
   calcIRAPI();
 }
 
@@ -1640,7 +1730,16 @@ function updateIRAPIBitacoraBtn() {
     if (ready) {
       note.textContent = `${log.length} registro${log.length !== 1 ? 's' : ''} disponibles · Microbiológico requiere laboratorio certificado.`;
     } else {
-      note.textContent = 'Sin registros en la bitácora. Agrega mediciones para habilitar el cálculo automático.';
+      const count = log.length;
+      if (!count) {
+        note.textContent = 'Sin registros en la bitácora. Agrega mediciones para habilitar el cálculo automático.';
+      } else {
+        const dates    = log.map(e => +new Date(e.fecha + 'T00:00:00')).filter(d => !isNaN(d));
+        const spanDays = dates.length >= 2
+          ? Math.round((Math.max(...dates) - Math.min(...dates)) / 86400000)
+          : 0;
+        note.textContent = `${count} de 10 registros · ${spanDays} de 30 días requeridos · Sigue registrando para habilitar.`;
+      }
     }
   }
 }
@@ -1663,7 +1762,7 @@ function calcIRAPIFromBitacora() {
   const ncOtros = log.filter(e =>
     (e.turb != null && !isNaN(e.turb) && e.turb > 0.5) ||
     (e.cya  != null && !isNaN(e.cya)  && e.cya  > 75)  ||
-    (e.orp  != null && !isNaN(e.orp)  && e.orp  > 700)
+    (e.orp  != null && !isNaN(e.orp)  && (e.orp < 650 || e.orp > 700))
   ).length;
 
   const pctCloro = Math.round((ncCloro / total) * 100);
@@ -1682,7 +1781,9 @@ function calcIRAPIFromBitacora() {
   });
 
   calcIRAPI();
-  showToast(`IRAPI calculado desde ${total} registro${total !== 1 ? 's' : ''} de la bitácora.`, 'success');
+  const reminder = document.getElementById('microLabReminder');
+  if (reminder) reminder.hidden = false;
+  showToast(`IRAPI calculado desde ${total} registro${total !== 1 ? 's' : ''} de la bitácora. Ingresa el resultado microbiológico manualmente.`, 'info');
 }
 
 // ── BITÁCORA ──────────────────────────────────────────────
@@ -1700,7 +1801,7 @@ function getLog() {
   catch { return []; }
 }
 
-const LOG_REQUIRED = ['logDate','logTime','logCloro','logCloroComb','logPh','logAlc','logCya','logTurb','logTemp'];
+const LOG_REQUIRED = ['logDate','logTime','logCloro','logCloroComb','logPh','logAlc','logTurb','logTemp'];
 let editingLogTs = null;
 let _newLogTs    = 0;
 let _trendParam  = 'cloro';
@@ -1716,7 +1817,7 @@ const LOG_PARAM_RANGES = [
   { id: 'logCya',       badge: 'logCyaBadge',       min: 0,   max: 75   },
   { id: 'logTurb',      badge: 'logTurbBadge',      min: 0,   max: 0.5  },
   { id: 'logTemp',      badge: 'logTempBadge',      min: 0,   max: 40   },
-  { id: 'logOrp',       badge: 'logOrpBadge',       min: 0,    max: 700  },
+  { id: 'logOrp',       badge: 'logOrpBadge',       min: 0,    max: 700, warnBelow: 650 },
   { id: 'logTds',       badge: 'logTdsBadge',       min: 1000, max: 1200 },
   { id: 'logCond',      badge: 'logCondBadge',      min: 2000, max: 2400 },
 ];
@@ -1742,8 +1843,9 @@ function checkLogForm() {
     filled++;
     const inRange = v >= f.min && v <= f.max;
     if (!inRange) outRange++;
-    badge.textContent = inRange ? '✓' : '✗ fuera';
-    badge.className   = 'lsi-pbadge ' + (inRange ? 'lsi-pbadge-ok' : 'lsi-pbadge-out');
+    const isWarn = inRange && f.warnBelow !== undefined && v < f.warnBelow;
+    badge.textContent = inRange ? (isWarn ? '⚠ eficacia' : '✓') : '✗ fuera';
+    badge.className   = 'lsi-pbadge ' + (inRange ? (isWarn ? 'lsi-pbadge-warn' : 'lsi-pbadge-ok') : 'lsi-pbadge-out');
   });
 
   const bar = document.getElementById('logComplianceBar');
@@ -1895,6 +1997,7 @@ function saveLog() {
   const aguaRepRaw   = parseFloat(document.getElementById('logAguaRep').value);
   const retrolavRaw  = parseInt(document.getElementById('logRetrolav').value);
   const durezaRaw    = parseFloat(document.getElementById('logDureza').value);
+  const cyaRaw       = parseFloat(document.getElementById('logCya').value);
   const entry = {
     fecha:     document.getElementById('logDate').value,
     hora:      document.getElementById('logTime').value,
@@ -1903,7 +2006,7 @@ function saveLog() {
     clorocomb: parseFloat(document.getElementById('logCloroComb').value),
     ph:        parseFloat(document.getElementById('logPh').value),
     alc:       parseFloat(document.getElementById('logAlc').value),
-    cya:       parseFloat(document.getElementById('logCya').value),
+    cya:       isNaN(cyaRaw) ? null : cyaRaw,
     turb:      parseFloat(document.getElementById('logTurb').value),
     temp:      parseFloat(document.getElementById('logTemp').value),
     dureza:    isNaN(durezaRaw)    ? null : durezaRaw,
@@ -2109,7 +2212,7 @@ function viewLog(ts) {
     { key: 'cya',       label: 'Estabilizador (CYA)',    unit: 'ppm',   normMin: 0,    normMax: 75   },
     { key: 'turb',      label: 'Transparencia',          unit: 'UNT',   normMin: 0,    normMax: 0.5  },
     { key: 'temp',      label: 'Temperatura',            unit: '°C',    normMin: 0,    normMax: 40   },
-    { key: 'orp',       label: 'Oxidación (ORP)',        unit: 'mV',    normMin: 0,    normMax: 700  },
+    { key: 'orp',       label: 'Oxidación (ORP)',        unit: 'mV',    normMin: 0,    normMax: 700, warnBelow: 650 },
     { key: 'tds',       label: 'Sólidos disueltos (TDS)',unit: 'mg/L',  normMin: 1000, normMax: 1200 },
     { key: 'cond',      label: 'Conductividad eléctrica',unit: 'µS/cm', normMin: 2000, normMax: 2400 },
   ];
@@ -2118,8 +2221,11 @@ function viewLog(ts) {
     const val = entry[p.key];
     if (val == null || isNaN(val)) return '';
     const inRange = val >= p.normMin && val <= p.normMax;
+    const isWarn  = inRange && p.warnBelow !== undefined && val < p.warnBelow;
     const badge   = inRange
-      ? '<span class="log-detail-badge ok">✓ En rango</span>'
+      ? (isWarn
+        ? '<span class="log-detail-badge warn">⚠ Eficacia baja</span>'
+        : '<span class="log-detail-badge ok">✓ En rango</span>')
       : '<span class="log-detail-badge out">✗ Fuera</span>';
     let devHTML = '';
     if (!inRange) {
@@ -2241,6 +2347,7 @@ const AFR_STEPS = {
   diarreico: [
     { title: 'Evacuar la piscina', desc: 'Solicite a todos los bañistas salir del agua de inmediato. Restrinja el acceso.' },
     { title: 'Identificar el tipo de incidente', desc: 'Confirme que se trata de materia fecal diarreica. Registre la hora exacta.' },
+    { title: 'Notificar autoridad sanitaria', desc: 'Notifique de inmediato a la Secretaría de Salud local o autoridad sanitaria competente. La Res. 234/2026 y la Ley 1209/2008 exigen notificación obligatoria ante todo evento fecal diarreico. Registre la hora de notificación y el funcionario contactado.' },
     { title: 'Remover el residuo', desc: 'Use una red dedicada. Coloque el residuo en bolsa hermética y deseche.' },
     { title: 'Hipercloración', desc: 'Eleve el cloro residual a 20 ppm. Tiempo mínimo de contacto: 13 horas. Riesgo de Cryptosporidium.' },
     { title: 'Verificar pH', desc: 'Mantenga el pH entre 6.8 y 7.3. Monitoree cada 2 horas durante las 13 horas.' },
@@ -2299,7 +2406,7 @@ function renderAFRDoseBlock() {
   const block = document.getElementById('afrDoseBlock');
   if (!block) return;
 
-  const HYPER_STEP = 3; // índice 0-base → Paso 4 "Hipercloración"
+  const HYPER_STEP = APP.afrType === 'diarreico' ? 4 : 3; // diarreico: +1 por paso "Notificar autoridad" en índice 2
   if (APP.afrStep !== HYPER_STEP) { block.hidden = true; return; }
   block.hidden = false;
 
@@ -2371,7 +2478,7 @@ function calcAFRDose(volArg, targetArg, cloroArg) {
   }
 
   const caclo = Math.round(delta * vol * 1.43);
-  const naclo = Math.round(delta * vol * 7.1);
+  const naclo = Math.round(delta * vol * 5.78);
 
   const deltaRow = (lastCloro !== null)
     ? `<div class="afr-dose-row" style="margin-bottom:4px"><span>Diferencia a agregar</span><strong>${delta.toFixed(1)} ppm</strong></div>` : '';
@@ -2385,9 +2492,9 @@ function calcAFRDose(volArg, targetArg, cloroArg) {
         <span class="afr-dose-prod-form">${vol.toFixed(1)} m³ × ${delta.toFixed(1)} ppm × 1.43 g/m³·ppm</span>
       </div>
       <div class="afr-dose-product">
-        <span class="afr-dose-prod-name">Hipoclorito de sodio 12%</span>
+        <span class="afr-dose-prod-name">Hipoclorito de sodio 15%</span>
         <span class="afr-dose-prod-qty">${naclo.toLocaleString('es-CO')} ml</span>
-        <span class="afr-dose-prod-form">${vol.toFixed(1)} m³ × ${delta.toFixed(1)} ppm × 7.1 ml/m³·ppm</span>
+        <span class="afr-dose-prod-form">${vol.toFixed(1)} m³ × ${delta.toFixed(1)} ppm × 5.78 ml/m³·ppm</span>
       </div>
     </div>
   `;
@@ -2443,7 +2550,7 @@ function finishAFR() {
     tipo:     APP.afrType,
     operador,
     fecha:    localDateStr(now),
-    hora:     now.toLocaleTimeString('es-CO'),
+    hora:     now.toTimeString().slice(0, 5),
     ts:       Date.now(),
     foto:     _photos.afrFoto || null,
   });
@@ -2524,10 +2631,15 @@ function editAFRIncident(ts) {
   const i = incidents.find(x => x.ts === ts);
   if (!i) return;
   _afrEditTs = ts;
-  document.getElementById('afrEditTipo').value     = i.tipo     || 'solido';
-  document.getElementById('afrEditFecha').value    = i.fecha    || '';
-  document.getElementById('afrEditHora').value     = i.hora     || '';
-  document.getElementById('afrEditOperador').value = i.operador || '';
+  document.getElementById('afrEditTipo').value            = i.tipo            || 'solido';
+  document.getElementById('afrEditFecha').value           = i.fecha           || '';
+  document.getElementById('afrEditHora').value            = i.hora            || '';
+  document.getElementById('afrEditOperador').value        = i.operador        || '';
+  document.getElementById('afrEditCloroFinal').value      = i.cloroFinal      ?? '';
+  document.getElementById('afrEditPhFinal').value         = i.phFinal         ?? '';
+  document.getElementById('afrEditTurbFinal').value       = i.turbFinal       ?? '';
+  document.getElementById('afrEditFechaReapertura').value = i.fechaReapertura || '';
+  document.getElementById('afrEditHoraReapertura').value  = i.horaReapertura  || '';
   document.getElementById('afrEditOverlay').style.display = 'flex';
 }
 
@@ -2558,6 +2670,22 @@ function viewAFRIncident(ts) {
   document.getElementById('afrDetailMeta').textContent =
     `${i.fecha || '–'} · ${fmt12h(i.hora, '')} · ${i.operador || 'Sin operador'}`;
 
+  const hasCierre = i.fechaReapertura || i.cloroFinal != null || i.phFinal != null || i.turbFinal != null;
+  const cierreSection = hasCierre
+    ? `<div class="log-detail-section">
+        <div class="log-detail-section-title" style="color:#0cb86a">✓ Cierre del protocolo</div>
+        ${i.cloroFinal != null ? `<div class="log-detail-param"><span class="log-detail-param-label">Cloro libre post-tratamiento</span><span class="log-detail-param-val">${i.cloroFinal} ppm ${i.cloroFinal >= 2 && i.cloroFinal <= 4 ? '<span class="log-detail-badge ok">✓ En rango</span>' : '<span class="log-detail-badge out">✗ Fuera</span>'}</span></div>` : ''}
+        ${i.phFinal    != null ? `<div class="log-detail-param"><span class="log-detail-param-label">pH post-tratamiento</span><span class="log-detail-param-val">${i.phFinal} ${i.phFinal >= 6.8 && i.phFinal <= 7.3 ? '<span class="log-detail-badge ok">✓ En rango</span>' : '<span class="log-detail-badge out">✗ Fuera</span>'}</span></div>` : ''}
+        ${i.turbFinal  != null ? `<div class="log-detail-param"><span class="log-detail-param-label">Turbiedad post-tratamiento</span><span class="log-detail-param-val">${i.turbFinal} UNT ${i.turbFinal <= 0.5 ? '<span class="log-detail-badge ok">✓ ≤ 0.5</span>' : '<span class="log-detail-badge out">✗ > 0.5</span>'}</span></div>` : ''}
+        ${i.fechaReapertura ? `<div class="log-detail-param"><span class="log-detail-param-label">Reapertura</span><span class="log-detail-param-val">${i.fechaReapertura}${i.horaReapertura ? ' · ' + fmt12h(i.horaReapertura) : ''}</span></div>` : ''}
+      </div>`
+    : `<div class="log-detail-section">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Cierre pendiente — registra cloro final, pH, turbiedad y fecha de reapertura al editar este incidente.
+        </div>
+      </div>`;
+
   document.getElementById('afrDetailBody').innerHTML = `
     <div class="log-detail-section">
       <div class="log-detail-section-title">Información del incidente</div>
@@ -2582,6 +2710,7 @@ function viewAFRIncident(ts) {
       <div class="log-detail-section-title">Protocolo aplicado (Res. 234/2026)</div>
       <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin:0">${protDesc}</p>
     </div>
+    ${cierreSection}
     ${i.foto ? `<div class="log-detail-section">
       <div class="log-detail-section-title">Evidencia fotográfica</div>
       <div class="log-detail-fotos">
@@ -2607,13 +2736,21 @@ function closeAFRDetail(e) {
 
 function saveAFREdit() {
   if (!_afrEditTs) return;
+  const cloroFinalRaw = parseFloat(document.getElementById('afrEditCloroFinal').value);
+  const phFinalRaw    = parseFloat(document.getElementById('afrEditPhFinal').value);
+  const turbFinalRaw  = parseFloat(document.getElementById('afrEditTurbFinal').value);
   let incidents = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
   incidents = incidents.map(i => i.ts !== _afrEditTs ? i : {
     ...i,
-    tipo:     document.getElementById('afrEditTipo').value,
-    fecha:    document.getElementById('afrEditFecha').value,
-    hora:     document.getElementById('afrEditHora').value,
-    operador: document.getElementById('afrEditOperador').value,
+    tipo:             document.getElementById('afrEditTipo').value,
+    fecha:            document.getElementById('afrEditFecha').value,
+    hora:             document.getElementById('afrEditHora').value,
+    operador:         document.getElementById('afrEditOperador').value,
+    cloroFinal:       isNaN(cloroFinalRaw) ? null : cloroFinalRaw,
+    phFinal:          isNaN(phFinalRaw)    ? null : phFinalRaw,
+    turbFinal:        isNaN(turbFinalRaw)  ? null : turbFinalRaw,
+    fechaReapertura:  document.getElementById('afrEditFechaReapertura').value || null,
+    horaReapertura:   document.getElementById('afrEditHoraReapertura').value  || null,
   });
   localStorage.setItem('aqua_afr', JSON.stringify(incidents));
   document.getElementById('afrEditOverlay').style.display = 'none';
@@ -2651,19 +2788,45 @@ function restoreReportFields() {
   } catch {}
 }
 
+function getReportLog() {
+  const desde = document.getElementById('repDesde')?.value || '';
+  const hasta  = document.getElementById('repHasta')?.value  || '';
+  let log = getLog();
+  if (desde) log = log.filter(e => e.fecha >= desde);
+  if (hasta)  log = log.filter(e => e.fecha <= hasta);
+  return log;
+}
+
+function onRepRangeChange() {
+  const desde = document.getElementById('repDesde')?.value || '';
+  const hasta  = document.getElementById('repHasta')?.value  || '';
+  const btn   = document.getElementById('btnClearRepRange');
+  if (btn) btn.disabled = !desde && !hasta;
+  updateReportSummary();
+  updateReportBtn();
+}
+
+function clearRepRange() {
+  const d = document.getElementById('repDesde');
+  const h = document.getElementById('repHasta');
+  if (d) d.value = '';
+  if (h) h.value = '';
+  onRepRangeChange();
+}
+
 function updateReportSummary() {
-  const log = getLog().slice(0, 10);
+  const log = getReportLog();
 
   const titleEl = document.getElementById('repSummaryTitle');
   if (titleEl) {
     if (log.length) {
-      const desde = log[log.length - 1].fecha || '';
-      const hasta  = log[0].fecha || '';
-      titleEl.textContent = desde === hasta
-        ? `Resumen · ${desde}`
-        : `Resumen · ${desde} al ${hasta}`;
+      const logDesde = log[log.length - 1].fecha || '';
+      const logHasta = log[0].fecha || '';
+      titleEl.textContent = logDesde === logHasta
+        ? `Resumen · ${logDesde}`
+        : `Resumen · ${logDesde} al ${logHasta}`;
     } else {
-      titleEl.textContent = 'Resumen · últimos 10 registros';
+      titleEl.textContent = 'Resumen · sin registros en el rango';
     }
   }
 
@@ -2677,49 +2840,44 @@ function updateReportSummary() {
   document.getElementById('repMediciones').textContent = log.length;
   document.getElementById('repIncidentes').textContent = incidents.length;
 
-  const pctIds = ['repCloro','repPh','repAlc','repCya','repTurb'];
+  const pctIds = ['repCloro','repPh','repAlc','repCya','repTurb','repTemp'];
 
   if (!log.length) {
-    pctIds.forEach(id => { document.getElementById(id).textContent = '–'; });
+    pctIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '–'; });
+    ['repCloroComb','repOrp','repTds','repCond','repDureza'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '–'; });
     return;
   }
 
   const pct = (ok) => ((log.filter(ok).length / log.length) * 100).toFixed(0) + '%';
+  const pctOpt = (filter, ok) => { const sub = log.filter(filter); return sub.length ? ((sub.filter(ok).length / sub.length) * 100).toFixed(0) + '%' : '–'; };
 
   document.getElementById('repCloro').textContent = pct(e => e.cloro >= 2.0 && e.cloro <= 4.0);
   const ccLogs = log.filter(e => e.clorocomb != null && !isNaN(e.clorocomb));
   document.getElementById('repCloroComb').textContent = ccLogs.length
     ? ((ccLogs.filter(e => e.clorocomb <= 0.3).length / ccLogs.length) * 100).toFixed(0) + '%'
     : '–';
-  const orpLogs = log.filter(e => e.orp != null && !isNaN(e.orp));
-  document.getElementById('repOrp').textContent = orpLogs.length
-    ? ((orpLogs.filter(e => e.orp <= 700).length / orpLogs.length) * 100).toFixed(0) + '%'
-    : '–';
-  const tdsLogs = log.filter(e => e.tds != null && !isNaN(e.tds));
-  document.getElementById('repTds').textContent = tdsLogs.length
-    ? ((tdsLogs.filter(e => e.tds >= 1000 && e.tds <= 1200).length / tdsLogs.length) * 100).toFixed(0) + '%'
-    : '–';
-  const condLogs = log.filter(e => e.cond != null && !isNaN(e.cond));
-  document.getElementById('repCond').textContent = condLogs.length
-    ? ((condLogs.filter(e => e.cond >= 2000 && e.cond <= 2400).length / condLogs.length) * 100).toFixed(0) + '%'
-    : '–';
+  document.getElementById('repOrp').textContent  = pctOpt(e => e.orp  != null && !isNaN(e.orp),  e => e.orp  <= 700);
+  document.getElementById('repTds').textContent  = pctOpt(e => e.tds  != null && !isNaN(e.tds),  e => e.tds  >= 1000 && e.tds  <= 1200);
+  document.getElementById('repCond').textContent = pctOpt(e => e.cond != null && !isNaN(e.cond), e => e.cond >= 2000 && e.cond <= 2400);
   document.getElementById('repPh').textContent    = pct(e => e.ph   >= 6.8 && e.ph   <= 7.3);
   document.getElementById('repAlc').textContent   = pct(e => e.alc  >= 20  && e.alc  <= 150);
-  document.getElementById('repCya').textContent   = pct(e => e.cya  >= 0   && e.cya  <= 75);
+  document.getElementById('repCya').textContent   = pctOpt(e => e.cya != null && !isNaN(e.cya), e => e.cya >= 0 && e.cya <= 75);
   document.getElementById('repTurb').textContent  = pct(e => e.turb >= 0   && e.turb <= 0.5);
+  document.getElementById('repTemp').textContent  = pctOpt(e => e.temp != null && !isNaN(e.temp), e => e.temp <= 40);
+  document.getElementById('repDureza').textContent = pctOpt(e => e.dureza != null && !isNaN(e.dureza), e => e.dureza >= 200 && e.dureza <= 700);
 }
 
 function updateDashReportBtn() {
   const btn = document.getElementById('btnDashReport');
   if (!btn) return;
-  const ready = getLog().length >= 10;
+  const ready = getLog().length >= 1;
   btn.classList.toggle('btn-locked', !ready);
   btn.setAttribute('aria-disabled', String(!ready));
 }
 
 function dashboardReportClick() {
-  if (getLog().length < 10) {
-    showToast('Completa el registro mensual (mínimo 10 mediciones)', 'info');
+  if (getLog().length < 1) {
+    showToast('Sin registros en la bitácora. Agrega mediciones para generar el reporte.', 'info');
     return;
   }
   navigate('reporte');
@@ -2729,13 +2887,23 @@ function updateReportBtn() {
   const btn  = document.getElementById('btnGeneratePDF');
   const note = document.getElementById('repPdfNote');
   if (!btn) return;
-  const count = getLog().length;
-  const ready = count >= 10;
+  const log   = getReportLog();
+  const count = log.length;
+  const ready = count >= 1;
+  const desde = document.getElementById('repDesde')?.value || '';
+  const hasta  = document.getElementById('repHasta')?.value  || '';
+  const hasFilter = desde || hasta;
   btn.disabled = !ready;
   if (note) {
-    note.textContent = ready
-      ? `${count} registros · se usarán los últimos 10`
-      : `Mínimo 10 registros · tienes ${count} de 10`;
+    if (!ready) {
+      note.textContent = hasFilter
+        ? 'Sin registros en el rango seleccionado.'
+        : 'Sin registros en la bitácora.';
+    } else {
+      note.textContent = hasFilter
+        ? `${count} registro${count !== 1 ? 's' : ''} en el rango seleccionado`
+        : `${count} registro${count !== 1 ? 's' : ''} disponibles`;
+    }
   }
 }
 
@@ -2806,7 +2974,7 @@ function __buildPDF(logoB64) {
   const responsable = document.getElementById('repResponsable').value  || '–';
   const ubicacion   = document.getElementById('repUbicacion').value   || '–';
   const volumen     = document.getElementById('repVolumen').value      || '–';
-  const log    = getLog().slice(0, 10);
+  const log    = getReportLog();
   const desde  = log.length ? log[log.length - 1].fecha : null;
   const hasta  = log.length ? log[0].fecha : null;
   const allAfr = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
@@ -2887,12 +3055,14 @@ function __buildPDF(logoB64) {
     { label: 'Cloro libre residual', unit: 'ppm', field: 'cloro',     dec: 1, ok: e => e.cloro >= 2.0 && e.cloro <= 4.0,                                                    range: '2.0 – 4.0 ppm' },
     { label: 'Cloro combinado',      unit: 'ppm', field: 'clorocomb', dec: 2, ok: e => { const v = +e.clorocomb; return isNaN(v) ? true : v >= 0 && v <= 0.3; },             range: '0 – 0.3 ppm'   },
     { label: 'pH',                   unit: '',    field: 'ph',        dec: 2, ok: e => e.ph   >= 6.8 && e.ph   <= 7.3,                                                    range: '6.8 – 7.3'     },
-    { label: 'Alcalinidad total',     unit: 'ppm', field: 'alc',  dec: 0, ok: e => e.alc  >= 20  && e.alc  <= 150,  range: '20 – 150 ppm'   },
-    { label: 'Estabilizador (CYA)',    unit: 'ppm', field: 'cya',  dec: 0, ok: e => e.cya  >= 0   && e.cya  <= 75,   range: '0 – 75 ppm'     },
+    { label: 'Alcalinidad total',     unit: 'ppm', field: 'alc',    dec: 0, ok: e => e.alc    >= 20  && e.alc    <= 150, range: '20 – 150 ppm'    },
+    { label: 'Dureza cálcica',        unit: 'ppm', field: 'dureza', dec: 0, ok: e => e.dureza == null || (e.dureza >= 200 && e.dureza <= 700), range: '200 – 700 ppm'  },
+    { label: 'Estabilizador (CYA)',    unit: 'ppm', field: 'cya',    dec: 0, ok: e => e.cya == null || (e.cya >= 0 && e.cya <= 75), range: '0 – 75 ppm' },
     { label: 'Transparencia / Turbiedad', unit: 'UNT', field: 'turb', dec: 2, ok: e => e.turb >= 0   && e.turb <= 0.5,  range: '0 – 0.5 UNT'    },
+    { label: 'Temperatura del agua',  unit: '°C',   field: 'temp', dec: 1, ok: e => { const v = +e.temp; return isNaN(v) ? true : v <= 40; }, range: '≤ 40 °C'            },
     { label: 'Potencial redox (ORP)',  unit: 'mV',   field: 'orp',  dec: 0, ok: e => { const v = +e.orp;  return isNaN(v) ? true : v >= 0    && v <= 700;  }, range: '0 – 700 mV'         },
-    { label: 'Sólidos disueltos (TDS)',unit: 'mg/L', field: 'tds',  dec: 0, ok: e => { const v = +e.tds;  return isNaN(v) ? true : v >= 1000 && v <= 1200; }, range: '1000 – 1200 mg/L'   },
-    { label: 'Conductividad eléctrica',unit: 'µS/cm',field: 'cond', dec: 0, ok: e => { const v = +e.cond; return isNaN(v) ? true : v >= 2000 && v <= 2400; }, range: '2000 – 2400 µS/cm'  },
+    { label: 'Sólidos disueltos (TDS)',unit: 'mg/L', field: 'tds',  dec: 0, ok: e => e.tds  == null || (e.tds  >= 1000 && e.tds  <= 1200), range: '1000 – 1200 mg/L'   },
+    { label: 'Conductividad eléctrica',unit: 'µS/cm',field: 'cond', dec: 0, ok: e => e.cond == null || (e.cond >= 2000 && e.cond <= 2400), range: '2000 – 2400 µS/cm'  },
   ];
 
   doc.autoTable({
@@ -2952,7 +3122,7 @@ function __buildPDF(logoB64) {
     const ncOtros = log.filter(e =>
       (e.turb != null && !isNaN(e.turb) && e.turb > 0.5) ||
       (e.cya  != null && !isNaN(e.cya)  && e.cya  > 75)  ||
-      (e.orp  != null && !isNaN(e.orp)  && e.orp  > 700)
+      (e.orp  != null && !isNaN(e.orp)  && (e.orp < 650 || e.orp > 700))
     ).length;
     const pCloro  = Math.round((ncCloro / n) * 100);
     const pAlk    = Math.round((ncAlk   / n) * 100);
@@ -2979,9 +3149,9 @@ function __buildPDF(logoB64) {
       head: [['Parámetro', '% No conformidad', 'Peso', 'Aporte al score']],
       body: [
         ['Microbiológico *', 'No determinado', '45%', '–'],
-        ['Cloro residual',   pCloro + '%',    '20% > 36%', (pCloro * (20/55)).toFixed(1)],
-        ['Alcalinidad / pH', pAlk   + '%',    '30% > 55%', (pAlk   * (30/55)).toFixed(1)],
-        ['Otros parámetros', pOtros + '%',    '5%  >  9%', (pOtros * (5/55)).toFixed(1)],
+        ['Cloro residual',   pCloro + '%',    '20% (36% s/micro)', (pCloro * (20/55)).toFixed(1)],
+        ['Alcalinidad / pH', pAlk   + '%',    '30% (55% s/micro)', (pAlk   * (30/55)).toFixed(1)],
+        ['Otros parámetros', pOtros + '%',    '5% (9% s/micro)',   (pOtros * (5/55)).toFixed(1)],
         ['Nivel de riesgo (parcial)', irapiScore.toString(), '', irapiLabel],
       ],
       theme: 'grid',
@@ -3058,16 +3228,26 @@ function __buildPDF(logoB64) {
   } else {
     doc.autoTable({
       startY: afrY + 4,
-      head: [['Fecha', 'Hora', 'Tipo / Severidad', 'Operador']],
-      body: incidents.map(i => [
-        i.fecha    || '–',
-        fmt12h(i.hora),
-        i.tipo === 'diarreico' ? 'Diarreico — EMERGENCIA (Cryptosporidium)' : i.tipo === 'vomito' ? 'Vómito' : 'Sólido',
-        i.operador || '–',
-      ]),
+      head: [['Fecha', 'Hora', 'Tipo / Severidad', 'Operador', 'Cl. final', 'pH final', 'Turb. final', 'Reapertura']],
+      body: incidents.map(i => {
+        const reapertura = i.fechaReapertura
+          ? `${i.fechaReapertura}${i.horaReapertura ? ' ' + fmt12h(i.horaReapertura) : ''}`
+          : '–';
+        return [
+          i.fecha    || '–',
+          fmt12h(i.hora),
+          i.tipo === 'diarreico' ? 'Diarreico — EMERGENCIA (Cryptosporidium)' : i.tipo === 'vomito' ? 'Vómito' : 'Sólido',
+          i.operador || '–',
+          i.cloroFinal  != null ? `${i.cloroFinal} ppm`             : '–',
+          i.phFinal     != null ? String(i.phFinal)                  : '–',
+          i.turbFinal   != null ? `${i.turbFinal} UNT`               : '–',
+          reapertura,
+        ];
+      }),
       theme: 'grid',
-      headStyles: { fillColor: [153, 27, 27], textColor: 255, fontStyle: 'bold' },
-      bodyStyles: { fontSize: 9 },
+      headStyles: { fillColor: [153, 27, 27], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+      bodyStyles: { fontSize: 8 },
+      columnStyles: { 2: { cellWidth: 40 }, 6: { cellWidth: 18 } },
       didParseCell: (data) => {
         if (data.section !== 'body') return;
         const tipo = incidents[data.row.index]?.tipo;
