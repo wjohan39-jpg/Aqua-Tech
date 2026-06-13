@@ -871,22 +871,22 @@ function updateShapeFields() {
 
 function calcVolume() {
   const shape = document.getElementById('poolShape').value;
-  const depth = parseFloat(document.getElementById('poolDepth').value) || 0;
+  const depth = Math.max(0, parseFloat(document.getElementById('poolDepth').value) || 0);
   let vol = 0;
   let formulaNote = '';
 
   if (shape === 'circular') {
-    const D = parseFloat(document.getElementById('poolDiam').value) || 0;
+    const D = Math.max(0, parseFloat(document.getElementById('poolDiam').value) || 0);
     vol = D * D * depth * 0.785;
     formulaNote = `Circular: ${D} × ${D} × ${depth} × 0.785 = ${vol.toFixed(1)} m³`;
   } else if (shape === 'oval') {
-    const L = parseFloat(document.getElementById('poolLength').value) || 0;
-    const A = parseFloat(document.getElementById('poolWidth').value)  || 0;
+    const L = Math.max(0, parseFloat(document.getElementById('poolLength').value) || 0);
+    const A = Math.max(0, parseFloat(document.getElementById('poolWidth').value)  || 0);
     vol = L * A * depth * 0.89;
     formulaNote = `Ovalada: ${L} × ${A} × ${depth} × 0.89 = ${vol.toFixed(1)} m³`;
   } else {
-    const L = parseFloat(document.getElementById('poolLength').value) || 0;
-    const A = parseFloat(document.getElementById('poolWidth').value)  || 0;
+    const L = Math.max(0, parseFloat(document.getElementById('poolLength').value) || 0);
+    const A = Math.max(0, parseFloat(document.getElementById('poolWidth').value)  || 0);
     vol = L * A * depth;
     formulaNote = `Rectangular: ${L} × ${A} × ${depth} = ${vol.toFixed(1)} m³`;
   }
@@ -1097,15 +1097,19 @@ function _calcPhBlock(vol, p, r) {
   const abs  = Math.abs(diff);
   let body = '';
   if (!phOk) {
+    const phNote = `<div class="calc-ph-alknote">
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span><strong>Dosis de inicio conservadora.</strong> La cantidad real depende de la alcalinidad total (AT) del agua: a mayor AT, mayor resistencia al cambio de pH. Verifica el resultado siempre tras 4–6 h de circulación antes de volver a dosar.</span>
+    </div>`;
     if (p.phA < PMIN) {
-      body = _buildChems([
-        { name: 'Carbonato de sodio (Na₂CO₃)', dose: _fmtMass(abs * vol * 22), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} ΔpH × 22 g/m³`, warning: 'La dosis real depende de la alcalinidad del agua. A mayor alcalinidad (>100 ppm), puede requerirse el doble. Reevaluar tras 4–6 h.' },
+      body = phNote + _buildChems([
+        { name: 'Carbonato de sodio (Na₂CO₃)', dose: _fmtMass(abs * vol * 22), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} ΔpH × 22 g/m³`, warning: 'A alcalinidad > 100 ppm puede requerirse el doble o más. Usa la pestaña Alcalinidad para ajustar AT primero si supera 150 ppm.' },
       ]);
     } else {
       const mlHCl = abs * vol * 15;
-      body = _buildChems([
+      body = phNote + _buildChems([
         { name: 'Ácido muriático HCl 31%', dose: _fmtVol(mlHCl), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} ΔpH × 15 ml/m³`,
-          warning: (mlHCl > 7000 ? '⚠ Supera 7 L — aplicar en varias dosis separadas. Máx. 7–8 L por aplicación. ' : '') + 'Dosis inicial conservadora (factor de arranque). La cantidad real depende de la alcalinidad: a 80–120 ppm de alcalinidad puede necesitarse hasta 5–8× esta dosis. Para correcciones > 0.5 unidades de pH, reduce primero la Alcalinidad Total con ácido (usa la calculadora de Alcalinidad: 2.03 ml/m³·ppm) para bajar el buffer antes de reajustar pH. Siempre reevaluar tras 6 h.' },
+          warning: (mlHCl > 7000 ? '⚠ Supera 7 L — aplicar en varias dosis separadas. Máx. 7–8 L por aplicación. ' : '') + 'A 80–120 ppm de AT puede necesitarse hasta 5–8× esta cifra. Para correcciones > 0.5 pH, reduce primero la AT con ácido (pestaña Alcalinidad: 2.03 ml/m³·ppm) antes de reajustar pH.' },
         { name: 'Bisulfato de sodio (NaHSO₄)', dose: _fmtMass(abs * vol * 18), formula: `${vol.toFixed(1)} m³ × ${abs.toFixed(2)} ΔpH × 18 g/m³` },
       ]);
     }
@@ -1670,19 +1674,19 @@ function calcIRAPI() {
   const ACTION_BAJO = {
     micro: 'Factor microbiológico activo. Programa análisis de laboratorio esta semana.',
     cloro: 'Nivel de cloro fuera del rango ideal. Ajusta la dosificación antes de la próxima sesión.',
-    alk:   'Alcalinidad con margen de riesgo. Verifica y corrige antes de la próxima medición.',
+    alk:   'pH, ORP o CYA con margen de riesgo. Verifica y corrige antes de la próxima medición.',
     otros: 'Factores adicionales elevan el riesgo. Revisa novedades registradas en la bitácora.',
   };
   const ACTION_MEDIO = {
     micro: 'Riesgo microbiológico moderado. Programa análisis de laboratorio urgente y refuerza la desinfección.',
     cloro: 'Cloro en nivel de alerta. Corrige la dosificación antes de la próxima sesión de uso.',
-    alk:   'Alcalinidad en rango de riesgo medio. Ajusta la química del agua hoy.',
+    alk:   'pH, ORP o CYA en rango de riesgo medio. Ajusta la química del agua hoy.',
     otros: 'Factores adicionales en alerta. Revisa novedades y aplica acciones correctivas.',
   };
   const ACTION_ALTO = {
     micro: 'Riesgo microbiológico alto. Solicita análisis de laboratorio urgente y considera cierre preventivo.',
     cloro: 'Cloro en nivel crítico. Ajusta la dosificación de inmediato y restringe el acceso hasta normalizar.',
-    alk:   'Alcalinidad crítica. Corrige la química del agua hoy — afecta directamente la eficacia del cloro.',
+    alk:   'pH, ORP o CYA en nivel crítico. Corrige la química del agua hoy — afecta directamente la eficacia del cloro.',
     otros: 'Múltiples factores de riesgo activos. Evalúa cierre preventivo y revisa todos los parámetros.',
   };
   let phrase = '';
@@ -1773,14 +1777,15 @@ function calcIRAPIFromBitacora() {
     (e.cloro != null && !isNaN(e.cloro) && (e.cloro < 2.0 || e.cloro > 4.0)) ||
     (e.clorocomb != null && !isNaN(e.clorocomb) && e.clorocomb > 0.3)
   ).length;
+  // VAC (Res. 234/2026 Anexo II): pH + ORP + Ácido Cianúrico
   const ncAlk   = log.filter(e =>
-    (e.alc  != null && !isNaN(e.alc)  && (e.alc < 20  || e.alc > 150)) ||
-    (e.ph   != null && !isNaN(e.ph)   && (e.ph  < 6.8 || e.ph  > 7.3))
+    (e.ph   != null && !isNaN(e.ph)   && (e.ph  < 6.8 || e.ph  > 7.3)) ||
+    (e.orp  != null && !isNaN(e.orp)  && (e.orp < 650 || e.orp > 700)) ||
+    (e.cya  != null && !isNaN(e.cya)  && e.cya  > 75)
   ).length;
+  // VCT (Res. 234/2026 Anexo II): Turbiedad únicamente
   const ncOtros = log.filter(e =>
-    (e.turb != null && !isNaN(e.turb) && e.turb > 0.5) ||
-    (e.cya  != null && !isNaN(e.cya)  && e.cya  > 75)  ||
-    (e.orp  != null && !isNaN(e.orp)  && (e.orp < 650 || e.orp > 700))
+    (e.turb != null && !isNaN(e.turb) && e.turb > 0.5)
   ).length;
 
   const pctCloro = Math.round((ncCloro / total) * 100);
