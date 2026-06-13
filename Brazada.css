@@ -4039,3 +4039,36 @@ a.docs-ref-item:hover { background: var(--border); }
 [data-theme="dark"] .preloader-choice:hover .preloader-choice-icon { background: #38bdf8; }
 [data-theme="dark"] .preloader-choice-title      { color: #e2e8f0; }
 [data-theme="dark"] .preloader-choice:hover .preloader-choice-title { color: #38bdf8; }
+
+/* ── Paginación bitácora ─────────────────────────────────── */
+.log-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 0 4px;
+}
+.log-pg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.log-pg-btn:hover:not(:disabled) { background: var(--primary); color: #fff; border-color: var(--primary); }
+.log-pg-btn:disabled              { opacity: .35; cursor: default; }
+.log-pg-info {
+  font-size: 13px;
+  color: var(--text-muted);
+  min-width: 56px;
+  text-align: center;
+}
+[data-theme="dark"] .log-pg-btn { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+[data-theme="dark"] .log-pg-btn:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: #fff; }
