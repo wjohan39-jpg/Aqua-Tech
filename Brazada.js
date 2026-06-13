@@ -1068,7 +1068,7 @@ function _buildChems(chems) {
 function _buildCalcBlock(o) {
   const noAction = o.inRange
     ? `<div class="calc-noaction"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0cb86a" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-       Dentro del rango Res. 234/2026 (<strong>${o.rangeText}</strong>) · Sin acción requerida.</div>` : '';
+       <span>Dentro del rango Res. 234/2026 (<strong>${o.rangeText}</strong>) · Sin acción requerida.</span></div>` : '';
   const closure = o.closureAlert
     ? `<div class="calc-closure-alert"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
        <div><strong>Piscina cerrada al público</strong> · Art. 6, Res. 234/2026<br>
