@@ -369,7 +369,14 @@ function _pinInit() {
 // Guarda json en localStorage y, en paralelo, firma y persiste el HMAC.
 // La escritura es sincrónica; la firma es async no-bloqueante.
 async function _secSave(lsKey, json) {
-  localStorage.setItem(lsKey, json);
+  try {
+    localStorage.setItem(lsKey, json);
+  } catch (e) {
+    if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+      showToast('Almacenamiento lleno. Elimina fotos o registros antiguos para continuar.', 'error', 8000);
+    }
+    return;
+  }
   try {
     const sig = await _INTEGRITY.sign(json);
     localStorage.setItem(lsKey + '_sig', sig);
@@ -407,7 +414,7 @@ function sectionInit(section) {
   if (section === 'dashboard')  { renderDashboardIndices(); renderDashboardVencimientos(); renderDashboardGauges(); updateDashReportBtn(); }
   if (section === 'reporte')    { updateReportSummary(); updateReportBtn(); }
   if (section === 'calculadora'){ calcVolume(); calcDosificacion(); }
-  if (section === 'lsi')        calcLSI();
+  if (section === 'lsi')        { _lsiFromBitacora = false; calcLSI(); }
   if (section === 'irapi')      { calcIRAPI(); updateIRAPIBitacoraBtn(); }
   if (section === 'documentos') { renderDocs(); updateVencimientos(); }
   if (section === 'bitacora')      { renderLog(); updateOperadorDatalist(); }
@@ -543,6 +550,13 @@ document.addEventListener('click', e => {
   if (t.closest('#btnPinChangeCancel')) { _pinHideOverlay();        return; }
   if (t.closest('#btnLockApp'))         { lockApp();                return; }
   if (t.closest('#btnChangePin'))       { openChangePinView();      return; }
+  if (t.closest('#btnRotateData'))      {
+    showConfirm(
+      '¿Limpiar datos antiguos? Se eliminarán registros de más de 6 meses y las fotos de registros entre 3–6 meses (el texto se conserva).',
+      _rotateOldData
+    );
+    return;
+  }
 
   const navEl = t.closest('[data-navigate]');
   if (navEl) { navigate(navEl.dataset.navigate, e); return; }
@@ -1807,13 +1821,13 @@ function calcDosificacion() {
   const vol = APP.volume || 0;
   const p   = {
     cloroA:     parseFloat(document.getElementById('calcCloroActual')?.value),
-    cloroT:     parseFloat(document.getElementById('calcCloroObj')?.value)    || 3.0,
+    cloroT:     (v => isNaN(v) ? 3.0  : v)(parseFloat(document.getElementById('calcCloroObj')?.value)),
     phA:        parseFloat(document.getElementById('calcPhActual')?.value),
-    phT:        parseFloat(document.getElementById('calcPhObj')?.value)       || 7.1,
+    phT:        (v => isNaN(v) ? 7.1  : v)(parseFloat(document.getElementById('calcPhObj')?.value)),
     alcA:       parseFloat(document.getElementById('calcAlcActual')?.value),
-    alcT:       parseFloat(document.getElementById('calcAlcObj')?.value)      || 100,
+    alcT:       (v => isNaN(v) ? 100  : v)(parseFloat(document.getElementById('calcAlcObj')?.value)),
     cyaA:       parseFloat(document.getElementById('calcCyaActual')?.value),
-    cyaT:       parseFloat(document.getElementById('calcCyaObj')?.value)      || 40,
+    cyaT:       (v => isNaN(v) ? 40   : v)(parseFloat(document.getElementById('calcCyaObj')?.value)),
     cloroCombA: parseFloat(document.getElementById('calcCloroCombActual')?.value),
   };
 
@@ -2144,7 +2158,7 @@ function hasTrimestreData() {
   const log = getLog();
   if (log.length < 10) return false;
   const dates = log.map(e => +new Date(e.fecha + 'T00:00:00')).filter(d => !isNaN(d));
-  if (dates.length < 2) return true;
+  if (dates.length < 2) return false;
   return (Math.max(...dates) - Math.min(...dates)) / 86400000 >= 30;
 }
 
@@ -2485,7 +2499,8 @@ function _lastDureza() {
 
 // ── FOTOS ─────────────────────────────────────────────────
 const _photos = { fotoAgua: null, fotoAveria: null, afrFoto: null, mantenimientoFoto: null };
-let _photoPickerActive = false;
+let _photoPickerActive  = false;
+let _rotationOffered    = false;
 
 function triggerPhoto(key) {
   const input = document.createElement('input');
@@ -2656,13 +2671,85 @@ function _calcISLForEntry(entry) {
   entry.islDureza = hard;
 }
 
+function _rotateOldData() {
+  const now = new Date();
+  const sixAgo   = new Date(now); sixAgo.setMonth(sixAgo.getMonth() - 6);
+  const threeAgo = new Date(now); threeAgo.setMonth(threeAgo.getMonth() - 3);
+  const pad = n => String(n).padStart(2, '0');
+  const toYMD = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const sixCutoff   = toYMD(sixAgo);
+  const threeCutoff = toYMD(threeAgo);
+
+  let removedRecs  = 0;
+  let strippedRecs = 0;
+
+  const safeLoad = key => {
+    try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+  };
+  const rotateList = (arr, photoKeys) => arr
+    .filter(e => {
+      if (!e.fecha || e.fecha < sixCutoff) { removedRecs++; return false; }
+      return true;
+    })
+    .map(e => {
+      if (e.fecha < threeCutoff && photoKeys.some(k => e[k])) {
+        strippedRecs++;
+        const patch = {};
+        photoKeys.forEach(k => { patch[k] = null; });
+        return { ...e, ...patch };
+      }
+      return e;
+    });
+
+  const bitacora = safeLoad('aqua_bitacora');
+  if (Array.isArray(bitacora)) {
+    _secSave('aqua_bitacora', JSON.stringify(rotateList(bitacora, ['fotoAgua', 'fotoAveria'])));
+  }
+
+  const afr = safeLoad('aqua_afr');
+  if (Array.isArray(afr)) {
+    _secSave('aqua_afr', JSON.stringify(rotateList(afr, ['foto'])));
+  }
+
+  const mnt = safeLoad('aqua_mantenimiento');
+  if (Array.isArray(mnt)) {
+    _secSave('aqua_mantenimiento', JSON.stringify(rotateList(mnt, ['foto'])));
+  }
+
+  renderLog();
+  renderAFRIncidents();
+  renderMnt();
+  renderDashboardGauges();
+
+  const parts = [];
+  if (removedRecs  > 0) parts.push(`${removedRecs} registro${removedRecs > 1 ? 's' : ''} eliminado${removedRecs > 1 ? 's' : ''} (más de 6 meses)`);
+  if (strippedRecs > 0) parts.push(`fotos de ${strippedRecs} registro${strippedRecs > 1 ? 's' : ''} eliminadas (3–6 meses, texto conservado)`);
+  showToast(
+    parts.length ? `Limpieza completada: ${parts.join('; ')}.` : 'No hay registros con más de 3 meses para limpiar.',
+    parts.length ? 'success' : 'info',
+    8000
+  );
+}
+
 function _checkStorageUsage() {
   try {
     let bytes = 0;
     for (const k of Object.keys(localStorage)) bytes += localStorage[k].length * 2;
-    if (bytes > 4_000_000) {
+    if (bytes > 4_500_000) {
       showToast(
-        `Almacenamiento local casi lleno (~${(bytes / 1e6).toFixed(1)} MB). Considera eliminar registros o fotos antiguas.`,
+        `⚠️ Almacenamiento casi lleno (~${(bytes / 1e6).toFixed(1)} MB de ~5 MB). Elimina fotos o registros antiguos para evitar pérdida de datos.`,
+        'error', 10000
+      );
+      if (!_rotationOffered) {
+        _rotationOffered = true;
+        setTimeout(() => showConfirm(
+          `Almacenamiento al ~${Math.round(bytes / 50000)}%. ¿Limpiar automáticamente registros mayores a 6 meses y fotos mayores a 3 meses?`,
+          _rotateOldData
+        ), 1200);
+      }
+    } else if (bytes > 3_500_000) {
+      showToast(
+        `Almacenamiento local al ${Math.round(bytes / 50000)}%. Considera eliminar registros o fotos antiguas.`,
         'warning', 7000
       );
     }
