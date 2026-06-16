@@ -2485,6 +2485,7 @@ function _lastDureza() {
 
 // ── FOTOS ─────────────────────────────────────────────────
 const _photos = { fotoAgua: null, fotoAveria: null, afrFoto: null, mantenimientoFoto: null };
+let _photoPickerActive = false;
 
 function triggerPhoto(key) {
   const input = document.createElement('input');
@@ -2492,10 +2493,12 @@ function triggerPhoto(key) {
   input.accept = 'image/*';
   input.capture = 'environment';
   input.onchange = e => {
+    _photoPickerActive = false;
     const file = e.target.files[0];
     if (!file) return;
     _compressPhoto(file, b64 => _applyPhoto(key, b64));
   };
+  _photoPickerActive = true;
   input.click();
 }
 
@@ -4239,7 +4242,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }, 0);
 
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && _PIN.exists() && _PIN.unlocked) lockApp();
+    if (document.hidden) {
+      // No bloquear si la cámara/galería del OS está abierta
+      if (_PIN.exists() && _PIN.unlocked && !_photoPickerActive) lockApp();
+    } else {
+      // App vuelve al frente: limpiar bandera (cubre el caso de cancelar sin foto)
+      if (_photoPickerActive) setTimeout(() => { _photoPickerActive = false; }, 300);
+    }
   });
 });
 
