@@ -107,6 +107,15 @@
             </button>
           </li>
 
+          <li class="nav-item" data-section="mantenimiento">
+            <button type="button" class="nav-link" data-navigate="mantenimiento">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+              <span class="nav-text">Mantenimiento</span>
+            </button>
+          </li>
+
           <li class="nav-item" data-section="reporte">
             <button type="button" class="nav-link" data-navigate="reporte">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1046,6 +1055,85 @@
           </div>
         </section>
 
+        <!-- SECCION: MANTENIMIENTO -->
+        <section class="page-section" id="section-mantenimiento">
+          <div class="two-col-layout">
+
+            <!-- Formulario nuevo registro -->
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <h3>Nuevo registro de mantenimiento</h3>
+              </div>
+
+              <div class="form-grid-3">
+                <div class="form-group">
+                  <label class="form-label" for="mntFecha">FECHA <span class="req">*</span></label>
+                  <div class="input-unit"><input type="date" class="form-input" id="mntFecha" /></div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="mntTecnico">TÉCNICO <span class="req">*</span></label>
+                  <input type="text" class="form-input" id="mntTecnico" placeholder="Nombre del técnico" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="mntArea">ÁREA <span class="req">*</span></label>
+                  <select class="form-input" id="mntArea">
+                    <option value="">Seleccionar área...</option>
+                    <option value="motobomba">Motobomba</option>
+                    <option value="caldera">Caldera</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top:12px">
+                <label class="form-label" for="mntDescripcion">DESCRIPCIÓN DEL TRABAJO <span class="req">*</span></label>
+                <textarea class="form-input" id="mntDescripcion" rows="3" placeholder="Describe el trabajo realizado, piezas cambiadas, observaciones..." style="resize:vertical;min-height:72px"></textarea>
+              </div>
+
+              <div class="form-group" style="margin-top:12px">
+                <label class="form-label" for="mntProximo">PRÓXIMO MANTENIMIENTO</label>
+                <div class="input-unit"><input type="date" class="form-input" id="mntProximo" /></div>
+              </div>
+
+              <div class="photo-capture-wrap" style="margin-top:12px">
+                <button type="button" class="btn-photo-capture" data-photo="mantenimientoFoto" aria-label="Tomar foto del mantenimiento">
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  Foto del mantenimiento (opcional)
+                </button>
+                <div class="photo-preview-wrap" id="photo-preview-mantenimientoFoto" hidden>
+                  <img class="photo-thumb" id="photo-thumb-mantenimientoFoto" alt="Foto del mantenimiento" />
+                  <button type="button" class="photo-remove" data-photo="mantenimientoFoto" aria-label="Eliminar foto">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-footer" style="margin-top:16px">
+                <div id="mntEditBanner" class="log-edit-banner js-hidden">
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Editando registro del <strong id="mntEditDate"></strong>
+                </div>
+                <button class="btn btn-primary" id="btnSaveMnt" disabled>
+                  <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  <span id="btnSaveMntText">Guardar registro</span>
+                </button>
+                <button class="btn btn-outline btn-danger-outline js-hidden" id="btnCancelEditMnt">
+                  Cancelar edición
+                </button>
+              </div>
+            </div>
+
+            <!-- Historial -->
+            <div class="card">
+              <h3 class="card-title">Historial (<span id="mntCount">0</span>)</h3>
+              <div id="mntListWrap">
+                <p class="empty-state">Sin registros aún. Agregue el primer mantenimiento.</p>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
         <!-- SECCION: REPORTE -->
         <section class="page-section" id="section-reporte">
           <div class="two-col-layout">
@@ -1451,18 +1539,35 @@
     </div>
   </div>
 
+  <!-- MODAL DETALLE MANTENIMIENTO -->
+  <div id="mntDetailOverlay" class="log-detail-overlay js-hidden" role="dialog" aria-modal="true" aria-label="Detalle del mantenimiento">
+    <div class="log-detail-modal">
+      <button class="log-detail-close" aria-label="Cerrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="log-detail-header">
+        <div class="log-detail-title" id="mntDetailTitle">Mantenimiento</div>
+        <div class="log-detail-meta" id="mntDetailMeta"></div>
+      </div>
+      <div class="log-detail-body" id="mntDetailBody"></div>
+    </div>
+  </div>
+
   <!-- PRELOADER -->
   <div id="preloader" class="preloader" role="dialog" aria-label="Pantalla de bienvenida" aria-modal="true">
     <div class="preloader-inner">
 
       <div class="preloader-brand">
-        <picture>
-          <source srcset="Multimedia/logo1.webp" type="image/webp" fetchpriority="high" />
-          <img src="Multimedia/logo1.png" alt="Brazada Aqua Tech" class="preloader-logo" width="59" height="88" fetchpriority="high" />
-        </picture>
+        <div class="preloader-logo-card">
+          <picture>
+            <source srcset="Multimedia/logo1.webp" type="image/webp" fetchpriority="high" />
+            <img src="Multimedia/logo1.png" alt="Brazada Aqua Tech" class="preloader-logo" width="59" height="88" fetchpriority="high" />
+          </picture>
+        </div>
         <div class="preloader-brand-text">
           <span class="preloader-brand-name">Brazada</span>
           <span class="preloader-brand-sub">Aqua Tech</span>
+          <span class="preloader-brand-by">by Gonzo</span>
         </div>
       </div>
 

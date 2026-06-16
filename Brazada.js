@@ -35,11 +35,13 @@ function _safeNum(v, fix) {
   return fix !== undefined ? n.toFixed(fix) : String(n);
 }
 
-// Valida que un valor sea un data URI PNG base64 válido antes de usarlo como src.
+// Valida que un valor sea un data URI de imagen base64 válido antes de usarlo como src.
+// Acepta JPEG (nuevas fotos) y PNG (fotos guardadas antes de la migración a JPEG).
 // Previene inyección de atributo y URLs externas provenientes de localStorage tamperado.
 function _safePhotoSrc(v) {
-  if (typeof v !== 'string' || !v.startsWith('data:image/png;base64,')) return '';
-  return v;
+  if (typeof v !== 'string') return '';
+  if (v.startsWith('data:image/jpeg;base64,') || v.startsWith('data:image/png;base64,')) return v;
+  return '';
 }
 
 // ── INTEGRIDAD DE ALMACENAMIENTO (HMAC-SHA256 + IndexedDB) ───────────────
@@ -376,7 +378,7 @@ async function _secSave(lsKey, json) {
 
 // Verifica la firma HMAC de cada clave protegida y avisa al usuario si falla.
 async function _verifyIntegrity() {
-  for (const k of ['aqua_bitacora', 'aqua_afr']) {
+  for (const k of ['aqua_bitacora', 'aqua_afr', 'aqua_mantenimiento']) {
     const json = localStorage.getItem(k);
     const sig  = localStorage.getItem(k + '_sig');
     if (!json || !sig) continue;
@@ -408,19 +410,25 @@ function sectionInit(section) {
   if (section === 'lsi')        calcLSI();
   if (section === 'irapi')      { calcIRAPI(); updateIRAPIBitacoraBtn(); }
   if (section === 'documentos') { renderDocs(); updateVencimientos(); }
-  if (section === 'bitacora')   { renderLog(); updateOperadorDatalist(); }
-  if (section === 'protocolo')  { renderAFR(); renderAFRIncidents(); }
+  if (section === 'bitacora')      { renderLog(); updateOperadorDatalist(); }
+  if (section === 'protocolo')     { renderAFR(); renderAFRIncidents(); }
+  if (section === 'mantenimiento') { renderMnt(); checkMntForm(); }
 }
 
 function navigate(section, event) {
   if (event) event.preventDefault();
 
   // Cerrar cualquier modal abierto y restaurar scroll
-  ['logDetailOverlay', 'afrDetailOverlay', 'afrEditOverlay'].forEach(id => {
+  ['logDetailOverlay', 'afrDetailOverlay', 'afrEditOverlay', 'mntDetailOverlay'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
   document.body.style.overflow = '';
+
+  // Cancelar edición pendiente al cambiar de sección
+  if (APP.currentSection === 'mantenimiento' && section !== 'mantenimiento' && editingMntTs) {
+    cancelEditMnt();
+  }
 
   const target  = document.getElementById('section-' + section);
   const current = document.querySelector('.page-section.active');
@@ -564,7 +572,9 @@ document.addEventListener('click', e => {
   if (photoRemove) { removePhoto(photoRemove.dataset.photo); return; }
 
   if (t.closest('#btnSaveLog'))    { saveLog();        return; }
-  if (t.closest('#btnCancelEdit')) { cancelEditLog();  return; }
+  if (t.closest('#btnSaveMnt'))       { saveMnt();          return; }
+  if (t.closest('#btnCancelEdit'))    { cancelEditLog();    return; }
+  if (t.closest('#btnCancelEditMnt')) { cancelEditMnt();    return; }
   if (t.closest('#btnClearFilter')) { clearLogFilter(); return; }
 
   const afrTypeBtn = t.closest('[data-afr-type]');
@@ -607,6 +617,9 @@ document.addEventListener('click', e => {
   if (t.id === 'logDetailOverlay')       { closeLogDetail(e);        return; }
   if (t.closest('#logDetailOverlay .log-detail-close')) { closeLogDetail(); return; }
 
+  if (t.id === 'mntDetailOverlay')       { closeMntDetail(e);        return; }
+  if (t.closest('#mntDetailOverlay .log-detail-close')) { closeMntDetail(); return; }
+
   if (t.closest('#preloaderBtn')) { preloaderNext(); return; }
   const dismissBtn = t.closest('[data-dismiss]');
   if (dismissBtn) { dismissPreloader(dismissBtn.dataset.dismiss); return; }
@@ -626,6 +639,16 @@ document.addEventListener('click', e => {
   const pgBtn = t.closest('.log-pg-btn[data-page]');
   if (pgBtn && !pgBtn.disabled) { goLogPage(Number(pgBtn.dataset.page)); return; }
 
+  // Mantenimiento — lista
+  const mntItem = t.closest('.mnt-item[data-ts]');
+  if (mntItem) {
+    const ts = Number(mntItem.dataset.ts);
+    if (t.closest('.btn-edit-log'))      { editMnt(ts);       return; }
+    if (t.closest('.btn-delete-log'))    { deleteMnt(ts);     return; }
+    if (!t.closest('.mnt-item-actions')) { openMntDetail(ts); return; }
+    return;
+  }
+
   // AFR — lista (ítems clickeables + botones de acción)
   const afrItem = t.closest('.afr-incident-item[data-ts]');
   if (afrItem) {
@@ -644,13 +667,16 @@ document.addEventListener('click', e => {
   if (t.closest('.js-go-venc')) { goToVencimientos(e); return; }
 });
 
-document.addEventListener('input', e => {
+document.addEventListener('blur', e => {
   const el = e.target;
-  const id = el.id;
-
   if (el.type === 'number' && el.min !== '' && el.max !== '') {
     clampInput(el, parseFloat(el.min), parseFloat(el.max));
   }
+}, true);
+
+document.addEventListener('input', e => {
+  const el = e.target;
+  const id = el.id;
 
   if (id === 'poolLength' || id === 'poolWidth' || id === 'poolDiam' || id === 'poolDepth') {
     calcVolume(); return;
@@ -674,6 +700,8 @@ document.addEventListener('input', e => {
     checkLogForm(); return;
   }
 
+  if (['mntFecha','mntTecnico','mntDescripcion'].includes(id)) { checkMntForm(); return; }
+
   if (id === 'repNombre' || id === 'repResponsable' || id === 'repUbicacion' || id === 'repVolumen') {
     saveReportFields(); return;
   }
@@ -688,6 +716,7 @@ document.addEventListener('change', e => {
   if (id === 'poolShape')        { updateShapeFields();  return; }
   if (id === 'filterFueraRango') { renderLog();           return; }
   if (id === 'repDesde' || id === 'repHasta') { onRepRangeChange(); return; }
+  if (id === 'mntArea') { checkMntForm(); return; }
 });
 
 function navigateCalcToBitacora(event) {
@@ -2388,6 +2417,7 @@ function getLog() {
 
 const LOG_REQUIRED = ['logDate','logTime','logCloro','logCloroComb','logPh','logAlc','logTurb','logTemp'];
 let editingLogTs = null;
+let editingMntTs = null;
 let _newLogTs    = 0;
 let _trendParam  = 'cloro';
 let _trendDays   = 7;
@@ -2454,7 +2484,7 @@ function _lastDureza() {
 }
 
 // ── FOTOS ─────────────────────────────────────────────────
-const _photos = { fotoAgua: null, fotoAveria: null, afrFoto: null };
+const _photos = { fotoAgua: null, fotoAveria: null, afrFoto: null, mantenimientoFoto: null };
 
 function triggerPhoto(key) {
   const input = document.createElement('input');
@@ -2494,7 +2524,7 @@ function _compressPhoto(file, cb) {
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    cb(canvas.toDataURL('image/png'));
+    cb(canvas.toDataURL('image/jpeg', 0.72));
   };
   img.src = url;
 }
@@ -4188,6 +4218,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   setTimeout(() => {
     renderAFR();
     renderAFRIncidents();
+    renderMnt();
+    clearMntForm();
     restoreCalcFields();
     calcVolume();
     calcDosificacion();
@@ -4210,6 +4242,233 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (document.hidden && _PIN.exists() && _PIN.unlocked) lockApp();
   });
 });
+
+// ── MANTENIMIENTO DE EQUIPOS ─────────────────────────────
+
+function _isValidMntEntry(e) {
+  return e !== null && typeof e === 'object'
+    && typeof e.ts          === 'number' && isFinite(e.ts)
+    && typeof e.fecha       === 'string' && e.fecha.length > 0
+    && typeof e.tecnico     === 'string' && e.tecnico.length > 0
+    && ['motobomba', 'caldera'].includes(e.area)
+    && typeof e.descripcion === 'string' && e.descripcion.length > 0;
+}
+
+function getMntLog() {
+  if (!_requireUnlocked()) return [];
+  try {
+    const raw = JSON.parse(localStorage.getItem('aqua_mantenimiento') || '[]');
+    return Array.isArray(raw) ? raw.filter(_isValidMntEntry) : [];
+  } catch { return []; }
+}
+
+function clearMntForm() {
+  const now = new Date();
+  const d = document.getElementById('mntFecha');
+  if (d) d.value = localDateStr(now);
+  ['mntTecnico', 'mntDescripcion'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const area = document.getElementById('mntArea');
+  if (area) area.value = '';
+  const prox = document.getElementById('mntProximo');
+  if (prox) prox.value = '';
+  _applyPhoto('mantenimientoFoto', null);
+  checkMntForm();
+}
+
+function checkMntForm() {
+  const ok = !!(
+    document.getElementById('mntFecha')?.value.trim() &&
+    document.getElementById('mntTecnico')?.value.trim() &&
+    document.getElementById('mntArea')?.value &&
+    document.getElementById('mntDescripcion')?.value.trim()
+  );
+  const btn = document.getElementById('btnSaveMnt');
+  if (btn) btn.disabled = !ok;
+}
+
+function saveMnt() {
+  if (!_requireUnlocked()) return;
+  const fecha = document.getElementById('mntFecha').value.trim();
+  const tec   = document.getElementById('mntTecnico').value.trim();
+  const area  = document.getElementById('mntArea').value;
+  const desc  = document.getElementById('mntDescripcion').value.trim();
+  const prox  = document.getElementById('mntProximo').value.trim();
+  if (!fecha || !tec || !area || !desc) return;
+
+  const areaLabel = area === 'motobomba' ? 'Motobomba' : 'Caldera';
+  let log = getMntLog();
+  let toastMsg;
+
+  if (editingMntTs) {
+    const entry = { ts: editingMntTs, fecha, tecnico: tec, area, descripcion: desc,
+                    proximo: prox || null, foto: _photos.mantenimientoFoto || null };
+    log = log.map(e => e.ts === editingMntTs ? entry : e);
+    editingMntTs = null;
+    document.getElementById('btnSaveMntText').textContent   = 'Guardar registro';
+    document.getElementById('mntEditBanner').style.display  = 'none';
+    document.getElementById('btnCancelEditMnt').style.display = 'none';
+    toastMsg = `Mantenimiento de ${areaLabel} actualizado.`;
+  } else {
+    const entry = { ts: Date.now(), fecha, tecnico: tec, area, descripcion: desc,
+                    proximo: prox || null, foto: _photos.mantenimientoFoto || null };
+    log.unshift(entry);
+    toastMsg = `Mantenimiento de ${areaLabel} registrado.`;
+  }
+
+  _secSave('aqua_mantenimiento', JSON.stringify(log));
+  _checkStorageUsage();
+  clearMntForm();
+  renderMnt();
+  showToast(toastMsg, 'success');
+}
+
+function deleteMnt(ts) {
+  if (!_requireUnlocked()) return;
+  showConfirm('¿Eliminar este registro de mantenimiento? Esta acción no se puede deshacer.', () => {
+    const log = getMntLog().filter(e => e.ts !== ts);
+    _secSave('aqua_mantenimiento', JSON.stringify(log));
+    renderMnt();
+    showToast('Registro de mantenimiento eliminado.', 'success');
+  });
+}
+
+function editMnt(ts) {
+  if (!_requireUnlocked()) return;
+  const e = getMntLog().find(x => x.ts === ts);
+  if (!e) return;
+  editingMntTs = ts;
+  document.getElementById('mntFecha').value       = e.fecha       || '';
+  document.getElementById('mntTecnico').value     = e.tecnico     || '';
+  document.getElementById('mntArea').value        = e.area        || '';
+  document.getElementById('mntDescripcion').value = e.descripcion || '';
+  document.getElementById('mntProximo').value     = e.proximo     || '';
+  _applyPhoto('mantenimientoFoto', e.foto || null);
+  document.getElementById('btnSaveMntText').textContent     = 'Actualizar registro';
+  document.getElementById('mntEditDate').textContent        = e.fecha || '';
+  document.getElementById('mntEditBanner').style.display    = 'flex';
+  document.getElementById('btnCancelEditMnt').style.display = 'inline-flex';
+  checkMntForm();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEditMnt() {
+  editingMntTs = null;
+  document.getElementById('btnSaveMntText').textContent     = 'Guardar registro';
+  document.getElementById('mntEditBanner').style.display    = 'none';
+  document.getElementById('btnCancelEditMnt').style.display = 'none';
+  clearMntForm();
+}
+
+function renderMnt() {
+  if (!_requireUnlocked()) return;
+  const log  = getMntLog();
+  const wrap = document.getElementById('mntListWrap');
+  const cnt  = document.getElementById('mntCount');
+  if (!wrap) return;
+  if (cnt) cnt.textContent = log.length;
+  if (!log.length) {
+    wrap.innerHTML = '<p class="empty-state">Sin registros aún. Agregue el primer mantenimiento.</p>';
+    return;
+  }
+  wrap.innerHTML = log.map(e => {
+    const isMoto     = e.area === 'motobomba';
+    const badgeClass = isMoto ? 'mnt-badge-motobomba' : 'mnt-badge-caldera';
+    const badgeText  = isMoto ? 'Motobomba' : 'Caldera';
+    const proxTxt    = e.proximo ? ` · Próximo: ${escapeHtml(e.proximo)}` : '';
+    const hasPhoto   = !!_safePhotoSrc(e.foto);
+    return `
+    <div class="mnt-item" data-ts="${e.ts}" title="Ver detalle del mantenimiento">
+      <div class="mnt-item-info">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
+            <strong>${escapeHtml(e.fecha)}</strong>
+            <span class="mnt-area-badge ${badgeClass}">${badgeText}</span>
+            ${hasPhoto ? `<svg title="Foto adjunta" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>` : ''}
+          </div>
+          <span style="font-size:13px;color:var(--text-muted)">Técnico: ${escapeHtml(e.tecnico)}${proxTxt}</span>
+        </div>
+      </div>
+      <div class="mnt-item-actions">
+        <button class="btn-edit-log" title="Editar registro" aria-label="Editar registro de mantenimiento">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn-delete-log" title="Eliminar registro" aria-label="Eliminar registro de mantenimiento">
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openMntDetail(ts) {
+  if (!_requireUnlocked()) return;
+  const e = getMntLog().find(x => x.ts === ts);
+  if (!e) return;
+
+  const overlay = document.getElementById('mntDetailOverlay');
+  const title   = document.getElementById('mntDetailTitle');
+  const meta    = document.getElementById('mntDetailMeta');
+  const body    = document.getElementById('mntDetailBody');
+  if (!overlay || !body) return;
+
+  const isMoto     = e.area === 'motobomba';
+  const badgeClass = isMoto ? 'mnt-badge-motobomba' : 'mnt-badge-caldera';
+  const badgeText  = isMoto ? 'Motobomba' : 'Caldera';
+
+  if (title) title.innerHTML = `Mantenimiento &middot; <span class="mnt-area-badge ${badgeClass}">${badgeText}</span>`;
+  if (meta)  meta.textContent = e.fecha + (e.proximo ? ' · Próximo: ' + e.proximo : '');
+
+  const fotoHTML = _safePhotoSrc(e.foto) ? `
+    <div class="log-detail-section">
+      <div class="log-detail-section-title">Foto del mantenimiento</div>
+      <div class="log-detail-fotos">
+        <div class="log-detail-foto-item">
+          <img class="log-detail-foto-img" src="${_safePhotoSrc(e.foto)}" alt="Foto del mantenimiento" />
+        </div>
+      </div>
+    </div>` : '';
+
+  body.innerHTML = `
+    <div class="log-detail-section">
+      <div class="log-detail-section-title">Técnico</div>
+      <p style="margin:0;font-size:15px;font-weight:600;color:var(--text)">${escapeHtml(e.tecnico)}</p>
+    </div>
+    <div class="log-detail-section">
+      <div class="log-detail-section-title">Descripción del trabajo</div>
+      <p style="margin:0;font-size:13px;line-height:1.65;color:var(--text)">${escapeHtml(e.descripcion)}</p>
+    </div>
+    ${fotoHTML}
+    <div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap">
+      <button class="btn btn-outline btn-danger-outline js-mnt-detail-delete" style="flex:1">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Eliminar
+      </button>
+      <button class="btn btn-outline js-mnt-detail-edit" style="flex:1">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Editar
+      </button>
+      <button class="btn btn-primary js-mnt-detail-close" style="flex:1">Cerrar</button>
+    </div>
+  `;
+
+  body.querySelector('.js-mnt-detail-delete').addEventListener('click', () => { closeMntDetail(); deleteMnt(e.ts); });
+  body.querySelector('.js-mnt-detail-edit').addEventListener('click',   () => { closeMntDetail(); editMnt(e.ts); });
+  body.querySelector('.js-mnt-detail-close').addEventListener('click',  () => closeMntDetail());
+
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMntDetail(event) {
+  if (event && event.target !== document.getElementById('mntDetailOverlay')) return;
+  const overlay = document.getElementById('mntDetailOverlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
 
 // ── PRELOADER ─────────────────────────────────────────────
 function preloaderNext() {
