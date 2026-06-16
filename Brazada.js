@@ -237,6 +237,7 @@ async function _pinHandleCreate() {
   await _PIN.set(newPin);
   _PIN.unlock();
   _pinHideOverlay();
+  sectionInit(APP.currentSection);
   if (btn) { btn.disabled = false; btn.textContent = 'Crear PIN'; }
   showToast('PIN creado. La app quedará protegida al recargar.', 'success');
 }
@@ -260,6 +261,7 @@ async function _pinHandleUnlock() {
   if (ok) {
     _PIN.unlock();
     _pinHideOverlay();
+    sectionInit(APP.currentSection);
   } else {
     const attempts = _PIN.addAttempt();
     // Bloqueo a partir del 5.º fallo: 30 s · 60 s · 120 s · 240 s · 300 s (cap)
@@ -406,7 +408,7 @@ function sectionInit(section) {
   if (section === 'lsi')        calcLSI();
   if (section === 'irapi')      { calcIRAPI(); updateIRAPIBitacoraBtn(); }
   if (section === 'documentos') { renderDocs(); updateVencimientos(); }
-  if (section === 'bitacora')   updateOperadorDatalist();
+  if (section === 'bitacora')   { renderLog(); updateOperadorDatalist(); }
   if (section === 'protocolo')  { renderAFR(); renderAFRIncidents(); }
 }
 
