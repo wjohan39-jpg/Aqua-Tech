@@ -1444,8 +1444,8 @@ function calcVolume() {
 
   if (shape === 'circular') {
     const D = Math.max(0, parseFloat(document.getElementById('poolDiam').value) || 0);
-    vol = D * D * depth * 0.785;
-    formulaNote = `Circular: ${D} × ${D} × ${depth} × 0.785 = ${vol.toFixed(1)} m³`;
+    vol = (Math.PI / 4) * D * D * depth;
+    formulaNote = `Circular: π/4 × ${D}² × ${depth} = ${vol.toFixed(1)} m³`;
   } else if (shape === 'oval') {
     const L = Math.max(0, parseFloat(document.getElementById('poolLength').value) || 0);
     const A = Math.max(0, parseFloat(document.getElementById('poolWidth').value)  || 0);
