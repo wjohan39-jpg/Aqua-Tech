@@ -2164,7 +2164,7 @@ input, select, textarea { font-family: inherit; }
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 
 .btn-photo-capture {
@@ -4085,3 +4085,248 @@ a.docs-ref-item:hover { background: var(--border); }
 }
 [data-theme="dark"] .log-pg-btn { background: #1e293b; border-color: #334155; color: #e2e8f0; }
 [data-theme="dark"] .log-pg-btn:hover:not(:disabled) { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* ── PIN LOCK SCREEN ─────────────────────────────────────── */
+.pin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.pin-overlay[hidden] { display: none; }
+
+.pin-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pin-logo { display: flex; justify-content: center; }
+.pin-logo img { width: 52px; height: auto; }
+
+.pin-brand { text-align: center; margin-bottom: 4px; }
+.pin-brand-name {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.pin-brand-sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: .06em;
+  margin-top: 2px;
+}
+
+.pin-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.pin-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--muted);
+  transition: border-color .18s;
+  text-align: center;
+  letter-spacing: .25em;
+}
+.pin-input:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  background: var(--surface);
+}
+
+.pin-error {
+  font-size: 0.8rem;
+  color: var(--destructive);
+  text-align: center;
+  margin-top: -4px;
+}
+.pin-error[hidden] { display: none; }
+
+.pin-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+.pin-row .btn { flex: 1; }
+
+.pin-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  margin-top: 4px;
+  padding: 0;
+  transition: color .15s;
+}
+.pin-link:hover { color: var(--destructive); }
+
+.btn-full { width: 100%; }
+
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-5px); }
+  80%       { transform: translateX(5px); }
+}
+.pin-shake { animation: pin-shake .35s ease; }
+
+/* ── SIDEBAR FOOTER ACTIONS ──────────────────────────────── */
+.sidebar-footer-actions {
+  margin-top: auto;
+  padding: 12px 16px 16px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgba(255,255,255,.65);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  width: 100%;
+  text-align: left;
+}
+.sidebar-action-btn:hover {
+  background: rgba(255,255,255,.1);
+  color: #fff;
+}
+
+/* Dark mode */
+[data-theme="dark"] .pin-overlay { background: #0f172a; }
+[data-theme="dark"] .pin-card    { background: #1e293b; border: 1px solid #334155; }
+[data-theme="dark"] .pin-input   { background: #0f172a; border-color: #334155; color: #e2e8f0; }
+[data-theme="dark"] .pin-input:focus { border-color: var(--primary-light); background: #0f172a; }
+[data-theme="dark"] .pin-brand-name  { color: #7dd3fc; }
+
+/* ── H-NEW-11: Clases de reemplazo para eliminar unsafe-inline de style-src ─── */
+
+/* Estado oculto inicial — reemplaza style="display:none" en HTML */
+.js-hidden { display: none; }
+
+/* Flex-1 utilities — reemplazan style="flex:1" y style="flex:1;min-width:0" */
+.fg-1          { flex: 1; }
+.fg-1-no-shrink { flex: 1; min-width: 0; }
+
+/* calc-param-pair: todos sus form-groups necesitan flex:1 */
+.calc-param-pair .form-group { flex: 1; }
+
+/* Márgenes específicos (tenían display:none combinado o eran solo margin) */
+#trendCard      { margin-bottom: 1.5rem; }
+#dashIndices    { margin-bottom: 1.5rem; }
+#dashVencAlerts { margin-bottom: 1.5rem; }
+#trendCard .card-title { margin: 0; }
+
+/* Tarjeta resultado calculadora (paso 3) */
+.calc-result-card { margin-top: 1.25rem; }
+/* Tarjeta con margen superior estándar (1.5rem) */
+.card--mt { margin-top: 1.5rem; }
+
+/* IRAPI — laboratorio input unit */
+.micro-lab-input-unit { max-width: 140px; }
+
+/* Ícono en banner con flex-shrink y margin-top */
+.icon-top { flex-shrink: 0; margin-top: 1px; }
+
+/* Span opcional en títulos de parámetros */
+.param-title-optional {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Nota de cloro combinado en calculadora */
+.calc-comb-note {
+  padding: 9px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Botón limpiar filtro — bitácora */
+#btnClearFilter {
+  align-self: flex-end;
+  font-size: 0.8rem;
+  padding: 6px 12px;
+}
+
+/* Span de nota en banner emergencia AFR */
+.afr-emergency-note { font-weight: 400; }
+
+/* Formulario de reporte — rango de fechas */
+.rep-range-fg { flex: 1; min-width: 0; }
+#btnClearRepRange {
+  align-self: flex-end;
+  padding: 8px 14px;
+  font-size: 12px;
+}
+
+/* Sección documentos — segunda fila de tarjetas */
+.docs-secondary-layout { margin-top: 1.5rem; }
+
+/* Caja normativa con margen superior en documentos */
+.art-box--top { margin-top: 1rem; }
+
+/* Modal de edición de incidente AFR */
+.afr-edit-modal {
+  max-width: 380px;
+  width: 90%;
+  max-height: 90dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.afr-edit-title {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+.afr-edit-section-divider {
+  margin: 16px 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.form-row--mb { margin-bottom: 20px; }
+
+/* Textos del preloader pantalla 2 */
+.preloader-greeting { margin-bottom: 4px; }
+.preloader-text     { margin: 0; }

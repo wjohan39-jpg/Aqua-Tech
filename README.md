@@ -132,6 +132,23 @@ Abre `http://localhost:8080/Brazada.html` en el navegador.
 En Chrome / Edge: abre la app → menú → *Instalar aplicación*.
 En Android: *Agregar a pantalla de inicio* desde el navegador.
 
+### Cabeceras HTTP requeridas en producción
+
+La app requiere las siguientes cabeceras HTTP para que las protecciones de seguridad funcionen correctamente. En Vercel estas se aplican automáticamente vía `vercel.json`. Para otros servidores, configura el equivalente:
+
+| Cabecera | Valor mínimo requerido |
+|----------|----------------------|
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none';` |
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains; preload` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `camera=(self), geolocation=(), microphone=()` |
+
+> Sin `X-Content-Type-Options: nosniff`, el navegador puede interpretar recursos como HTML, abriendo vectores de XSS. Sin CSP, inyecciones de scripts de terceros no son bloqueadas.
+
+Para desarrollo local con `python -m http.server`, las cabeceras no se aplican — esto es aceptable únicamente en entornos de desarrollo. Nunca expongas el servidor de desarrollo a redes no confiables.
+
 ---
 
 ## Estructura del proyecto

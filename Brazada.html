@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdnjs.cloudflare.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; manifest-src 'self';" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <title>Brazada Aqua Tech</title>
   <meta name="description" content="Sistema de gestión de piscinas bajo Resolución 234/2026 · Colombia" />
 
@@ -15,12 +17,11 @@
   <meta name="theme-color" content="#1e293b" />
   <link rel="manifest" href="manifest.json" />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="preload" href="Multimedia/logo1.webp" as="image" type="image/webp" fetchpriority="high" />
   <link rel="stylesheet" href="Brazada.css" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" /></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <script src="Brazada.js" defer></script>
 </head>
 <body>
@@ -50,7 +51,7 @@
         <ul class="nav-list">
 
           <li class="nav-item active" data-section="dashboard">
-            <button type="button" class="nav-link" onclick="navigate('dashboard', event)">
+            <button type="button" class="nav-link" data-navigate="dashboard">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
                 <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
@@ -60,7 +61,7 @@
           </li>
 
           <li class="nav-item" data-section="calculadora">
-            <button type="button" class="nav-link" onclick="navigate('calculadora', event)">
+            <button type="button" class="nav-link" data-navigate="calculadora">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/>
               </svg>
@@ -69,7 +70,7 @@
           </li>
 
           <li class="nav-item" data-section="lsi">
-            <button type="button" class="nav-link" onclick="navigate('lsi', event)">
+            <button type="button" class="nav-link" data-navigate="lsi">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
                 <path d="M12 6v6l4 2"/>
@@ -79,7 +80,7 @@
           </li>
 
           <li class="nav-item" data-section="irapi">
-            <button type="button" class="nav-link" onclick="navigate('irapi', event)">
+            <button type="button" class="nav-link" data-navigate="irapi">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
               </svg>
@@ -88,7 +89,7 @@
           </li>
 
           <li class="nav-item" data-section="bitacora">
-            <button type="button" class="nav-link" onclick="navigate('bitacora', event)">
+            <button type="button" class="nav-link" data-navigate="bitacora">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
                 <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
@@ -98,7 +99,7 @@
           </li>
 
           <li class="nav-item" data-section="protocolo">
-            <button type="button" class="nav-link" onclick="navigate('protocolo', event)">
+            <button type="button" class="nav-link" data-navigate="protocolo">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
@@ -107,7 +108,7 @@
           </li>
 
           <li class="nav-item" data-section="reporte">
-            <button type="button" class="nav-link" onclick="navigate('reporte', event)">
+            <button type="button" class="nav-link" data-navigate="reporte">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
@@ -118,7 +119,7 @@
           </li>
 
           <li class="nav-item" data-section="normativa">
-            <button type="button" class="nav-link" onclick="navigate('normativa', event)">
+            <button type="button" class="nav-link" data-navigate="normativa">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
               </svg>
@@ -127,7 +128,7 @@
           </li>
 
           <li class="nav-item" data-section="documentos">
-            <button type="button" class="nav-link" onclick="navigate('documentos', event)">
+            <button type="button" class="nav-link" data-navigate="documentos">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -139,17 +140,30 @@
 
         </ul>
       </nav>
+
+      <!-- Sidebar footer: bloqueo y cambio de PIN -->
+      <div class="sidebar-footer-actions">
+        <button type="button" id="btnLockApp" class="sidebar-action-btn" aria-label="Bloquear aplicación">
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span>Bloquear</span>
+        </button>
+        <button type="button" id="btnChangePin" class="sidebar-action-btn" aria-label="Cambiar PIN">
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 12 2v2a8 8 0 1 1-5.66 2.34"/><path d="M3 2v4h4"/></svg>
+          <span>Cambiar PIN</span>
+        </button>
+      </div>
+
     </aside>
 
     <!-- OVERLAY MOVIL -->
-    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
     <!-- CONTENIDO PRINCIPAL -->
     <div class="main-wrapper">
 
       <!-- HEADER -->
       <header class="topbar">
-        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" aria-label="Alternar menú">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Alternar menú">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>
           </svg>
@@ -161,7 +175,7 @@
         <div class="topbar-status">
           <span class="status-dot"></span>
           <span class="status-text">Sistema operativo · Colombia</span>
-          <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Alternar modo oscuro" title="Modo oscuro / claro">
+          <button class="theme-toggle" id="themeToggle" aria-label="Alternar modo oscuro" title="Modo oscuro / claro">
             <svg class="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="theme-icon-sun"  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
           </button>
@@ -175,14 +189,14 @@
         <section class="page-section active" id="section-dashboard">
           <div class="section-topbar">
             <div class="section-actions">
-              <button class="btn btn-outline" onclick="navigate('bitacora', event)">
+              <button class="btn btn-outline" data-navigate="bitacora">
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
                   <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
                 Registrar medición
               </button>
-              <button id="btnDashReport" class="btn btn-primary btn-locked" onclick="dashboardReportClick()" aria-disabled="true">
+              <button id="btnDashReport" class="btn btn-primary btn-locked" aria-disabled="true">
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
@@ -192,7 +206,7 @@
             </div>
           </div>
           <!-- Panel de inicio guiado (visible solo sin datos) -->
-          <div id="dashEmptyGuide" class="dash-empty-guide" style="display:none">
+          <div id="dashEmptyGuide" class="dash-empty-guide js-hidden">
             <div class="deg-header">
               <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               <div>
@@ -201,7 +215,7 @@
               </div>
             </div>
             <div class="deg-steps">
-              <button class="deg-step" onclick="navigate('calculadora', event)">
+              <button class="deg-step" data-navigate="calculadora">
                 <div class="deg-step-num">1</div>
                 <div class="deg-step-body">
                   <div class="deg-step-title">Calculadora química</div>
@@ -210,7 +224,7 @@
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
               <div class="deg-connector"></div>
-              <button class="deg-step" onclick="navigate('bitacora', event)">
+              <button class="deg-step" data-navigate="bitacora">
                 <div class="deg-step-num">2</div>
                 <div class="deg-step-body">
                   <div class="deg-step-title">Registrar medición</div>
@@ -219,7 +233,7 @@
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
               <div class="deg-connector"></div>
-              <button class="deg-step" onclick="navigate('lsi', event)">
+              <button class="deg-step" data-navigate="lsi">
                 <div class="deg-step-num">3</div>
                 <div class="deg-step-body">
                   <div class="deg-step-title">Índice de equilibrio (ISL) e IRAPI</div>
@@ -245,11 +259,11 @@
             <span class="badge badge-success" id="complianceBadge">&#10003; Cumple</span>
           </div>
           <!-- Banner antigüedad de datos -->
-          <div id="dataAgeWarning" style="display:none"></div>
+          <div id="dataAgeWarning" class="js-hidden"></div>
           <!-- Parámetros -->
           <div class="params-header">
             <h3 class="params-title" id="paramsTitle">Parámetros del agua · última medición</h3>
-            <button class="share-btn" id="shareBtn" onclick="compartirEstado()" title="Compartir estado de la piscina" style="display:none" aria-label="Compartir estado">
+            <button class="share-btn js-hidden" id="shareBtn" title="Compartir estado de la piscina" aria-label="Compartir estado">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
                 <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
@@ -261,19 +275,19 @@
             <!-- Generado por JS -->
           </div>
           <!-- Gráfico de tendencias -->
-          <div class="card trend-card" id="trendCard" style="display:none;margin-bottom:1.5rem">
+          <div class="card trend-card js-hidden" id="trendCard">
             <div class="trend-header">
-              <h3 class="card-title" style="margin:0">Tendencia de parámetros</h3>
+              <h3 class="card-title">Tendencia de parámetros</h3>
               <div class="trend-controls">
                 <div class="trend-btn-group">
-                  <button class="trend-btn active" data-param="cloro" onclick="setTrendParam('cloro')">Cloro libre</button>
-                  <button class="trend-btn" data-param="ph" onclick="setTrendParam('ph')">pH</button>
-                  <button class="trend-btn" data-param="alc" onclick="setTrendParam('alc')">Alcalinidad</button>
+                  <button class="trend-btn active" data-param="cloro">Cloro libre</button>
+                  <button class="trend-btn" data-param="ph">pH</button>
+                  <button class="trend-btn" data-param="alc">Alcalinidad</button>
                 </div>
                 <div class="trend-btn-group">
-                  <button class="trend-day active" data-days="7" onclick="setTrendDays(7)">7 d</button>
-                  <button class="trend-day" data-days="14" onclick="setTrendDays(14)">14 d</button>
-                  <button class="trend-day" data-days="30" onclick="setTrendDays(30)">30 d</button>
+                  <button class="trend-day active" data-days="7">7 d</button>
+                  <button class="trend-day" data-days="14">14 d</button>
+                  <button class="trend-day" data-days="30">30 d</button>
                 </div>
               </div>
             </div>
@@ -288,10 +302,10 @@
           </div>
 
           <!-- Índices de riesgo -->
-          <div id="dashIndices" style="margin-bottom:1.5rem"></div>
+          <div id="dashIndices"></div>
 
           <!-- Alertas de vencimientos -->
-          <div id="dashVencAlerts" style="display:none;margin-bottom:1.5rem"></div>
+          <div id="dashVencAlerts" class="js-hidden"></div>
 
           <!-- Seguridad + Accesos rápidos -->
           <div class="bottom-grid">
@@ -314,23 +328,23 @@
             <div class="card quick-access-card">
               <h3 class="card-title">Accesos rápidos</h3>
               <div class="quick-list">
-                <button class="quick-btn" onclick="navigate('bitacora', event)">
+                <button class="quick-btn" data-navigate="bitacora">
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                   Registrar medición
                 </button>
-                <button class="quick-btn" onclick="navigate('calculadora', event)">
+                <button class="quick-btn" data-navigate="calculadora">
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>
                   Calculadora Química
                 </button>
-                <button class="quick-btn" onclick="navigate('irapi', event)">
+                <button class="quick-btn" data-navigate="irapi">
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                   Ver nivel de riesgo (IRAPI)
                 </button>
-                <button class="quick-btn" onclick="navigate('protocolo', event)">
+                <button class="quick-btn" data-navigate="protocolo">
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   Protocolo AFR
                 </button>
-                <button class="quick-btn" onclick="navigate('normativa', event)">
+                <button class="quick-btn" data-navigate="normativa">
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                   Ver normativa
                 </button>
@@ -351,7 +365,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label" for="poolShape">FORMA</label>
-                <select class="form-select" id="poolShape" onchange="updateShapeFields()">
+                <select class="form-select" id="poolShape">
                   <option value="rectangular">Rectangular</option>
                   <option value="oval">Ovalada (tipo estadio)</option>
                   <option value="circular">Circular</option>
@@ -361,20 +375,20 @@
                 <div class="form-row" id="rectFields">
                   <div class="form-group">
                     <label class="form-label" for="poolLength">LARGO</label>
-                    <div class="input-unit"><input type="number" class="form-input" id="poolLength" placeholder="ej. 25" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                    <div class="input-unit"><input type="number" class="form-input" id="poolLength" placeholder="ej. 25" min="0" /><span class="unit">m</span></div>
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="poolWidth">ANCHO</label>
-                    <div class="input-unit"><input type="number" class="form-input" id="poolWidth" placeholder="ej. 12" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                    <div class="input-unit"><input type="number" class="form-input" id="poolWidth" placeholder="ej. 12" min="0" /><span class="unit">m</span></div>
                   </div>
                 </div>
-                <div class="form-group" id="circField" style="display:none;">
+                <div class="form-group js-hidden" id="circField">
                   <label class="form-label" for="poolDiam">DIÁMETRO</label>
-                  <div class="input-unit"><input type="number" class="form-input" id="poolDiam" placeholder="ej. 8" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="poolDiam" placeholder="ej. 8" min="0" /><span class="unit">m</span></div>
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="poolDepth">PROFUNDIDAD MEDIA</label>
-                  <div class="input-unit"><input type="number" class="form-input" id="poolDepth" placeholder="ej. 1.5" step="0.1" min="0" oninput="calcVolume()" /><span class="unit">m</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="poolDepth" placeholder="ej. 1.5" step="0.1" min="0" /><span class="unit">m</span></div>
                 </div>
               </div>
               <div class="calc-vol-result">
@@ -400,14 +414,14 @@
               <div class="calc-param-block">
                 <div class="calc-param-title">Cloro libre</div>
                 <div class="calc-param-pair">
-                  <div class="form-group" style="flex:1">
+                  <div class="form-group">
                     <label class="form-label">ACTUAL (ppm)</label>
-                    <input type="number" class="form-input" id="calcCloroActual" step="0.1" min="0" max="20" placeholder="ej. 2.0" oninput="clampInput(this,0,20);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcCloroActual" step="0.1" min="0" max="20" placeholder="ej. 2.0" />
                   </div>
                   <span class="calc-arrow-sep">&rarr;</span>
-                  <div class="form-group" style="flex:1">
+                  <div class="form-group">
                     <label class="form-label">OBJETIVO (ppm)</label>
-                    <input type="number" class="form-input" id="calcCloroObj" step="0.1" min="2.0" max="4.0" value="4.0" oninput="clampInput(this,2.0,4.0);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcCloroObj" step="0.1" min="2.0" max="4.0" value="4.0" />
                   </div>
                 </div>
                 <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; Rango: 2.0&ndash;4.0 ppm</div>
@@ -416,14 +430,14 @@
               <div class="calc-param-block">
                 <div class="calc-param-title">pH</div>
                 <div class="calc-param-pair">
-                  <div class="form-group" style="flex:1">
+                  <div class="form-group">
                     <label class="form-label">ACTUAL</label>
-                    <input type="number" class="form-input" id="calcPhActual" step="0.1" min="0" max="14" placeholder="ej. 6.8" oninput="clampInput(this,0,14);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcPhActual" step="0.1" min="0" max="14" placeholder="ej. 6.8" />
                   </div>
                   <span class="calc-arrow-sep">&rarr;</span>
-                  <div class="form-group" style="flex:1">
+                  <div class="form-group">
                     <label class="form-label">OBJETIVO</label>
-                    <input type="number" class="form-input" id="calcPhObj" step="0.1" min="6.8" max="7.3" value="7.3" oninput="clampInput(this,6.8,7.3);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcPhObj" step="0.1" min="6.8" max="7.3" value="7.3" />
                   </div>
                 </div>
                 <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; Rango: 6.8&ndash;7.3</div>
@@ -432,14 +446,14 @@
               <div class="calc-param-block">
                 <div class="calc-param-title">Alcalinidad total</div>
                 <div class="calc-param-pair">
-                  <div class="form-group" style="flex:1">
+                  <div class="form-group">
                     <label class="form-label">ACTUAL (ppm)</label>
-                    <input type="number" class="form-input" id="calcAlcActual" step="1" min="0" max="300" placeholder="ej. 80" oninput="clampInput(this,0,300);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcAlcActual" step="1" min="0" max="300" placeholder="ej. 80" />
                   </div>
                   <span class="calc-arrow-sep">&rarr;</span>
-                  <div class="form-group" style="flex:1">
+                  <div class="form-group">
                     <label class="form-label">OBJETIVO (ppm)</label>
-                    <input type="number" class="form-input" id="calcAlcObj" step="1" min="20" max="150" value="100" oninput="clampInput(this,20,150);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcAlcObj" step="1" min="20" max="150" value="100" />
                   </div>
                 </div>
                 <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; Rango: 20&ndash;150 ppm</div>
@@ -448,29 +462,29 @@
               <div class="calc-param-block">
                 <div class="calc-param-title">Estabilizador CYA</div>
                 <div class="calc-param-pair">
-                  <div class="form-group" style="flex:1">
+                  <div class="form-group">
                     <label class="form-label">ACTUAL (ppm)</label>
-                    <input type="number" class="form-input" id="calcCyaActual" step="1" min="0" max="150" placeholder="ej. 30" oninput="clampInput(this,0,150);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcCyaActual" step="1" min="0" max="150" placeholder="ej. 30" />
                   </div>
                   <span class="calc-arrow-sep"></span>
-                  <div class="form-group" style="flex:1">
+                  <div class="form-group">
                     <label class="form-label">OBJETIVO (ppm)</label>
-                    <input type="number" class="form-input" id="calcCyaObj" step="1" min="0" max="75" value="40" oninput="clampInput(this,0,75);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcCyaObj" step="1" min="0" max="75" value="40" />
                   </div>
                 </div>
                 <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; M&aacute;x. 75 ppm &middot; Objetivo sugerido: 30–50 ppm (piscinas descubiertas)</div>
               </div>
 
               <div class="calc-param-block">
-                <div class="calc-param-title">Cloro combinado <span style="font-weight:400;font-size:11px;color:var(--text-muted)">(opcional &middot; activa cloración de choque)</span></div>
+                <div class="calc-param-title">Cloro combinado <span class="param-title-optional">(opcional &middot; activa cloración de choque)</span></div>
                 <div class="calc-param-pair">
-                  <div class="form-group" style="flex:1">
+                  <div class="form-group">
                     <label class="form-label">ACTUAL (ppm)</label>
-                    <input type="number" class="form-input" id="calcCloroCombActual" step="0.01" min="0" max="5" placeholder="ej. 0.2" oninput="clampInput(this,0,5);calcDosificacion()" />
+                    <input type="number" class="form-input" id="calcCloroCombActual" step="0.01" min="0" max="5" placeholder="ej. 0.2" />
                   </div>
                   <span class="calc-arrow-sep"></span>
-                  <div class="form-group" style="flex:1">
-                    <div style="padding:9px 12px;font-size:12px;color:var(--text-muted);line-height:1.4">Si &gt; 0.3 ppm:<br>cloración de choque — objetivo = 10&times; el combinado</div>
+                  <div class="form-group">
+                    <div class="calc-comb-note">Si &gt; 0.3 ppm:<br>cloración de choque — objetivo = 10&times; el combinado</div>
                   </div>
                 </div>
                 <div class="calc-param-hint">Res. 234/2026 &nbsp;&middot;&nbsp; M&aacute;x. 0.3 ppm</div>
@@ -480,7 +494,7 @@
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 <span>El ajuste de <strong>pH se calcula primero</strong>. Art.&nbsp;5: no dosificar con ba&ntilde;istas en el agua.</span>
               </div>
-              <button class="btn btn-outline btn-full calc-to-bitacora" onclick="navigateCalcToBitacora(event)">
+              <button class="btn btn-outline btn-full calc-to-bitacora">
                 <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
                   <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
@@ -491,7 +505,7 @@
           </div>
 
           <!-- Paso 3: Resultados -->
-          <div class="card" style="margin-top:1.25rem">
+          <div class="card calc-result-card">
             <div class="card-header">
               <span class="calc-step-num calc-step-num-3">3</span>
               <h3>Dosificaci&oacute;n recomendada</h3>
@@ -507,7 +521,7 @@
               <div class="fns-title">Registrar medición en bitácora</div>
               <div class="fns-desc">Guarda los valores actuales para el historial oficial y el cálculo del IRAPI</div>
             </div>
-            <button class="fns-btn" onclick="navigate('bitacora', event)">
+            <button class="fns-btn" data-navigate="bitacora">
               Ir a bitácora
               <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
@@ -525,29 +539,29 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiPh">PH <span class="lsi-pbadge" id="lsiPhBadge"></span></label>
-                  <input type="number" class="form-input" id="lsiPh" placeholder="ej. 7.1" step="0.1" min="0" max="14" oninput="clampInput(this,0,14);_lsiFromBitacora=false;calcLSI()" />
+                  <input type="number" class="form-input" id="lsiPh" placeholder="ej. 7.1" step="0.1" min="0" max="14" />
                   <div class="lsi-param-hint">Res. 234/2026 &middot; 6.8&ndash;7.3</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiTemp">TEMPERATURA <span class="lsi-pbadge" id="lsiTempBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiTemp" placeholder="ej. 27" min="0" max="40" oninput="clampInput(this,0,40);_lsiFromBitacora=false;calcLSI()" /><span class="unit">°C</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiTemp" placeholder="ej. 27" min="0" max="40" /><span class="unit">°C</span></div>
                   <div class="lsi-param-hint">M&aacute;x. 40 °C &middot; Tabla coeficientes: 5–38 °C</div>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiHard">DUREZA CÁLCICA <span class="lsi-pbadge" id="lsiHardBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiHard" placeholder="ej. 250" min="0" max="700" oninput="clampInput(this,0,700);_lsiFromBitacora=false;calcLSI()" /><span class="unit">ppm</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiHard" placeholder="ej. 250" min="0" max="700" /><span class="unit">ppm</span></div>
                   <div class="lsi-param-hint">Res. 234/2026 &middot; 200&ndash;700 ppm</div>
                 </div>
                 <div class="form-group">
                   <label class="form-label lsi-plabel" for="lsiAlk">ALCALINIDAD TOTAL <span class="lsi-pbadge" id="lsiAlkBadge"></span></label>
-                  <div class="input-unit"><input type="number" class="form-input" id="lsiAlk" placeholder="ej. 100" min="0" max="200" oninput="clampInput(this,0,200);_lsiFromBitacora=false;calcLSI()" /><span class="unit">ppm</span></div>
+                  <div class="input-unit"><input type="number" class="form-input" id="lsiAlk" placeholder="ej. 100" min="0" max="200" /><span class="unit">ppm</span></div>
                   <div class="lsi-param-hint">Res. 234/2026 &middot; 20&ndash;150 ppm &middot; hasta 200 para diagnóstico</div>
                 </div>
               </div>
               <div class="irapi-bitacora-btn-wrap">
-                <button class="btn btn-outline btn-full" onclick="calcLSIFromBitacora()">
+                <button class="btn btn-outline btn-full" id="btnCalcLSIBitacora">
                   <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
                   Cargar desde última medición
                 </button>
@@ -591,7 +605,7 @@
               <div class="fns-title">Calcular el riesgo sanitario (IRAPI)</div>
               <div class="fns-desc">Con el equilibrio del agua calculado, completa el análisis evaluando el riesgo microbiológico y químico</div>
             </div>
-            <button class="fns-btn" onclick="navigate('irapi', event)">
+            <button class="fns-btn" data-navigate="irapi">
               Ir a IRAPI
               <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
@@ -617,8 +631,8 @@
                   <div id="microLabMode" class="micro-panel">
                     <p class="micro-panel-note">Ingresa el porcentaje de no conformidad que indica el resultado del análisis de laboratorio certificado.</p>
                     <div class="micro-lab-row">
-                      <div class="input-unit" style="max-width:140px">
-                        <input type="number" class="form-input" id="microLabValue" min="0" max="100" placeholder="0" oninput="applyMicroLab()" />
+                      <div class="input-unit micro-lab-input-unit">
+                        <input type="number" class="form-input" id="microLabValue" min="0" max="100" placeholder="0" />
                         <span class="unit">%</span>
                       </div>
                       <span class="micro-lab-hint">% de parámetros no conformes</span>
@@ -626,10 +640,10 @@
                   </div>
 
                   <!-- Slider compartido -->
-                  <input type="range" class="irapi-range" id="sliderMicro" min="0" max="100" value="0" oninput="calcIRAPI(); hideMicroReminder()" />
+                  <input type="range" class="irapi-range" id="sliderMicro" min="0" max="100" value="0" />
                   <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valMicro">0%</span><span>100%</span></div>
                   <div id="microLabReminder" class="micro-lab-reminder" hidden>
-                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="icon-top"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <span>Bitácora cargada. El dato <strong>microbiológico</strong> requiere laboratorio certificado — ingrésalo desde tu último análisis trimestral (Res. 234/2026).</span>
                   </div>
                 </div>
@@ -638,7 +652,7 @@
                     <span>Cloro residual <span class="irapi-tag auto" id="tagCloro"></span></span>
                     <span class="irapi-weight">peso 20%</span>
                   </div>
-                  <input type="range" class="irapi-range" id="sliderCloro" min="0" max="100" value="0" oninput="calcIRAPI()" />
+                  <input type="range" class="irapi-range" id="sliderCloro" min="0" max="100" value="0" />
                   <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valCloro">0%</span><span>100%</span></div>
                 </div>
                 <div class="irapi-slider-group">
@@ -646,7 +660,7 @@
                     <span>pH · ORP · Ác. Cianúrico <span class="irapi-tag auto" id="tagAlk"></span></span>
                     <span class="irapi-weight">peso 30%</span>
                   </div>
-                  <input type="range" class="irapi-range" id="sliderAlk" min="0" max="100" value="0" oninput="calcIRAPI()" />
+                  <input type="range" class="irapi-range" id="sliderAlk" min="0" max="100" value="0" />
                   <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valAlk">0%</span><span>100%</span></div>
                 </div>
                 <div class="irapi-slider-group">
@@ -654,12 +668,12 @@
                     <span>Turbiedad <span class="irapi-tag auto" id="tagOtros"></span></span>
                     <span class="irapi-weight">peso 5%</span>
                   </div>
-                  <input type="range" class="irapi-range" id="sliderOtros" min="0" max="100" value="0" oninput="calcIRAPI()" />
+                  <input type="range" class="irapi-range" id="sliderOtros" min="0" max="100" value="0" />
                   <div class="irapi-slider-footer"><span>0% no conformidad</span><span id="valOtros">0%</span><span>100%</span></div>
                 </div>
               </div>
               <div class="irapi-bitacora-btn-wrap">
-                <button id="btnCalcIRAPIBitacora" class="btn btn-outline btn-full" onclick="calcIRAPIFromBitacora()" disabled>
+                <button id="btnCalcIRAPIBitacora" class="btn btn-outline btn-full" disabled>
                   <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
                   Calcular desde bitácora
                 </button>
@@ -692,7 +706,7 @@
               <div class="fns-title">Ver el estado global en el Dashboard</div>
               <div class="fns-desc">El dashboard consolida cumplimiento, parámetros, ISL e IRAPI en una sola vista</div>
             </div>
-            <button class="fns-btn" onclick="navigate('dashboard', event)">
+            <button class="fns-btn" data-navigate="dashboard">
               Ir al dashboard
               <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
@@ -709,11 +723,11 @@
             <div class="form-grid-3">
               <div class="form-group">
                 <label class="form-label" for="logDate">FECHA</label>
-                <div class="input-unit"><input type="date" class="form-input" id="logDate" oninput="checkLogForm()" /></div>
+                <div class="input-unit"><input type="date" class="form-input" id="logDate" /></div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="logTime">HORA</label>
-                <div class="input-unit"><input type="time" class="form-input" id="logTime" oninput="checkLogForm()" /></div>
+                <div class="input-unit"><input type="time" class="form-input" id="logTime" /></div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="logOperador">OPERADOR</label>
@@ -723,8 +737,8 @@
             </div>
             <div class="form-grid-4">
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logCloro">CLORO LIBRE <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logCloro')" aria-label="Ayuda: cloro libre">?</button> <span class="lsi-pbadge" id="logCloroBadge"></span></label>
-                <input type="number" class="form-input" id="logCloro" step="0.1" min="0" max="10" placeholder="ej. 1.5" oninput="clampInput(this,0,10);checkLogForm()" />
+                <label class="form-label lsi-plabel" for="logCloro">CLORO LIBRE <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logCloro" aria-label="Ayuda: cloro libre">?</button> <span class="lsi-pbadge" id="logCloroBadge"></span></label>
+                <input type="number" class="form-input" id="logCloro" step="0.1" min="0" max="10" placeholder="ej. 1.5" />
                 <div class="lsi-param-hint">2.0&ndash;4.0 ppm</div>
                 <div class="param-tooltip-card" id="tt-logCloro" hidden>
                   <div class="tt-what">El desinfectante activo del agua. Mata bacterias, virus y hongos.</div>
@@ -733,8 +747,8 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logPh">PH <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logPh')" aria-label="Ayuda: pH">?</button> <span class="lsi-pbadge" id="logPhBadge"></span></label>
-                <input type="number" class="form-input" id="logPh" step="0.1" min="0" max="14" placeholder="ej. 7.1" oninput="clampInput(this,0,14);checkLogForm()" />
+                <label class="form-label lsi-plabel" for="logPh">PH <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logPh" aria-label="Ayuda: pH">?</button> <span class="lsi-pbadge" id="logPhBadge"></span></label>
+                <input type="number" class="form-input" id="logPh" step="0.1" min="0" max="14" placeholder="ej. 7.1" />
                 <div class="lsi-param-hint">6.8&ndash;7.3</div>
                 <div class="param-tooltip-card" id="tt-logPh" hidden>
                   <div class="tt-what">La acidez del agua. pH bajo corroe equipos; pH alto hace el cloro menos eficaz.</div>
@@ -743,8 +757,8 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logAlc">ALCALINIDAD TOTAL <span class="freq-badge-daily"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Diario</span> <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logAlc')" aria-label="Ayuda: alcalinidad">?</button> <span class="lsi-pbadge" id="logAlcBadge"></span></label>
-                <input type="number" class="form-input" id="logAlc" min="0" max="200" placeholder="ej. 100" oninput="clampInput(this,0,200);checkLogForm()" />
+                <label class="form-label lsi-plabel" for="logAlc">ALCALINIDAD TOTAL <span class="freq-badge-daily"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Diario</span> <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logAlc" aria-label="Ayuda: alcalinidad">?</button> <span class="lsi-pbadge" id="logAlcBadge"></span></label>
+                <input type="number" class="form-input" id="logAlc" min="0" max="200" placeholder="ej. 100" />
                 <div class="lsi-param-hint">20&ndash;150 ppm</div>
                 <div class="param-tooltip-card" id="tt-logAlc" hidden>
                   <div class="tt-what">La "amortiguación" del pH. Evita que el pH cambie bruscamente al agregar químicos.</div>
@@ -753,8 +767,8 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logCya">ESTABILIZADOR DE CLORO <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logCya')" aria-label="Ayuda: CYA estabilizador">?</button> <span class="lsi-pbadge" id="logCyaBadge"></span></label>
-                <input type="number" class="form-input" id="logCya" min="0" max="75" placeholder="ej. 30" oninput="clampInput(this,0,75);checkLogForm()" />
+                <label class="form-label lsi-plabel" for="logCya">ESTABILIZADOR DE CLORO <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <button class="param-help-btn" type="button" data-tooltip="tt-logCya" aria-label="Ayuda: CYA estabilizador">?</button> <span class="lsi-pbadge" id="logCyaBadge"></span></label>
+                <input type="number" class="form-input" id="logCya" min="0" max="75" placeholder="ej. 30" />
                 <div class="lsi-param-hint">Ácido cianúrico (CYA) &middot; 0&ndash;75 ppm</div>
                 <div class="param-tooltip-card" id="tt-logCya" hidden>
                   <div class="tt-what">Protege el cloro de la luz solar para que no se evapore. Solo necesario en piscinas descubiertas.</div>
@@ -765,8 +779,8 @@
             </div>
             <div class="form-grid-4">
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logCloroComb">CLORO COMBINADO <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logCloroComb')" aria-label="Ayuda: cloro combinado">?</button> <span class="lsi-pbadge" id="logCloroCombBadge"></span></label>
-                <input type="number" class="form-input" id="logCloroComb" step="0.01" min="0" max="2" placeholder="ej. 0.1" oninput="clampInput(this,0,2);checkLogForm()" />
+                <label class="form-label lsi-plabel" for="logCloroComb">CLORO COMBINADO <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logCloroComb" aria-label="Ayuda: cloro combinado">?</button> <span class="lsi-pbadge" id="logCloroCombBadge"></span></label>
+                <input type="number" class="form-input" id="logCloroComb" step="0.01" min="0" max="2" placeholder="ej. 0.1" />
                 <div class="lsi-param-hint">M&aacute;x. 0.3 ppm &middot; Res. 234/2026</div>
                 <div class="param-tooltip-card" id="tt-logCloroComb" hidden>
                   <div class="tt-what">El cloro "gastado" unido a sudor y materia orgánica. Causa el olor fuerte a piscina y la irritación de ojos.</div>
@@ -775,8 +789,8 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logTurb">TRANSPARENCIA DEL AGUA <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logTurb')" aria-label="Ayuda: turbiedad">?</button> <span class="lsi-pbadge" id="logTurbBadge"></span></label>
-                <input type="number" class="form-input" id="logTurb" step="0.01" min="0" max="2" placeholder="ej. 0.3" oninput="clampInput(this,0,2);checkLogForm()" />
+                <label class="form-label lsi-plabel" for="logTurb">TRANSPARENCIA DEL AGUA <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logTurb" aria-label="Ayuda: turbiedad">?</button> <span class="lsi-pbadge" id="logTurbBadge"></span></label>
+                <input type="number" class="form-input" id="logTurb" step="0.01" min="0" max="2" placeholder="ej. 0.3" />
                 <div class="lsi-param-hint">Menor valor = agua más clara &middot; Máx. 0.5 UNT</div>
                 <div class="param-tooltip-card" id="tt-logTurb" hidden>
                   <div class="tt-what">La claridad del agua. 0 = cristalina. Agua turbia impide ver el fondo y puede ocultar a un bañista en peligro.</div>
@@ -785,8 +799,8 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logTemp">TEMPERATURA <span class="req">*</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logTemp')" aria-label="Ayuda: temperatura">?</button> <span class="lsi-pbadge" id="logTempBadge"></span></label>
-                <input type="number" class="form-input" id="logTemp" min="0" max="40" placeholder="ej. 27" oninput="clampInput(this,0,40);checkLogForm()" />
+                <label class="form-label lsi-plabel" for="logTemp">TEMPERATURA <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logTemp" aria-label="Ayuda: temperatura">?</button> <span class="lsi-pbadge" id="logTempBadge"></span></label>
+                <input type="number" class="form-input" id="logTemp" min="0" max="40" placeholder="ej. 27" />
                 <div class="lsi-param-hint">M&aacute;x. 40 °C</div>
                 <div class="param-tooltip-card" id="tt-logTemp" hidden>
                   <div class="tt-what">La temperatura del agua. Agua muy caliente favorece la proliferación bacteriana y reduce la eficacia del cloro.</div>
@@ -795,8 +809,8 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logDureza">DUREZA CÁLCICA <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <button class="param-help-btn" type="button" onclick="toggleTooltip('tt-logDureza')" aria-label="Ayuda: dureza cálcica">?</button> <span class="lsi-pbadge" id="logDurezaBadge"></span></label>
-                <div class="input-unit"><input type="number" class="form-input" id="logDureza" min="0" max="700" placeholder="ej. 250" oninput="clampInput(this,0,700);checkLogForm()" /><span class="unit">ppm</span></div>
+                <label class="form-label lsi-plabel" for="logDureza">DUREZA CÁLCICA <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <button class="param-help-btn" type="button" data-tooltip="tt-logDureza" aria-label="Ayuda: dureza cálcica">?</button> <span class="lsi-pbadge" id="logDurezaBadge"></span></label>
+                <div class="input-unit"><input type="number" class="form-input" id="logDureza" min="0" max="700" placeholder="ej. 250" /><span class="unit">ppm</span></div>
                 <div class="lsi-param-hint">200&ndash;700 ppm &middot; Usada en el ISL</div>
                 <div class="param-tooltip-card" id="tt-logDureza" hidden>
                   <div class="tt-what">La concentración de calcio disuelto. Afecta directamente el Índice de Saturación Langelier (ISL).</div>
@@ -806,13 +820,13 @@
               </div>
             </div>
             <div class="photo-capture-wrap">
-              <button type="button" class="btn-photo-capture" onclick="triggerPhoto('fotoAgua')" aria-label="Tomar foto del estado del agua">
+              <button type="button" class="btn-photo-capture" data-photo="fotoAgua" aria-label="Tomar foto del estado del agua">
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 Foto del estado del agua
               </button>
               <div class="photo-preview-wrap" id="photo-preview-fotoAgua" hidden>
                 <img class="photo-thumb" id="photo-thumb-fotoAgua" alt="Foto del agua" />
-                <button type="button" class="photo-remove" onclick="removePhoto('fotoAgua')" aria-label="Eliminar foto del agua">
+                <button type="button" class="photo-remove" data-photo="fotoAgua" aria-label="Eliminar foto del agua">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
@@ -825,21 +839,21 @@
               <div class="form-group">
                 <label class="form-label" for="logCaudal">CAUDAL DE CIRCULACIÓN</label>
                 <div class="input-unit">
-                  <input type="number" class="form-input" id="logCaudal" min="0" max="500" step="0.1" placeholder="ej. 45" oninput="clampInput(this,0,500)" />
+                  <input type="number" class="form-input" id="logCaudal" min="0" max="500" step="0.1" placeholder="ej. 45" />
                   <span class="unit">m&sup3;/h</span>
                 </div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="logHorasFun">HORAS DE FUNCIONAMIENTO</label>
                 <div class="input-unit">
-                  <input type="number" class="form-input" id="logHorasFun" min="0" max="24" step="0.5" placeholder="ej. 8" oninput="clampInput(this,0,24)" />
+                  <input type="number" class="form-input" id="logHorasFun" min="0" max="24" step="0.5" placeholder="ej. 8" />
                   <span class="unit">h</span>
                 </div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="logAguaRep">AGUA REPUESTA</label>
                 <div class="input-unit">
-                  <input type="number" class="form-input" id="logAguaRep" min="0" max="9999" step="0.1" placeholder="ej. 2.5" oninput="clampInput(this,0,9999)" />
+                  <input type="number" class="form-input" id="logAguaRep" min="0" max="9999" step="0.1" placeholder="ej. 2.5" />
                   <span class="unit">m&sup3;</span>
                 </div>
               </div>
@@ -851,7 +865,7 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label" for="logRetrolav">RETROLAVADOS REALIZADOS</label>
-                <input type="number" class="form-input" id="logRetrolav" min="0" max="20" step="1" placeholder="ej. 1" oninput="clampInput(this,0,20)" />
+                <input type="number" class="form-input" id="logRetrolav" min="0" max="20" step="1" placeholder="ej. 1" />
               </div>
             </div>
             <div class="form-group">
@@ -862,14 +876,14 @@
             <div class="form-group">
               <label class="form-label" for="logAverias">AVERÍAS Y MANTENIMIENTOS</label>
               <textarea class="form-input form-textarea" id="logAverias" placeholder="Fallas detectadas, reparaciones y mantenimientos preventivos realizados"></textarea>
-              <div class="photo-capture-wrap" style="margin-top:8px">
-                <button type="button" class="btn-photo-capture" onclick="triggerPhoto('fotoAveria')" aria-label="Tomar foto de la avería o equipo">
+              <div class="photo-capture-wrap">
+                <button type="button" class="btn-photo-capture" data-photo="fotoAveria" aria-label="Tomar foto de la avería o equipo">
                   <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                   Foto del equipo / avería
                 </button>
                 <div class="photo-preview-wrap" id="photo-preview-fotoAveria" hidden>
                   <img class="photo-thumb" id="photo-thumb-fotoAveria" alt="Foto avería" />
-                  <button type="button" class="photo-remove" onclick="removePhoto('fotoAveria')" aria-label="Eliminar foto de avería">
+                  <button type="button" class="photo-remove" data-photo="fotoAveria" aria-label="Eliminar foto de avería">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 </div>
@@ -883,7 +897,7 @@
               <div class="form-group">
                 <label class="form-label lsi-plabel" for="logOrp">ORP &middot; POTENCIAL REDOX <span class="lsi-pbadge" id="logOrpBadge"></span></label>
                 <div class="input-unit">
-                  <input type="number" class="form-input" id="logOrp" min="0" max="1000" placeholder="ej. 650" oninput="clampInput(this,0,1000);checkLogForm()" />
+                  <input type="number" class="form-input" id="logOrp" min="0" max="1000" placeholder="ej. 650" />
                   <span class="unit">mV</span>
                 </div>
                 <div class="lsi-param-hint">M&aacute;x. 700 mV &middot; Opcional</div>
@@ -891,7 +905,7 @@
               <div class="form-group">
                 <label class="form-label lsi-plabel" for="logTds">TDS &middot; S&Oacute;LIDOS DISUELTOS <span class="lsi-pbadge" id="logTdsBadge"></span></label>
                 <div class="input-unit">
-                  <input type="number" class="form-input" id="logTds" min="0" max="5000" step="1" placeholder="ej. 1100" oninput="clampInput(this,0,5000);checkLogForm()" />
+                  <input type="number" class="form-input" id="logTds" min="0" max="5000" step="1" placeholder="ej. 1100" />
                   <span class="unit">mg/L</span>
                 </div>
                 <div class="lsi-param-hint">1000–1200 mg/L &middot; Opcional</div>
@@ -899,7 +913,7 @@
               <div class="form-group">
                 <label class="form-label lsi-plabel" for="logCond">CONDUCTIVIDAD <span class="lsi-pbadge" id="logCondBadge"></span></label>
                 <div class="input-unit">
-                  <input type="number" class="form-input" id="logCond" min="0" max="8000" step="1" placeholder="ej. 2200" oninput="clampInput(this,0,8000);checkLogForm()" />
+                  <input type="number" class="form-input" id="logCond" min="0" max="8000" step="1" placeholder="ej. 2200" />
                   <span class="unit">&mu;S/cm</span>
                 </div>
                 <div class="lsi-param-hint">2000–2400 &mu;S/cm &middot; Opcional</div>
@@ -909,23 +923,23 @@
               <label class="form-label" for="logNotas">NOTAS</label>
               <textarea class="form-input form-textarea" id="logNotas" placeholder="Observaciones de la jornada"></textarea>
             </div>
-            <div id="logComplianceBar" class="log-compliance-bar" style="display:none"></div>
+            <div id="logComplianceBar" class="log-compliance-bar js-hidden"></div>
             <div class="form-footer">
-              <div id="logEditBanner" class="log-edit-banner" style="display:none">
+              <div id="logEditBanner" class="log-edit-banner js-hidden">
                 <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 Editando registro del <strong id="logEditDate"></strong>
               </div>
-              <button class="btn btn-primary" id="btnSaveLog" onclick="saveLog()" disabled>
+              <button class="btn btn-primary" id="btnSaveLog" disabled>
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 <span id="btnSaveLogText">Guardar en bitácora</span>
               </button>
-              <button class="btn btn-outline btn-danger-outline" id="btnCancelEdit" onclick="cancelEditLog()" style="display:none">
+              <button class="btn btn-outline btn-danger-outline js-hidden" id="btnCancelEdit">
                 Cancelar edición
               </button>
               <span class="log-form-hint">* Completa todos los campos para habilitar el guardado</span>
             </div>
           </div>
-          <div class="card" style="margin-top:1.5rem">
+          <div class="card card--mt">
             <div class="card-header">
               <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
               <h3>Histórico (<span id="logCount">0</span>)</h3>
@@ -933,34 +947,34 @@
             <div class="log-filter-bar">
               <div class="log-filter-group">
                 <label class="log-filter-label" for="filterDesde">Desde</label>
-                <input type="date" class="form-input log-filter-input" id="filterDesde" oninput="renderLog()" />
+                <input type="date" class="form-input log-filter-input" id="filterDesde" />
               </div>
               <div class="log-filter-group">
                 <label class="log-filter-label" for="filterHasta">Hasta</label>
-                <input type="date" class="form-input log-filter-input" id="filterHasta" oninput="renderLog()" />
+                <input type="date" class="form-input log-filter-input" id="filterHasta" />
               </div>
               <div class="log-filter-group--wide">
                 <label class="log-filter-label" for="filterOperador">Operador / notas</label>
-                <input type="text" class="form-input log-filter-input" id="filterOperador" placeholder="Buscar por operador o notas..." oninput="renderLog()" />
+                <input type="text" class="form-input log-filter-input" id="filterOperador" placeholder="Buscar por operador o notas..." />
               </div>
               <label class="log-filter-toggle">
-                <input type="checkbox" id="filterFueraRango" onchange="renderLog()" />
+                <input type="checkbox" id="filterFueraRango" />
                 Solo fuera de rango
               </label>
-              <button id="btnClearFilter" class="btn btn-outline" style="align-self:flex-end;font-size:0.8rem;padding:6px 12px" onclick="clearLogFilter()" disabled>Limpiar</button>
+              <button id="btnClearFilter" class="btn btn-outline" disabled>Limpiar</button>
             </div>
             <div id="logTableWrap">
               <p class="empty-state">Sin registros aún. Agregue la primera medición arriba.</p>
             </div>
           </div>
 
-          <div class="flow-next-step" id="fnsAfterBitacora" style="display:none">
+          <div class="flow-next-step js-hidden" id="fnsAfterBitacora">
             <div class="fns-left">
               <div class="fns-label">Siguiente paso</div>
               <div class="fns-title">Calcular el equilibrio del agua (ISL)</div>
               <div class="fns-desc">Con las mediciones guardadas, analiza si el agua está equilibrada, corrosiva o incrustante</div>
             </div>
-            <button class="fns-btn" onclick="navigate('lsi', event)">
+            <button class="fns-btn" data-navigate="lsi">
               Ir a ISL
               <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
@@ -975,7 +989,7 @@
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 <div>
                   EMERGENCIA SANITARIA &mdash; EVENTO DIARREICO<br>
-                  <span style="font-weight:400">Riesgo de Cryptosporidium &middot; Hipercloración 20 ppm &middot; Cierre mínimo <strong>13 horas</strong></span>
+                  <span class="afr-emergency-note">Riesgo de Cryptosporidium &middot; Hipercloración 20 ppm &middot; Cierre mínimo <strong>13 horas</strong></span>
                 </div>
               </div>
               <div class="afr-step-indicator">
@@ -983,9 +997,9 @@
                 <span id="afrStepLabel">Paso 1 de 7</span>
               </div>
               <div class="afr-type-toggle">
-                <button class="afr-type-btn active"              id="btnSolido"    onclick="setAFRType('solido')">Sólido</button>
-                <button class="afr-type-btn afr-btn-diarreico"   id="btnDiarreico" onclick="setAFRType('diarreico')">Diarreico</button>
-                <button class="afr-type-btn afr-btn-vomito"      id="btnVomito"    onclick="setAFRType('vomito')">Vómito</button>
+                <button class="afr-type-btn active"              id="btnSolido"    data-afr-type="solido">Sólido</button>
+                <button class="afr-type-btn afr-btn-diarreico"   id="btnDiarreico" data-afr-type="diarreico">Diarreico</button>
+                <button class="afr-type-btn afr-btn-vomito"      id="btnVomito"    data-afr-type="vomito">Vómito</button>
               </div>
               <div class="afr-content" id="afrContent">
                 <h2 class="afr-step-title" id="afrTitle">Evacuar la piscina</h2>
@@ -993,12 +1007,12 @@
                 <div class="afr-dose-block" id="afrDoseBlock" hidden></div>
               </div>
               <div class="afr-nav">
-                <button class="btn btn-outline" id="afrPrev" onclick="afrStep(-1)">
+                <button class="btn btn-outline" id="afrPrev">
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
                   Anterior
                 </button>
                 <div class="afr-dots" id="afrDots"></div>
-                <button class="btn btn-primary" id="afrNext" onclick="afrStep(1)">
+                <button class="btn btn-primary" id="afrNext">
                   Siguiente
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                 </button>
@@ -1006,18 +1020,18 @@
               <div class="afr-footer">
                 <input type="text" class="form-input" id="afrOperador" placeholder="Operador a cargo" aria-label="Nombre del operador a cargo" />
                 <div class="photo-capture-wrap">
-                  <button type="button" class="btn-photo-capture" onclick="triggerPhoto('afrFoto')" aria-label="Tomar foto del incidente">
+                  <button type="button" class="btn-photo-capture" data-photo="afrFoto" aria-label="Tomar foto del incidente">
                     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                     Foto del incidente (opcional)
                   </button>
                   <div class="photo-preview-wrap" id="photo-preview-afrFoto" hidden>
                     <img class="photo-thumb" id="photo-thumb-afrFoto" alt="Foto del incidente" />
-                    <button type="button" class="photo-remove" onclick="removePhoto('afrFoto')" aria-label="Eliminar foto del incidente">
+                    <button type="button" class="photo-remove" data-photo="afrFoto" aria-label="Eliminar foto del incidente">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                   </div>
                 </div>
-                <button class="btn btn-outline btn-danger-outline" onclick="resetAFR()">
+                <button class="btn btn-outline btn-danger-outline" id="btnResetAFR">
                   <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
                   Reiniciar
                 </button>
@@ -1043,36 +1057,36 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label" for="repNombre">NOMBRE DE LA PISCINA</label>
-                  <input type="text" class="form-input" id="repNombre" placeholder="ej. Piscina Principal" oninput="saveReportFields()" />
+                  <input type="text" class="form-input" id="repNombre" placeholder="ej. Piscina Principal" />
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="repResponsable">RESPONSABLE</label>
-                  <input type="text" class="form-input" id="repResponsable" placeholder="Operador a cargo" oninput="saveReportFields()" />
+                  <input type="text" class="form-input" id="repResponsable" placeholder="Operador a cargo" />
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label" for="repUbicacion">UBICACI&Oacute;N</label>
-                  <input type="text" class="form-input" id="repUbicacion" placeholder="ej. Bogotá, Colombia" oninput="saveReportFields()" />
+                  <input type="text" class="form-input" id="repUbicacion" placeholder="ej. Bogotá, Colombia" />
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="repVolumen">VOLUMEN BASE (M³)</label>
-                  <input type="number" class="form-input" id="repVolumen" placeholder="ej. 48" oninput="saveReportFields()" />
+                  <input type="number" class="form-input" id="repVolumen" placeholder="ej. 48" />
                 </div>
               </div>
             </div>
             <div class="card">
               <h3 class="card-title" id="repSummaryTitle">Resumen del periodo</h3>
               <div class="rep-range-row">
-                <div class="form-group" style="flex:1;min-width:0">
+                <div class="form-group rep-range-fg">
                   <label class="form-label" for="repDesde">DESDE</label>
-                  <input type="date" class="form-input" id="repDesde" onchange="onRepRangeChange()" />
+                  <input type="date" class="form-input" id="repDesde" />
                 </div>
-                <div class="form-group" style="flex:1;min-width:0">
+                <div class="form-group rep-range-fg">
                   <label class="form-label" for="repHasta">HASTA</label>
-                  <input type="date" class="form-input" id="repHasta" onchange="onRepRangeChange()" />
+                  <input type="date" class="form-input" id="repHasta" />
                 </div>
-                <button class="btn btn-outline" id="btnClearRepRange" onclick="clearRepRange()" style="align-self:flex-end;padding:8px 14px;font-size:12px" disabled>Limpiar</button>
+                <button class="btn btn-outline" id="btnClearRepRange" disabled>Limpiar</button>
               </div>
               <div class="report-summary" id="reportSummary">
                 <div class="summary-row"><span>Mediciones registradas</span><span id="repMediciones">0</span></div>
@@ -1089,7 +1103,7 @@
                 <div class="summary-row"><span>Temperatura &mdash; % registros &le; 40 &deg;C</span><span id="repTemp">&ndash;</span></div>
                 <div class="summary-row"><span>Dureza c&aacute;lcica &mdash; % cumplimiento</span><span id="repDureza">&ndash;</span></div>
               </div>
-              <button class="btn btn-primary btn-full" id="btnGeneratePDF" onclick="generatePDF()" disabled>
+              <button class="btn btn-primary btn-full" id="btnGeneratePDF" disabled>
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Generar PDF oficial
               </button>
@@ -1186,7 +1200,7 @@
           </div>
 
           <!-- Tarjeta secundaria: Ley 1209 y datos adicionales -->
-          <div class="two-col-layout" style="margin-top:1.5rem">
+          <div class="two-col-layout docs-secondary-layout">
             <div class="card">
               <div class="card-header">
                 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -1218,7 +1232,7 @@
                   <tr><td>Gancho de rescate</td><td class="norm-val">1 por estanque</td></tr>
                 </tbody>
               </table>
-              <div class="art-box" style="margin-top:1rem">
+              <div class="art-box art-box--top">
                 <strong>Art. 17 &mdash;</strong> El reporte mensual de calidad del agua debe exhibirse de forma visible en la zona de acceso a la piscina.
               </div>
             </div>
@@ -1230,8 +1244,8 @@
 
           <!-- Toggle perfil -->
           <div class="docs-profile-toggle">
-            <button class="docs-profile-btn active" id="btnPublico" onclick="setDocsProfile('publico')">Uso público · Establecimiento</button>
-            <button class="docs-profile-btn" id="btnDomestico" onclick="setDocsProfile('domestico')">Uso doméstico</button>
+            <button class="docs-profile-btn active" id="btnPublico" data-profile="publico">Uso público · Establecimiento</button>
+            <button class="docs-profile-btn" id="btnDomestico" data-profile="domestico">Uso doméstico</button>
           </div>
 
           <div class="two-col-layout">
@@ -1271,19 +1285,19 @@
                 </div>
                 <div class="docs-venc-item">
                   <span class="docs-venc-label">Cert. salvavidas</span>
-                  <input type="date" class="form-input docs-venc-input" id="fechaSalvavidas" oninput="updateVencimientos()" />
+                  <input type="date" class="form-input docs-venc-input" id="fechaSalvavidas" />
                   <span class="docs-venc-status" id="statusSalvavidas">&ndash;</span>
                 </div>
                 <div class="docs-venc-item docs-venc-concepto">
                   <span class="docs-venc-label">Concepto sanitario</span>
                   <div class="concepto-selector" id="conceptoSelector">
-                    <button type="button" class="concepto-opt concepto-verde" data-val="verde" onclick="selectConcepto('verde')">
+                    <button type="button" class="concepto-opt concepto-verde" data-val="verde">
                       <span class="concepto-circle"></span>Favorable
                     </button>
-                    <button type="button" class="concepto-opt concepto-amarillo" data-val="amarillo" onclick="selectConcepto('amarillo')">
+                    <button type="button" class="concepto-opt concepto-amarillo" data-val="amarillo">
                       <span class="concepto-circle"></span>Con Requerimientos
                     </button>
-                    <button type="button" class="concepto-opt concepto-rojo" data-val="rojo" onclick="selectConcepto('rojo')">
+                    <button type="button" class="concepto-opt concepto-rojo" data-val="rojo">
                       <span class="concepto-circle"></span>Desfavorable
                     </button>
                   </div>
@@ -1342,9 +1356,9 @@
 
   <!-- Confirm modal -->
   <!-- Modal edición incidente AFR -->
-  <div id="afrEditOverlay" class="confirm-overlay" style="display:none" onclick="closeAFREdit(event)">
-    <div class="confirm-modal" style="max-width:380px;width:90%;max-height:90dvh;overflow-y:auto;-webkit-overflow-scrolling:touch">
-      <h3 style="margin:0 0 16px;font-size:15px;font-weight:700;color:var(--text)">Editar incidente AFR</h3>
+  <div id="afrEditOverlay" class="confirm-overlay js-hidden">
+    <div class="confirm-modal afr-edit-modal">
+      <h3 class="afr-edit-title">Editar incidente AFR</h3>
       <div class="form-group">
         <label class="form-label" for="afrEditTipo">TIPO DE INCIDENTE</label>
         <select class="form-select" id="afrEditTipo">
@@ -1354,11 +1368,11 @@
         </select>
       </div>
       <div class="form-row">
-        <div class="form-group" style="flex:1">
+        <div class="form-group fg-1">
           <label class="form-label" for="afrEditFecha">FECHA</label>
           <input type="date" class="form-input" id="afrEditFecha" />
         </div>
-        <div class="form-group" style="flex:1">
+        <div class="form-group fg-1">
           <label class="form-label" for="afrEditHora">HORA</label>
           <input type="time" class="form-input" id="afrEditHora" />
         </div>
@@ -1367,52 +1381,52 @@
         <label class="form-label" for="afrEditOperador">OPERADOR</label>
         <input type="text" class="form-input" id="afrEditOperador" placeholder="Nombre del operador" />
       </div>
-      <div style="margin:16px 0 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);border-top:1px solid var(--border);padding-top:14px">Cierre del protocolo (completar tras rehabilitar el agua)</div>
+      <div class="afr-edit-section-divider">Cierre del protocolo (completar tras rehabilitar el agua)</div>
       <div class="form-row">
-        <div class="form-group" style="flex:1">
+        <div class="form-group fg-1">
           <label class="form-label" for="afrEditCloroFinal">CLORO LIBRE FINAL (ppm)</label>
           <input type="number" class="form-input" id="afrEditCloroFinal" step="0.1" min="0" max="20" placeholder="ej. 3.0" />
         </div>
-        <div class="form-group" style="flex:1">
+        <div class="form-group fg-1">
           <label class="form-label" for="afrEditPhFinal">pH FINAL</label>
           <input type="number" class="form-input" id="afrEditPhFinal" step="0.1" min="0" max="14" placeholder="ej. 7.2" />
         </div>
-        <div class="form-group" style="flex:1">
+        <div class="form-group fg-1">
           <label class="form-label" for="afrEditTurbFinal">TURBIEDAD FINAL (UNT)</label>
           <input type="number" class="form-input" id="afrEditTurbFinal" step="0.01" min="0" max="5" placeholder="ej. 0.3" />
         </div>
       </div>
-      <div class="form-row" style="margin-bottom:20px">
-        <div class="form-group" style="flex:1">
+      <div class="form-row form-row--mb">
+        <div class="form-group fg-1">
           <label class="form-label" for="afrEditFechaReapertura">FECHA REAPERTURA</label>
           <input type="date" class="form-input" id="afrEditFechaReapertura" />
         </div>
-        <div class="form-group" style="flex:1">
+        <div class="form-group fg-1">
           <label class="form-label" for="afrEditHoraReapertura">HORA REAPERTURA</label>
           <input type="time" class="form-input" id="afrEditHoraReapertura" />
         </div>
       </div>
       <div class="confirm-actions">
-        <button class="btn btn-outline" onclick="closeAFREdit()">Cancelar</button>
-        <button class="btn btn-primary" onclick="saveAFREdit()">Guardar cambios</button>
+        <button class="btn btn-outline" id="btnAfrEditCancel">Cancelar</button>
+        <button class="btn btn-primary" id="btnAfrEditSave">Guardar cambios</button>
       </div>
     </div>
   </div>
 
-<div id="confirmOverlay" class="confirm-overlay" style="display:none" onclick="closeConfirmOverlay(event)">
+<div id="confirmOverlay" class="confirm-overlay js-hidden">
     <div class="confirm-modal">
       <p class="confirm-body" id="confirmBody"></p>
       <div class="confirm-actions">
-        <button class="btn btn-outline" onclick="closeConfirmOverlay()">Cancelar</button>
+        <button class="btn btn-outline" id="confirmCancelBtn">Cancelar</button>
         <button class="btn btn-danger" id="confirmOkBtn">Confirmar</button>
       </div>
     </div>
   </div>
 
   <!-- MODAL DETALLE INCIDENTE AFR -->
-  <div id="afrDetailOverlay" class="log-detail-overlay" style="display:none" onclick="closeAFRDetail(event)" role="dialog" aria-modal="true" aria-label="Detalle del incidente AFR">
+  <div id="afrDetailOverlay" class="log-detail-overlay js-hidden" role="dialog" aria-modal="true" aria-label="Detalle del incidente AFR">
     <div class="log-detail-modal">
-      <button class="log-detail-close" onclick="closeAFRDetail()" aria-label="Cerrar">
+      <button class="log-detail-close" aria-label="Cerrar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <div class="log-detail-header">
@@ -1424,9 +1438,9 @@
   </div>
 
   <!-- MODAL DETALLE BITÁCORA -->
-  <div id="logDetailOverlay" class="log-detail-overlay" style="display:none" onclick="closeLogDetail(event)" role="dialog" aria-modal="true" aria-label="Detalle del registro">
+  <div id="logDetailOverlay" class="log-detail-overlay js-hidden" role="dialog" aria-modal="true" aria-label="Detalle del registro">
     <div class="log-detail-modal">
-      <button class="log-detail-close" onclick="closeLogDetail()" aria-label="Cerrar">
+      <button class="log-detail-close" aria-label="Cerrar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <div class="log-detail-header">
@@ -1470,24 +1484,24 @@
           <span></span><span></span><span></span>
         </div>
 
-        <button class="preloader-btn" id="preloaderBtn" onclick="preloaderNext()">
+        <button class="preloader-btn" id="preloaderBtn">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           Comenzar
         </button>
       </div>
 
       <!-- Pantalla 2: ¿Qué quieres hacer? -->
-      <div id="preloaderScreen2" class="preloader-screen" style="display:none" aria-hidden="true">
+      <div id="preloaderScreen2" class="preloader-screen js-hidden" aria-hidden="true">
         <div class="preloader-s2-header">
           <div class="preloader-jg-chip">JG</div>
           <div class="preloader-s2-bubble">
-            <p class="preloader-greeting" style="margin-bottom:4px">¿Qué quieres hacer hoy?</p>
-            <p class="preloader-text" style="margin:0">Elige una opción para ir directo a donde lo necesitas</p>
+            <p class="preloader-greeting">¿Qué quieres hacer hoy?</p>
+            <p class="preloader-text">Elige una opción para ir directo a donde lo necesitas</p>
           </div>
         </div>
 
         <div class="preloader-choices">
-          <button class="preloader-choice" onclick="dismissPreloader('bitacora')">
+          <button class="preloader-choice" data-dismiss="bitacora">
             <div class="preloader-choice-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             </div>
@@ -1498,7 +1512,7 @@
             <svg class="preloader-choice-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
 
-          <button class="preloader-choice" onclick="dismissPreloader('calculadora')">
+          <button class="preloader-choice" data-dismiss="calculadora">
             <div class="preloader-choice-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>
             </div>
@@ -1509,7 +1523,7 @@
             <svg class="preloader-choice-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </button>
 
-          <button class="preloader-choice" onclick="dismissPreloader('dashboard')">
+          <button class="preloader-choice" data-dismiss="dashboard">
             <div class="preloader-choice-icon">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
             </div>
@@ -1524,6 +1538,51 @@
 
     </div>
   </div>
+
+<!-- PIN LOCK SCREEN -->
+<div id="pinOverlay" class="pin-overlay" role="dialog" aria-modal="true" aria-label="Acceso a Brazada Aqua Tech" hidden>
+  <div class="pin-card">
+    <picture class="pin-logo">
+      <source srcset="Multimedia/logo1.webp" type="image/webp" />
+      <img src="Multimedia/logo1.png" alt="Brazada Aqua Tech" width="52" height="76" />
+    </picture>
+    <div class="pin-brand">
+      <span class="pin-brand-name">Brazada Aqua Tech</span>
+      <span class="pin-brand-sub">RES. 234 / 2026</span>
+    </div>
+
+    <!-- Vista: crear PIN (primer uso) -->
+    <div id="pinViewSetup">
+      <p class="pin-label">Crea un PIN de 4–6 dígitos para proteger tus datos</p>
+      <input type="password" id="pinSetupNew"     class="pin-input" placeholder="PIN nuevo (4–6 dígitos)"    maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" />
+      <input type="password" id="pinSetupConfirm" class="pin-input" placeholder="Confirmar PIN"               maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" />
+      <p id="pinSetupError" class="pin-error" aria-live="polite" hidden></p>
+      <button type="button" id="btnPinCreate" class="btn btn-primary btn-full">Crear PIN</button>
+    </div>
+
+    <!-- Vista: desbloquear -->
+    <div id="pinViewUnlock" hidden>
+      <p class="pin-label">Ingresa tu PIN para continuar</p>
+      <input type="password" id="pinUnlockInput" class="pin-input" placeholder="PIN" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="current-password" />
+      <p id="pinUnlockError" class="pin-error" aria-live="polite" hidden></p>
+      <button type="button" id="btnPinUnlock" class="btn btn-primary btn-full">Desbloquear</button>
+      <button type="button" id="btnPinReset"  class="pin-link">Olvidé mi PIN (borrará todos los datos)</button>
+    </div>
+
+    <!-- Vista: cambiar PIN -->
+    <div id="pinViewChange" hidden>
+      <p class="pin-label">Cambiar PIN de acceso</p>
+      <input type="password" id="pinChangeOld"     class="pin-input" placeholder="PIN actual"          maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="current-password" />
+      <input type="password" id="pinChangeNew"     class="pin-input" placeholder="PIN nuevo (4–6 dígitos)" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" />
+      <input type="password" id="pinChangeConfirm" class="pin-input" placeholder="Confirmar PIN nuevo"  maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="new-password" />
+      <p id="pinChangeError" class="pin-error" aria-live="polite" hidden></p>
+      <div class="pin-row">
+        <button type="button" id="btnPinChangeSave"   class="btn btn-primary">Guardar</button>
+        <button type="button" id="btnPinChangeCancel" class="btn btn-outline">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   if ('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {

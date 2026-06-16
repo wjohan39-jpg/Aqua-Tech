@@ -5,6 +5,18 @@
 
 'use strict';
 
+// Defensa anti-clickjacking (capa JS — complementa X-Frame-Options y CSP frame-ancestors).
+// Intenta redirigir el frame padre; si el iframe está sandboxed y bloquea la navegación,
+// oculta el body como último recurso para que no haya superficie atacable.
+(function guardFrame() {
+  if (window.top === window.self) return;
+  try {
+    window.top.location = window.self.location;
+  } catch (_) {
+    document.documentElement.style.display = 'none';
+  }
+}());
+
 function escapeHtml(s) {
   if (s == null) return '';
   return String(s)
@@ -13,6 +25,365 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+// Convierte un valor leído de localStorage a número seguro para innerHTML.
+// Cualquier valor no numérico (incluyendo strings con HTML) retorna '–'.
+function _safeNum(v, fix) {
+  const n = Number(v);
+  if (!isFinite(n)) return '–';
+  return fix !== undefined ? n.toFixed(fix) : String(n);
+}
+
+// Valida que un valor sea un data URI PNG base64 válido antes de usarlo como src.
+// Previene inyección de atributo y URLs externas provenientes de localStorage tamperado.
+function _safePhotoSrc(v) {
+  if (typeof v !== 'string' || !v.startsWith('data:image/png;base64,')) return '';
+  return v;
+}
+
+// ── INTEGRIDAD DE ALMACENAMIENTO (HMAC-SHA256 + IndexedDB) ───────────────
+// CryptoKey no-extractable en IndexedDB — protege contra edición directa
+// de localStorage entre sesiones (DevTools, acceso físico al dispositivo).
+const _INTEGRITY = (() => {
+  const DB    = 'brazada_integrity_v1';
+  const STORE = 'keys';
+  const KID   = 'hmac_k';
+  let _cache  = null;
+
+  function _openDb() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open(DB, 1);
+      r.onupgradeneeded = e => e.target.result.createObjectStore(STORE);
+      r.onsuccess = e => res(e.target.result);
+      r.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  async function _getKey() {
+    if (_cache) return _cache;
+    const db = await _openDb();
+    return new Promise((res, rej) => {
+      const req = db.transaction(STORE, 'readwrite').objectStore(STORE).get(KID);
+      req.onsuccess = async () => {
+        if (req.result) { _cache = req.result; return res(_cache); }
+        const k = await crypto.subtle.generateKey(
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,                        // no-extractable: el material de clave nunca sale de IDB
+          ['sign', 'verify']
+        );
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(k, KID);
+        tx.oncomplete = () => { _cache = k; res(k); };
+        tx.onerror    = e => rej(e.target.error);
+      };
+      req.onerror = e => rej(e.target.error);
+    });
+  }
+
+  async function sign(text) {
+    const k   = await _getKey();
+    const buf = await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(text));
+    return btoa(String.fromCharCode(...new Uint8Array(buf)));
+  }
+
+  async function verify(text, b64) {
+    try {
+      const k      = await _getKey();
+      const sigBuf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+      return await crypto.subtle.verify('HMAC', k, sigBuf, new TextEncoder().encode(text));
+    } catch { return false; }
+  }
+
+  return { sign, verify };
+})();
+
+// ── AUTENTICACIÓN POR PIN (PBKDF2 · SHA-256) ─────────────────────────────
+// Estado de sesión encapsulado — no accesible como variable global directa.
+const _PIN = (() => {
+  const KEY   = 'aqua_pin';
+  const ITERS = 600_000;   // OWASP 2024: mínimo 600k para PBKDF2-HMAC-SHA-256
+  const HASH  = 'SHA-256';
+  const BITS  = 256;
+
+  // Estado de sesión privado
+  let _unlocked    = false;
+  let _attempts    = 0;
+  let _lockedUntil = 0;
+
+  const _SS_KEY = '_pin_state';
+  function _loadAttemptState() {
+    try {
+      const s = JSON.parse(sessionStorage.getItem(_SS_KEY) || '{}');
+      _attempts    = typeof s.attempts    === 'number' ? s.attempts    : 0;
+      _lockedUntil = typeof s.lockedUntil === 'number' ? s.lockedUntil : 0;
+    } catch { _attempts = 0; _lockedUntil = 0; }
+  }
+  function _saveAttemptState() {
+    sessionStorage.setItem(_SS_KEY, JSON.stringify({ attempts: _attempts, lockedUntil: _lockedUntil }));
+  }
+  _loadAttemptState();
+
+  function _b64(buf)  { return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+  function _unb64(s)  { return Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer; }
+
+  async function _derive(pin, salt) {
+    const mat = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(pin), { name: 'PBKDF2' }, false, ['deriveBits']
+    );
+    return crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt, iterations: ITERS, hash: HASH }, mat, BITS
+    );
+  }
+
+  async function set(pin) {
+    const salt = crypto.getRandomValues(new Uint8Array(16)).buffer;
+    const hash = await _derive(pin, salt);
+    localStorage.setItem(KEY, JSON.stringify({ salt: _b64(salt), hash: _b64(hash) }));
+  }
+
+  async function verify(pin) {
+    const stored = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (!stored) return false;
+    const actual = await _derive(pin, _unb64(stored.salt));
+    const a = new Uint8Array(actual);
+    const b = new Uint8Array(_unb64(stored.hash));
+    if (a.length !== b.length) return false;
+    let diff = 0;
+    for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+    return diff === 0;
+  }
+
+  function exists() { return !!localStorage.getItem(KEY); }
+  function remove() { localStorage.removeItem(KEY); }
+
+  // Interfaz de sesión — acceso controlado al estado privado
+  function unlock()       { _unlocked = true; _attempts = 0; _lockedUntil = 0; _saveAttemptState(); }
+  function lock()         { _unlocked = false; }
+  function addAttempt()   { ++_attempts; _saveAttemptState(); return _attempts; }
+  function setLockout(ms) { _lockedUntil = Date.now() + ms; _saveAttemptState(); }
+  function remainingSecs(){ return Math.max(0, Math.ceil((_lockedUntil - Date.now()) / 1000)); }
+
+  return {
+    set, verify, exists, remove,
+    unlock, lock, addAttempt, setLockout, remainingSecs,
+    get unlocked()  { return _unlocked;  },
+    get attempts()  { return _attempts;  },
+  };
+})();
+
+function _pinSwitchView(view) {
+  ['pinViewSetup', 'pinViewUnlock', 'pinViewChange'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = (el.id !== view);
+  });
+  const input = document.querySelector(`#${view} input`);
+  if (input) setTimeout(() => input.focus(), 60);
+}
+
+function _pinShowOverlay(view) {
+  _pinClearErrors();
+  _pinSwitchView(view);
+  const overlay = document.getElementById('pinOverlay');
+  if (overlay) overlay.hidden = false;
+}
+
+function _pinHideOverlay() {
+  const overlay = document.getElementById('pinOverlay');
+  if (overlay) overlay.hidden = true;
+  _pinClearErrors();
+  ['pinSetupNew','pinSetupConfirm','pinUnlockInput',
+   'pinChangeOld','pinChangeNew','pinChangeConfirm'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+function _pinClearErrors() {
+  ['pinSetupError','pinUnlockError','pinChangeError'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.hidden = true; el.textContent = ''; }
+  });
+}
+
+function _pinSetError(errId, msg) {
+  const el = document.getElementById(errId);
+  if (el) { el.textContent = msg; el.hidden = false; }
+  const card = document.querySelector('.pin-card');
+  if (card) {
+    card.classList.remove('pin-shake');
+    void card.offsetWidth;
+    card.classList.add('pin-shake');
+  }
+}
+
+function _pinValidate(pin) {
+  if (!pin || pin.length < 4) return 'El PIN debe tener al menos 4 dígitos.';
+  if (!/^\d+$/.test(pin))    return 'El PIN solo puede contener dígitos.';
+  const WEAK = ['0000','1111','2222','3333','4444','5555','6666','7777','8888','9999',
+                '1234','4321','0123','9876','1230','2345','3456','4567','5678','6789'];
+  if (WEAK.includes(pin.slice(0, 4))) return 'PIN demasiado predecible. Elige una combinación menos común.';
+  return null;
+}
+
+async function _pinHandleCreate() {
+  const newPin  = (document.getElementById('pinSetupNew')?.value || '').trim();
+  const confirm = (document.getElementById('pinSetupConfirm')?.value || '').trim();
+  const err = _pinValidate(newPin);
+  if (err)                 { _pinSetError('pinSetupError', err); return; }
+  if (newPin !== confirm)  { _pinSetError('pinSetupError', 'Los PINs no coinciden.'); return; }
+  const btn = document.getElementById('btnPinCreate');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+  await _PIN.set(newPin);
+  _PIN.unlock();
+  _pinHideOverlay();
+  if (btn) { btn.disabled = false; btn.textContent = 'Crear PIN'; }
+  showToast('PIN creado. La app quedará protegida al recargar.', 'success');
+}
+
+async function _pinHandleUnlock() {
+  // Rate limiting: bloqueo progresivo tras fallos consecutivos
+  const remaining = _PIN.remainingSecs();
+  if (remaining > 0) {
+    _pinSetError('pinUnlockError', `Demasiados intentos fallidos. Espera ${remaining} segundo${remaining === 1 ? '' : 's'}.`);
+    return;
+  }
+
+  const pin = (document.getElementById('pinUnlockInput')?.value || '').trim();
+  if (!pin) { _pinSetError('pinUnlockError', 'Ingresa tu PIN.'); return; }
+
+  const btn = document.getElementById('btnPinUnlock');
+  if (btn) { btn.disabled = true; btn.textContent = 'Verificando…'; }
+
+  const ok = await _PIN.verify(pin);
+
+  if (ok) {
+    _PIN.unlock();
+    _pinHideOverlay();
+  } else {
+    const attempts = _PIN.addAttempt();
+    // Bloqueo a partir del 5.º fallo: 30 s · 60 s · 120 s · 240 s · 300 s (cap)
+    if (attempts >= 5) {
+      const lockMs   = Math.min(30_000 * Math.pow(2, attempts - 5), 300_000);
+      _PIN.setLockout(lockMs);
+      const lockSecs = Math.ceil(lockMs / 1000);
+      _pinSetError('pinUnlockError', `PIN incorrecto. Acceso bloqueado ${lockSecs} segundo${lockSecs === 1 ? '' : 's'}.`);
+    } else {
+      const left = 5 - attempts;
+      _pinSetError('pinUnlockError', `PIN incorrecto. ${left} intento${left === 1 ? '' : 's'} restante${left === 1 ? '' : 's'} antes del bloqueo.`);
+    }
+    const input = document.getElementById('pinUnlockInput');
+    if (input) { input.value = ''; input.focus(); }
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Desbloquear'; }
+}
+
+async function _pinHandleChange() {
+  const remaining = _PIN.remainingSecs();
+  if (remaining > 0) {
+    _pinSetError('pinChangeError', `Demasiados intentos fallidos. Espera ${remaining} segundo${remaining === 1 ? '' : 's'}.`);
+    return;
+  }
+  const oldPin  = (document.getElementById('pinChangeOld')?.value || '').trim();
+  const newPin  = (document.getElementById('pinChangeNew')?.value || '').trim();
+  const confirm = (document.getElementById('pinChangeConfirm')?.value || '').trim();
+  if (!oldPin)              { _pinSetError('pinChangeError', 'Ingresa tu PIN actual.'); return; }
+  const err = _pinValidate(newPin);
+  if (err)                  { _pinSetError('pinChangeError', err); return; }
+  if (newPin !== confirm)   { _pinSetError('pinChangeError', 'Los PINs nuevos no coinciden.'); return; }
+  const btn = document.getElementById('btnPinChangeSave');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+  const ok = await _PIN.verify(oldPin);
+  if (!ok) {
+    const attempts = _PIN.addAttempt();
+    if (attempts >= 5) {
+      const lockMs  = Math.min(30_000 * Math.pow(2, attempts - 5), 300_000);
+      _PIN.setLockout(lockMs);
+      const lockSecs = Math.ceil(lockMs / 1000);
+      _pinSetError('pinChangeError', `PIN incorrecto. Acceso bloqueado ${lockSecs} segundo${lockSecs === 1 ? '' : 's'}.`);
+    } else {
+      const left = 5 - attempts;
+      _pinSetError('pinChangeError', `PIN actual incorrecto. ${left} intento${left === 1 ? '' : 's'} restante${left === 1 ? '' : 's'}.`);
+    }
+    if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
+    return;
+  }
+  await _PIN.set(newPin);
+  _PIN.unlock();
+  _pinHideOverlay();
+  if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
+  showToast('PIN actualizado correctamente.', 'success');
+}
+
+function _pinHandleReset() {
+  showConfirm(
+    '¿Restablecer PIN? Se borrarán TODOS los datos de la aplicación (bitácora, AFR, configuración). Esta acción no se puede deshacer.',
+    () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      indexedDB.deleteDatabase('brazada_integrity_v1');
+      if ('caches' in self) {
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+      }
+      location.reload();
+    }
+  );
+}
+
+// Guard de sesión: retorna false y muestra unlock si el PIN existe y la sesión no está desbloqueada.
+// Usar al inicio de cualquier función que acceda a datos sensibles de localStorage.
+function _requireUnlocked() {
+  if (_PIN.exists() && !_PIN.unlocked) {
+    _pinShowOverlay('pinViewUnlock');
+    return false;
+  }
+  return true;
+}
+
+function lockApp() {
+  if (!_PIN.exists()) { showToast('No hay PIN configurado.', 'warning'); return; }
+  _PIN.lock();
+  ['aqua_irapi_result','aqua_irapi_sliders',
+   'aqua_lsi_result','aqua_lsi_fields',
+   'aqua_calc_medicion'].forEach(k => sessionStorage.removeItem(k));
+  _pinShowOverlay('pinViewUnlock');
+}
+
+function openChangePinView() {
+  _pinShowOverlay(_PIN.exists() ? 'pinViewChange' : 'pinViewSetup');
+}
+
+function _pinInit() {
+  if (!_PIN.exists()) {
+    _pinShowOverlay('pinViewSetup');
+  } else {
+    _pinShowOverlay('pinViewUnlock');
+  }
+}
+
+// Guarda json en localStorage y, en paralelo, firma y persiste el HMAC.
+// La escritura es sincrónica; la firma es async no-bloqueante.
+async function _secSave(lsKey, json) {
+  localStorage.setItem(lsKey, json);
+  try {
+    const sig = await _INTEGRITY.sign(json);
+    localStorage.setItem(lsKey + '_sig', sig);
+  } catch { /* fallo silencioso — dato guardado, firma omitida */ }
+}
+
+// Verifica la firma HMAC de cada clave protegida y avisa al usuario si falla.
+async function _verifyIntegrity() {
+  for (const k of ['aqua_bitacora', 'aqua_afr']) {
+    const json = localStorage.getItem(k);
+    const sig  = localStorage.getItem(k + '_sig');
+    if (!json || !sig) continue;
+    const ok = await _INTEGRITY.verify(json, sig);
+    if (!ok) showToast(
+      `Alerta: los datos de "${k}" fueron modificados externamente. Verifica la integridad de los registros.`,
+      'error', 9000
+    );
+  }
 }
 
 let _logPage = 0;
@@ -123,7 +494,7 @@ function toggleTooltip(id) {
   const wasHidden = el.hidden;
   document.querySelectorAll('.param-tooltip-card').forEach(t => { t.hidden = true; });
   el.hidden = !wasHidden;
-  const btn = document.querySelector(`[onclick="toggleTooltip('${id}')"]`);
+  const btn = document.querySelector(`[data-tooltip="${id}"]`);
   if (btn) btn.setAttribute('aria-expanded', String(!wasHidden));
 }
 document.addEventListener('keydown', e => {
@@ -134,6 +505,13 @@ document.addEventListener('keydown', e => {
       document.body.style.overflow = '';
     }
   }
+  if (e.key === 'Enter') {
+    const active = document.activeElement;
+    if (!active) return;
+    if (active.id === 'pinSetupNew' || active.id === 'pinSetupConfirm')      { _pinHandleCreate(); return; }
+    if (active.id === 'pinUnlockInput') { if (!_PIN.remainingSecs()) _pinHandleUnlock(); return; }
+    if (active.id === 'pinChangeOld' || active.id === 'pinChangeNew' || active.id === 'pinChangeConfirm') { _pinHandleChange(); return; }
+  }
 });
 
 document.addEventListener('click', e => {
@@ -141,6 +519,173 @@ document.addEventListener('click', e => {
     document.querySelectorAll('.param-tooltip-card').forEach(t => { t.hidden = true; });
     document.querySelectorAll('.param-help-btn').forEach(b => b.setAttribute('aria-expanded', 'false'));
   }
+});
+
+// ── Event Delegation ─────────────────────────────────────────────
+document.addEventListener('click', e => {
+  const t = e.target;
+
+  // PIN overlay buttons
+  if (t.closest('#btnPinCreate'))       { _pinHandleCreate();       return; }
+  if (t.closest('#btnPinUnlock'))       { _pinHandleUnlock();       return; }
+  if (t.closest('#btnPinReset'))        { _pinHandleReset();        return; }
+  if (t.closest('#btnPinChangeSave'))   { _pinHandleChange();       return; }
+  if (t.closest('#btnPinChangeCancel')) { _pinHideOverlay();        return; }
+  if (t.closest('#btnLockApp'))         { lockApp();                return; }
+  if (t.closest('#btnChangePin'))       { openChangePinView();      return; }
+
+  const navEl = t.closest('[data-navigate]');
+  if (navEl) { navigate(navEl.dataset.navigate, e); return; }
+
+  if (t.closest('#sidebarOverlay') || t.closest('#sidebarToggle')) { toggleSidebar(); return; }
+  if (t.closest('#themeToggle'))    { toggleTheme();        return; }
+  if (t.closest('#shareBtn'))       { compartirEstado();    return; }
+  if (t.closest('#btnDashReport'))  { dashboardReportClick(); return; }
+
+  const trendParamEl = t.closest('.trend-btn[data-param]');
+  if (trendParamEl) { setTrendParam(trendParamEl.dataset.param); return; }
+
+  const trendDayEl = t.closest('.trend-day[data-days]');
+  if (trendDayEl) { setTrendDays(Number(trendDayEl.dataset.days)); return; }
+
+  if (t.closest('.calc-to-bitacora'))    { navigateCalcToBitacora(e); return; }
+  if (t.closest('#btnCalcLSIBitacora'))  { calcLSIFromBitacora();     return; }
+  if (t.closest('#btnCalcIRAPIBitacora')) { calcIRAPIFromBitacora();  return; }
+
+  const tooltipBtn = t.closest('[data-tooltip]');
+  if (tooltipBtn) { toggleTooltip(tooltipBtn.dataset.tooltip); return; }
+
+  const photoCapture = t.closest('.btn-photo-capture[data-photo]');
+  if (photoCapture) { triggerPhoto(photoCapture.dataset.photo); return; }
+
+  const photoRemove = t.closest('.photo-remove[data-photo]');
+  if (photoRemove) { removePhoto(photoRemove.dataset.photo); return; }
+
+  if (t.closest('#btnSaveLog'))    { saveLog();        return; }
+  if (t.closest('#btnCancelEdit')) { cancelEditLog();  return; }
+  if (t.closest('#btnClearFilter')) { clearLogFilter(); return; }
+
+  const afrTypeBtn = t.closest('[data-afr-type]');
+  if (afrTypeBtn) { setAFRType(afrTypeBtn.dataset.afrType); return; }
+
+  if (t.closest('#afrPrev')) { afrStep(-1); return; }
+  if (t.closest('#afrNext')) {
+    const steps = AFR_STEPS[APP.afrType];
+    if (APP.afrStep === steps.length - 1) finishAFR();
+    else afrStep(1);
+    return;
+  }
+  if (t.closest('#btnResetAFR')) { resetAFR(); return; }
+
+  if (t.closest('#btnClearRepRange')) { clearRepRange();  return; }
+  if (t.closest('#btnGeneratePDF'))   { generatePDF();    return; }
+
+  const profileBtn = t.closest('[data-profile]');
+  if (profileBtn) { setDocsProfile(profileBtn.dataset.profile); return; }
+
+  const conceptoBtn = t.closest('.concepto-opt[data-val]');
+  if (conceptoBtn) { selectConcepto(conceptoBtn.dataset.val); return; }
+
+  if (t.id === 'afrEditOverlay')         { closeAFREdit(e);          return; }
+  if (t.closest('#btnAfrEditCancel'))    { closeAFREdit();            return; }
+  if (t.closest('#btnAfrEditSave'))      { saveAFREdit();             return; }
+
+  if (t.id === 'confirmOverlay')         { closeConfirmOverlay(e);   return; }
+  if (t.closest('#confirmCancelBtn'))    { closeConfirmOverlay();     return; }
+  if (t.closest('#confirmOkBtn'))        {
+    const cb = _confirmOkCb;
+    closeConfirmOverlay();
+    if (cb) cb();
+    return;
+  }
+
+  if (t.id === 'afrDetailOverlay')       { closeAFRDetail(e);        return; }
+  if (t.closest('#afrDetailOverlay .log-detail-close')) { closeAFRDetail(); return; }
+
+  if (t.id === 'logDetailOverlay')       { closeLogDetail(e);        return; }
+  if (t.closest('#logDetailOverlay .log-detail-close')) { closeLogDetail(); return; }
+
+  if (t.closest('#preloaderBtn')) { preloaderNext(); return; }
+  const dismissBtn = t.closest('[data-dismiss]');
+  if (dismissBtn) { dismissPreloader(dismissBtn.dataset.dismiss); return; }
+
+  // Bitácora — tabla (filas clickeables + botones de acción)
+  const logRow = t.closest('.log-row-clickable[data-ts]');
+  if (logRow) {
+    const ts = Number(logRow.dataset.ts);
+    if (t.closest('.btn-edit-log'))   { editLog(ts);  return; }
+    if (t.closest('.btn-delete-log')) { deleteLog(ts); return; }
+    if (t.closest('.btn-cam-log'))    { viewLog(ts);  return; }
+    if (!t.closest('.log-row-actions')) { viewLog(ts); return; }
+    return;
+  }
+
+  // Bitácora — paginación
+  const pgBtn = t.closest('.log-pg-btn[data-page]');
+  if (pgBtn && !pgBtn.disabled) { goLogPage(Number(pgBtn.dataset.page)); return; }
+
+  // AFR — lista (ítems clickeables + botones de acción)
+  const afrItem = t.closest('.afr-incident-item[data-ts]');
+  if (afrItem) {
+    const ts = Number(afrItem.dataset.ts);
+    if (t.closest('.btn-edit-log'))   { editAFRIncident(ts);   return; }
+    if (t.closest('.btn-delete-log')) { deleteAFRIncident(ts); return; }
+    if (!t.closest('.afr-incident-actions')) { viewAFRIncident(ts); return; }
+    return;
+  }
+
+  // Documentos — ítems del checklist
+  const docsItem = t.closest('.docs-item[data-doc-id]');
+  if (docsItem) { toggleDocItem(docsItem.dataset.docId); return; }
+
+  // Documentos — ir a vencimientos
+  if (t.closest('.js-go-venc')) { goToVencimientos(e); return; }
+});
+
+document.addEventListener('input', e => {
+  const el = e.target;
+  const id = el.id;
+
+  if (el.type === 'number' && el.min !== '' && el.max !== '') {
+    clampInput(el, parseFloat(el.min), parseFloat(el.max));
+  }
+
+  if (id === 'poolLength' || id === 'poolWidth' || id === 'poolDiam' || id === 'poolDepth') {
+    calcVolume(); return;
+  }
+
+  if (['calcCloroActual','calcCloroObj','calcPhActual','calcPhObj',
+       'calcAlcActual','calcAlcObj','calcCyaActual','calcCyaObj','calcCloroCombActual'].includes(id)) {
+    calcDosificacion(); return;
+  }
+
+  if (id === 'lsiPh' || id === 'lsiTemp' || id === 'lsiHard' || id === 'lsiAlk') {
+    _lsiFromBitacora = false; calcLSI(); return;
+  }
+
+  if (id === 'microLabValue')  { applyMicroLab(); return; }
+  if (id === 'sliderMicro')    { calcIRAPI(); hideMicroReminder(); return; }
+  if (id === 'sliderCloro' || id === 'sliderAlk' || id === 'sliderOtros') { calcIRAPI(); return; }
+
+  if (['logDate','logTime','logCloro','logPh','logAlc','logCya',
+       'logCloroComb','logTurb','logTemp','logDureza','logOrp','logTds','logCond'].includes(id)) {
+    checkLogForm(); return;
+  }
+
+  if (id === 'repNombre' || id === 'repResponsable' || id === 'repUbicacion' || id === 'repVolumen') {
+    saveReportFields(); return;
+  }
+
+  if (id === 'fechaSalvavidas') { updateVencimientos(); return; }
+
+  if (id === 'filterDesde' || id === 'filterHasta' || id === 'filterOperador') { renderLog(); return; }
+});
+
+document.addEventListener('change', e => {
+  const id = e.target.id;
+  if (id === 'poolShape')        { updateShapeFields();  return; }
+  if (id === 'filterFueraRango') { renderLog();           return; }
+  if (id === 'repDesde' || id === 'repHasta') { onRepRangeChange(); return; }
 });
 
 function navigateCalcToBitacora(event) {
@@ -166,10 +711,21 @@ function showToast(msg, type = 'info', duration = 3500) {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-  toast.innerHTML = `
-    <span class="toast-icon">${icons[type] || icons.info}</span>
-    <span class="toast-msg">${msg}</span>
-    <button class="toast-close" onclick="this.closest('.toast').remove()">✕</button>`;
+
+  const iconEl = document.createElement('span');
+  iconEl.className = 'toast-icon';
+  iconEl.textContent = icons[type] || icons.info;
+
+  const msgEl = document.createElement('span');
+  msgEl.className = 'toast-msg';
+  msgEl.textContent = msg;
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'toast-close';
+  closeBtn.textContent = '✕';
+  closeBtn.addEventListener('click', () => closeBtn.closest('.toast').remove());
+
+  toast.append(iconEl, msgEl, closeBtn);
   container.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add('toast-visible'));
   setTimeout(() => {
@@ -186,11 +742,6 @@ function showConfirm(msg, onOk) {
   _confirmOkCb = onOk;
   document.getElementById('confirmBody').textContent = msg;
   document.getElementById('confirmOverlay').style.display = 'flex';
-  document.getElementById('confirmOkBtn').onclick = () => {
-    const cb = _confirmOkCb;
-    closeConfirmOverlay();
-    if (cb) cb();
-  };
 }
 
 function closeConfirmOverlay(e) {
@@ -388,7 +939,7 @@ function renderTrendChart() {
 
   const log = getLog();
   if (!log.length) { card.style.display = 'none'; return; }
-  card.style.display = '';
+  card.style.display = 'block';
 
   const paramDef = PARAM_DEFS.find(p => p.key === _trendParam);
   if (!paramDef) return;
@@ -589,13 +1140,13 @@ function renderDashboardVencimientos() {
 
   if (!alerts.length) { el.style.display = 'none'; return; }
 
-  el.style.display = '';
+  el.style.display = 'block';
   el.innerHTML = `
     <div class="dash-venc-wrap">
       <div class="dash-venc-header">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <strong>Documentos con vencimiento próximo</strong>
-        <button class="btn btn-sm btn-outline" onclick="goToVencimientos(event)" style="margin-left:auto;font-size:0.78rem;padding:4px 10px">Ver vencimientos</button>
+        <button class="btn btn-sm btn-outline js-go-venc" style="margin-left:auto;font-size:0.78rem;padding:4px 10px">Ver vencimientos</button>
       </div>
       ${alerts.map(({ label, msg, cls }) =>
         `<div class="dash-venc-item ${cls}"><span>${label}</span><span class="venc-badge">${msg}</span></div>`
@@ -632,7 +1183,7 @@ function renderDashboardGauges() {
     if (pt) pt.textContent = 'Parámetros del agua · sin mediciones';
     return;
   }
-  if (shareBtn) shareBtn.style.display = '';
+  if (shareBtn) shareBtn.style.display = 'flex';
 
   // Antigüedad del dato
   const ageMin   = _dataAgeMinutes(last);
@@ -821,9 +1372,9 @@ function compartirEstado() {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text)
         .then(()  => showToast('Resumen copiado al portapapeles', 'success'))
-        .catch(() => _execCommandCopy(text));
+        .catch(() => showToast('No se pudo copiar. Permite el acceso al portapapeles o copia manualmente.', 'error'));
     } else {
-      _execCommandCopy(text);
+      showToast('Portapapeles no disponible en este navegador.', 'error');
     }
   };
 
@@ -835,21 +1386,6 @@ function compartirEstado() {
   }
 }
 
-function _execCommandCopy(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.cssText = 'position:fixed;opacity:0;left:-9999px;top:-9999px';
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  try {
-    document.execCommand('copy');
-    showToast('Resumen copiado al portapapeles', 'success');
-  } catch {
-    showToast('No se pudo copiar automáticamente.', 'error');
-  }
-  document.body.removeChild(ta);
-}
 
 // ── CALCULADORA: VOLUMEN ─────────────────────────────────
 function updateShapeFields() {
@@ -1816,11 +2352,35 @@ function updateOperadorDatalist() {
   const names = [...new Set(
     getLog().map(e => e.operador).filter(n => n && n.trim())
   )].sort();
-  dl.innerHTML = names.map(n => `<option value="${n}"></option>`).join('');
+  dl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+}
+
+// ── Validadores de esquema ────────────────────────────────
+function _isValidLogEntry(e) {
+  return e !== null && typeof e === 'object'
+    && typeof e.ts    === 'number' && isFinite(e.ts)
+    && typeof e.fecha === 'string' && e.fecha.length > 0
+    && typeof e.hora  === 'string'
+    && isFinite(Number(e.cloro))
+    && isFinite(Number(e.ph))
+    && isFinite(Number(e.alc))
+    && isFinite(Number(e.turb))
+    && isFinite(Number(e.temp));
+}
+
+function _isValidAFREntry(e) {
+  return e !== null && typeof e === 'object'
+    && typeof e.ts    === 'number' && isFinite(e.ts)
+    && ['solido', 'vomito', 'diarreico'].includes(e.tipo)
+    && typeof e.fecha === 'string' && e.fecha.length > 0;
 }
 
 function getLog() {
-  try { return JSON.parse(localStorage.getItem('aqua_bitacora')) || []; }
+  if (!_requireUnlocked()) return [];
+  try {
+    const raw = JSON.parse(localStorage.getItem('aqua_bitacora')) || [];
+    return Array.isArray(raw) ? raw.filter(_isValidLogEntry) : [];
+  }
   catch { return []; }
 }
 
@@ -1874,7 +2434,7 @@ function checkLogForm() {
   const bar = document.getElementById('logComplianceBar');
   if (!bar) return;
   if (filled === 0) { bar.style.display = 'none'; return; }
-  bar.style.display = '';
+  bar.style.display = 'flex';
   if (outRange === 0) {
     bar.className = 'log-compliance-bar log-comp-ok';
     bar.innerHTML = `<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1932,7 +2492,7 @@ function _compressPhoto(file, cb) {
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    cb(canvas.toDataURL('image/jpeg', 0.65));
+    cb(canvas.toDataURL('image/png'));
   };
   img.src = url;
 }
@@ -1996,8 +2556,8 @@ function editLog(ts) {
   _applyPhoto('fotoAveria', entry.fotoAveria || null);
   document.getElementById('btnSaveLogText').textContent   = 'Actualizar registro';
   document.getElementById('logEditDate').textContent      = entry.fecha || '';
-  document.getElementById('logEditBanner').style.display  = '';
-  document.getElementById('btnCancelEdit').style.display  = '';
+  document.getElementById('logEditBanner').style.display  = 'flex';
+  document.getElementById('btnCancelEdit').style.display  = 'inline-flex';
   checkLogForm();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -2092,7 +2652,7 @@ function saveLog() {
     _newLogTs = entry.ts;
     toastMsg = `Medición del ${entry.fecha} guardada en bitácora.`;
   }
-  localStorage.setItem('aqua_bitacora', JSON.stringify(log));
+  _secSave('aqua_bitacora', JSON.stringify(log));
   _checkStorageUsage();
   _logPage = 0;
   clearLogForm();
@@ -2108,7 +2668,7 @@ function saveLog() {
 function deleteLog(ts) {
   showConfirm('¿Eliminar este registro? Esta acción no se puede deshacer.', () => {
     const log = getLog().filter(e => e.ts !== ts);
-    localStorage.setItem('aqua_bitacora', JSON.stringify(log));
+    _secSave('aqua_bitacora', JSON.stringify(log));
     if (!log.length) {
       sessionStorage.removeItem('aqua_irapi_result');
       sessionStorage.removeItem('aqua_irapi_sliders');
@@ -2192,9 +2752,9 @@ function renderLog() {
       </thead>
       <tbody>
         ${pageLog.map(e => `
-          <tr class="log-row-clickable" data-ts="${e.ts}" onclick="viewLog(${e.ts})" title="Ver detalle del registro">
-            <td data-label="Fecha">${e.fecha || '–'}</td>
-            <td data-label="Hora">${fmt12h(e.hora)}</td>
+          <tr class="log-row-clickable" data-ts="${e.ts}" title="Ver detalle del registro">
+            <td data-label="Fecha">${escapeHtml(e.fecha) || '–'}</td>
+            <td data-label="Hora">${escapeHtml(fmt12h(e.hora))}</td>
             <td data-label="Operador">${escapeHtml(e.operador) || '–'}</td>
             <td data-label="Cl. Libre"${cc('cloro',     e.cloro    )}>${e.cloro     ?? '–'} ppm</td>
             <td data-label="Cl. Comb" ${cc('clorocomb', e.clorocomb)}>${e.clorocomb != null && !isNaN(e.clorocomb) ? e.clorocomb + ' ppm' : '–'}</td>
@@ -2211,15 +2771,15 @@ function renderLog() {
             <td data-label="Art.16" title="${[e.caudal != null ? 'Caudal: ' + e.caudal + ' m³/h' : '', e.horasFun != null ? 'Horas: ' + e.horasFun + 'h' : '', e.aguaRep != null ? 'Agua: ' + e.aguaRep + ' m³' : '', e.retrolav != null ? 'Retrolavados: ' + e.retrolav : '', e.prodQuim ? 'Prod: ' + escapeHtml(e.prodQuim) : '', e.averias ? 'Averías: ' + escapeHtml(e.averias) : ''].filter(Boolean).join(' · ') || 'Sin datos Art.16'}">${(e.caudal != null || e.horasFun != null || e.aguaRep != null || e.retrolav != null || e.prodQuim || e.averias) ? '✓' : '–'}</td>
             <td data-label="Bañistas">${e.banistas ?? '–'}</td>
             <td data-label="">
-              <div class="log-row-actions" onclick="event.stopPropagation()">
-                ${(e.fotoAgua || e.fotoAveria) ? `<button class="btn-cam-log" onclick="viewLog(${e.ts})" title="Ver foto adjunta" aria-label="Ver foto del registro"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>` : ''}
-                <button class="btn-edit-log" onclick="editLog(${e.ts})" title="Editar registro" aria-label="Editar registro del ${e.fecha}">
+              <div class="log-row-actions">
+                ${(e.fotoAgua || e.fotoAveria) ? `<button class="btn-cam-log" title="Ver foto adjunta" aria-label="Ver foto del registro"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>` : ''}
+                <button class="btn-edit-log" title="Editar registro" aria-label="Editar registro del ${e.fecha}">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                   </svg>
                 </button>
-                <button class="btn-delete-log" onclick="deleteLog(${e.ts})" title="Eliminar registro" aria-label="Eliminar registro del ${e.fecha}">
+                <button class="btn-delete-log" title="Eliminar registro" aria-label="Eliminar registro del ${e.fecha}">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                     <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
@@ -2234,11 +2794,11 @@ function renderLog() {
     </div>
     ${totalPages > 1 ? `
     <div class="log-pagination">
-      <button class="log-pg-btn" onclick="goLogPage(0)" ${_logPage === 0 ? 'disabled' : ''} aria-label="Primera página">«</button>
-      <button class="log-pg-btn" onclick="goLogPage(${_logPage - 1})" ${_logPage === 0 ? 'disabled' : ''} aria-label="Página anterior">‹</button>
+      <button class="log-pg-btn" data-page="0" ${_logPage === 0 ? 'disabled' : ''} aria-label="Primera página">«</button>
+      <button class="log-pg-btn" data-page="${_logPage - 1}" ${_logPage === 0 ? 'disabled' : ''} aria-label="Página anterior">‹</button>
       <span class="log-pg-info">${_logPage + 1} / ${totalPages}</span>
-      <button class="log-pg-btn" onclick="goLogPage(${_logPage + 1})" ${_logPage >= totalPages - 1 ? 'disabled' : ''} aria-label="Página siguiente">›</button>
-      <button class="log-pg-btn" onclick="goLogPage(${totalPages - 1})" ${_logPage >= totalPages - 1 ? 'disabled' : ''} aria-label="Última página">»</button>
+      <button class="log-pg-btn" data-page="${_logPage + 1}" ${_logPage >= totalPages - 1 ? 'disabled' : ''} aria-label="Página siguiente">›</button>
+      <button class="log-pg-btn" data-page="${totalPages - 1}" ${_logPage >= totalPages - 1 ? 'disabled' : ''} aria-label="Última página">»</button>
     </div>` : ''}
   `;
 
@@ -2295,16 +2855,16 @@ function viewLog(ts) {
     }
     return `<div class="log-detail-param ${inRange ? '' : 'param-out'}">
       <span class="log-detail-param-label">${p.label}</span>
-      <span class="log-detail-param-val">${val}${p.unit ? ' ' + p.unit : ''}</span>
+      <span class="log-detail-param-val">${_safeNum(val)}${p.unit ? ' ' + p.unit : ''}</span>
       ${badge}${devHTML}
     </div>`;
   }).join('');
 
   const art16Items = [
-    entry.caudal    != null ? `<li>Caudal: <strong>${entry.caudal} m³/h</strong></li>` : '',
-    entry.horasFun  != null ? `<li>Horas de funcionamiento: <strong>${entry.horasFun} h</strong></li>` : '',
-    entry.aguaRep   != null ? `<li>Agua repuesta: <strong>${entry.aguaRep} m³</strong></li>` : '',
-    entry.retrolav  != null ? `<li>Retrolavados: <strong>${entry.retrolav}</strong></li>` : '',
+    entry.caudal    != null ? `<li>Caudal: <strong>${_safeNum(entry.caudal)} m³/h</strong></li>` : '',
+    entry.horasFun  != null ? `<li>Horas de funcionamiento: <strong>${_safeNum(entry.horasFun)} h</strong></li>` : '',
+    entry.aguaRep   != null ? `<li>Agua repuesta: <strong>${_safeNum(entry.aguaRep)} m³</strong></li>` : '',
+    entry.retrolav  != null ? `<li>Retrolavados: <strong>${_safeNum(entry.retrolav)}</strong></li>` : '',
     entry.prodQuim              ? `<li>Productos químicos: <strong>${escapeHtml(entry.prodQuim)}</strong></li>` : '',
     entry.averias               ? `<li>Averías / novedades: <strong>${escapeHtml(entry.averias)}</strong></li>` : '',
   ].filter(Boolean).join('');
@@ -2318,7 +2878,7 @@ function viewLog(ts) {
   const extraHTML = (entry.banistas != null || entry.notas)
     ? `<div class="log-detail-section">
         <div class="log-detail-section-title">Información adicional</div>
-        ${entry.banistas != null ? `<div class="log-detail-extra-row"><span>Bañistas</span><strong>${entry.banistas}</strong></div>` : ''}
+        ${entry.banistas != null ? `<div class="log-detail-extra-row"><span>Bañistas</span><strong>${_safeNum(entry.banistas)}</strong></div>` : ''}
         ${entry.notas ? `<div class="log-detail-notas"><em>${escapeHtml(entry.notas)}</em></div>` : ''}
       </div>` : '';
 
@@ -2327,11 +2887,11 @@ function viewLog(ts) {
     const islColor  = entry.islStatus === 'Equilibrada' ? '#0cb86a' : entry.islStatus === 'Incrustante' ? '#f59e0b' : '#ef4444';
     const islBg     = entry.islStatus === 'Equilibrada' ? '#f0fdf4' : entry.islStatus === 'Incrustante' ? '#fffbeb' : '#fef2f2';
     const islBorder = entry.islStatus === 'Equilibrada' ? '#bbf7d0' : entry.islStatus === 'Incrustante' ? '#fde68a' : '#fecaca';
-    const durezaNote = entry.dureza == null ? ` <span style="font-size:11px;color:#94a3b8">(dureza estimada: ${entry.islDureza} ppm)</span>` : '';
+    const durezaNote = entry.dureza == null ? ` <span style="font-size:11px;color:#94a3b8">(dureza estimada: ${_safeNum(entry.islDureza)} ppm)</span>` : '';
     islHTML = `<div class="log-detail-section">
       <div class="log-detail-section-title">Índice de Saturación Langelier (ISL)</div>
       <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;border:1px solid ${islBorder};background:${islBg}">
-        <span style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;color:${islColor}">${entry.isl.toFixed(2)}</span>
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;color:${islColor}">${_safeNum(entry.isl, 2)}</span>
         <div>
           <div style="font-weight:700;color:${islColor}">${entry.islStatus}</div>
           <div style="font-size:12px;color:#64748b">Rango óptimo: −0.3 a +0.5${durezaNote}</div>
@@ -2344,8 +2904,8 @@ function viewLog(ts) {
     <div class="log-detail-section">
       <div class="log-detail-section-title">Evidencia fotográfica</div>
       <div class="log-detail-fotos">
-        ${entry.fotoAgua   ? `<div class="log-detail-foto-item"><span class="log-detail-foto-label">Estado del agua</span><img class="log-detail-foto-img" src="${entry.fotoAgua}" alt="Foto del agua" /></div>` : ''}
-        ${entry.fotoAveria ? `<div class="log-detail-foto-item"><span class="log-detail-foto-label">Avería / equipo</span><img class="log-detail-foto-img" src="${entry.fotoAveria}" alt="Foto avería" /></div>` : ''}
+        ${_safePhotoSrc(entry.fotoAgua)   ? `<div class="log-detail-foto-item"><span class="log-detail-foto-label">Estado del agua</span><img class="log-detail-foto-img" src="${_safePhotoSrc(entry.fotoAgua)}" alt="Foto del agua" /></div>` : ''}
+        ${_safePhotoSrc(entry.fotoAveria) ? `<div class="log-detail-foto-item"><span class="log-detail-foto-label">Avería / equipo</span><img class="log-detail-foto-img" src="${_safePhotoSrc(entry.fotoAveria)}" alt="Foto avería" /></div>` : ''}
       </div>
     </div>` : '';
 
@@ -2359,16 +2919,19 @@ function viewLog(ts) {
     ${extraHTML}
     ${fotosHTML}
     <div style="display:flex;gap:8px;margin-top:20px">
-      <button class="btn btn-outline btn-danger-outline" style="flex:1" onclick="closeLogDetail();deleteLog(${entry.ts})">
+      <button class="btn btn-outline btn-danger-outline js-log-detail-delete" style="flex:1">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         Eliminar
       </button>
-      <button class="btn btn-outline" style="flex:1" onclick="closeLogDetail();editLog(${entry.ts})">
+      <button class="btn btn-outline js-log-detail-edit" style="flex:1">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Editar
       </button>
     </div>
   `;
+
+  body.querySelector('.js-log-detail-delete').addEventListener('click', () => { closeLogDetail(); deleteLog(entry.ts); });
+  body.querySelector('.js-log-detail-edit').addEventListener('click',   () => { closeLogDetail(); editLog(entry.ts);   });
 
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -2443,10 +3006,8 @@ function renderAFR() {
   const nextBtn = document.getElementById('afrNext');
   if (APP.afrStep === steps.length - 1) {
     nextBtn.textContent = 'Finalizar';
-    nextBtn.onclick = finishAFR;
   } else {
     nextBtn.innerHTML = 'Siguiente <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>';
-    nextBtn.onclick = () => afrStep(1);
   }
 
   // Dots
@@ -2483,7 +3044,7 @@ function renderAFRDoseBlock() {
   const lastCloro = (log.length > 0 && log[0].cloro != null) ? +log[0].cloro : null;
 
   const cloroRow = lastCloro !== null
-    ? `<div class="afr-dose-row"><span>Cloro actual (último registro)</span><strong>${lastCloro} ppm</strong></div>` : '';
+    ? `<div class="afr-dose-row"><span>Cloro actual (último registro)</span><strong>${_safeNum(lastCloro)} ppm</strong></div>` : '';
 
   const volRow = vol > 0
     ? `<div class="afr-dose-row"><span>Volumen de la piscina</span><strong>${vol.toFixed(1)} m³</strong></div>`
@@ -2491,7 +3052,7 @@ function renderAFRDoseBlock() {
          <span>Volumen de piscina</span>
          <div class="input-unit" style="max-width:120px">
            <input type="number" class="form-input" id="afrVolInput" min="1" max="9999" step="1"
-                  placeholder="m³" oninput="calcAFRDose()" />
+                  placeholder="m³" />
            <span class="unit">m³</span>
          </div>
        </div>`;
@@ -2514,6 +3075,8 @@ function renderAFRDoseBlock() {
     <div class="afr-dose-note">Disolver el producto en agua antes de agregar · Filtro encendido · Mantener pH 6.8–7.3</div>
   `;
 
+  const afrVolEl = document.getElementById('afrVolInput');
+  if (afrVolEl) afrVolEl.addEventListener('input', () => calcAFRDose());
   if (vol > 0) calcAFRDose(vol, target, lastCloro);
 }
 
@@ -2538,7 +3101,7 @@ function calcAFRDose(volArg, targetArg, cloroArg) {
   const delta     = lastCloro !== null ? Math.max(0, target - lastCloro) : target;
 
   if (delta <= 0) {
-    resultEl.innerHTML = `<div class="afr-dose-ok">El cloro actual (${lastCloro} ppm) ya alcanza el objetivo de ${target} ppm — verificar con kit antes de continuar.</div>`;
+    resultEl.innerHTML = `<div class="afr-dose-ok">El cloro actual (${_safeNum(lastCloro)} ppm) ya alcanza el objetivo de ${_safeNum(target)} ppm — verificar con kit antes de continuar.</div>`;
     return;
   }
 
@@ -2619,7 +3182,7 @@ function finishAFR() {
     ts:       Date.now(),
     foto:     _photos.afrFoto || null,
   });
-  localStorage.setItem('aqua_afr', JSON.stringify(incidents));
+  _secSave('aqua_afr', JSON.stringify(incidents));
   _applyPhoto('afrFoto', null);
   renderAFRIncidents();
   APP.afrStep = 0;
@@ -2646,7 +3209,9 @@ function _updateAFRBanner(incidents) {
 }
 
 function renderAFRIncidents() {
-  const incidents = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
+  if (!_requireUnlocked()) return;
+  const raw = (() => { try { return JSON.parse(localStorage.getItem('aqua_afr') || '[]'); } catch { return []; } })();
+  const incidents = Array.isArray(raw) ? raw.filter(_isValidAFREntry) : [];
   const el = document.getElementById('afrIncidents');
   _updateAFRBanner(incidents);
   if (!incidents.length) {
@@ -2661,20 +3226,20 @@ function renderAFRIncidents() {
     const badgeText  = isDiar ? 'EMERGENCIA' : isVom ? 'Vómito' : 'Sólido';
     const iconColor  = isDiar ? '#dc2626' : isVom ? '#d97706' : 'var(--warning)';
     return `
-    <div class="afr-incident-item ${incClass}" onclick="viewAFRIncident(${i.ts})" title="Ver detalle del incidente">
+    <div class="afr-incident-item ${incClass}" data-ts="${i.ts}" title="Ver detalle del incidente">
       <div class="afr-incident-info">
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" style="flex-shrink:0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <div>
-          <strong>${_afrFechaDisplay(i)} · ${fmt12h(i.hora, '')}</strong>
+          <strong>${escapeHtml(_afrFechaDisplay(i))} · ${escapeHtml(fmt12h(i.hora, ''))}</strong>
           <span class="afr-inc-badge ${badgeClass}">${badgeText}</span><br>
           <span style="font-size:13px;color:var(--text-muted)">Operador: ${escapeHtml(i.operador) || '–'}</span>
         </div>
       </div>
-      <div class="afr-incident-actions" onclick="event.stopPropagation()">
-        <button class="btn-edit-log" onclick="editAFRIncident(${i.ts})" title="Editar incidente" aria-label="Editar incidente">
+      <div class="afr-incident-actions">
+        <button class="btn-edit-log" title="Editar incidente" aria-label="Editar incidente">
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
-        <button class="btn-delete-log" onclick="deleteAFRIncident(${i.ts})" title="Eliminar incidente" aria-label="Eliminar incidente">
+        <button class="btn-delete-log" title="Eliminar incidente" aria-label="Eliminar incidente">
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
       </div>
@@ -2683,15 +3248,17 @@ function renderAFRIncidents() {
 }
 
 function deleteAFRIncident(ts) {
+  if (!_requireUnlocked()) return;
   showConfirm('¿Eliminar este incidente? Esta acción no se puede deshacer.', () => {
     const incidents = JSON.parse(localStorage.getItem('aqua_afr') || '[]').filter(i => i.ts !== ts);
-    localStorage.setItem('aqua_afr', JSON.stringify(incidents));
+    _secSave('aqua_afr', JSON.stringify(incidents));
     renderAFRIncidents();
     showToast('Incidente eliminado.', 'success');
   });
 }
 
 function editAFRIncident(ts) {
+  if (!_requireUnlocked()) return;
   const incidents = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
   const i = incidents.find(x => x.ts === ts);
   if (!i) return;
@@ -2715,6 +3282,7 @@ function closeAFREdit(e) {
 }
 
 function viewAFRIncident(ts) {
+  if (!_requireUnlocked()) return;
   const incidents = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
   const i = incidents.find(x => x.ts === ts);
   if (!i) return;
@@ -2760,11 +3328,11 @@ function viewAFRIncident(ts) {
       </div>
       <div class="log-detail-param">
         <span class="log-detail-param-label">Fecha</span>
-        <span class="log-detail-param-val">${i.fecha || '–'}</span>
+        <span class="log-detail-param-val">${escapeHtml(i.fecha) || '–'}</span>
       </div>
       <div class="log-detail-param">
         <span class="log-detail-param-label">Hora</span>
-        <span class="log-detail-param-val">${fmt12h(i.hora)}</span>
+        <span class="log-detail-param-val">${escapeHtml(fmt12h(i.hora))}</span>
       </div>
       <div class="log-detail-param">
         <span class="log-detail-param-label">Operador a cargo</span>
@@ -2779,17 +3347,21 @@ function viewAFRIncident(ts) {
     ${i.foto ? `<div class="log-detail-section">
       <div class="log-detail-section-title">Evidencia fotográfica</div>
       <div class="log-detail-fotos">
-        <div class="log-detail-foto-item"><span class="log-detail-foto-label">Foto del incidente</span><img class="log-detail-foto-img" src="${i.foto}" alt="Foto del incidente AFR" /></div>
+        <div class="log-detail-foto-item"><span class="log-detail-foto-label">Foto del incidente</span><img class="log-detail-foto-img" src="${_safePhotoSrc(i.foto)}" alt="Foto del incidente AFR" /></div>
       </div>
     </div>` : ''}
     <div style="display:flex;gap:8px;margin-top:20px">
-      <button class="btn btn-outline" style="flex:1" onclick="closeAFRDetail();editAFRIncident(${i.ts})">
+      <button class="btn btn-outline js-afr-detail-edit" style="flex:1">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Editar
       </button>
-      <button class="btn btn-primary" style="flex:1" onclick="closeAFRDetail()">Cerrar</button>
+      <button class="btn btn-primary js-afr-detail-close" style="flex:1">Cerrar</button>
     </div>
   `;
+
+  const afrBody = document.getElementById('afrDetailBody');
+  afrBody.querySelector('.js-afr-detail-edit').addEventListener('click',  () => { closeAFRDetail(); editAFRIncident(i.ts); });
+  afrBody.querySelector('.js-afr-detail-close').addEventListener('click', () =>   closeAFRDetail());
 
   document.getElementById('afrDetailOverlay').style.display = 'flex';
 }
@@ -2800,6 +3372,7 @@ function closeAFRDetail(e) {
 }
 
 function saveAFREdit() {
+  if (!_requireUnlocked()) return;
   if (!_afrEditTs) return;
   const cloroFinalRaw = parseFloat(document.getElementById('afrEditCloroFinal').value);
   const phFinalRaw    = parseFloat(document.getElementById('afrEditPhFinal').value);
@@ -2817,7 +3390,7 @@ function saveAFREdit() {
     fechaReapertura:  document.getElementById('afrEditFechaReapertura').value || null,
     horaReapertura:   document.getElementById('afrEditHoraReapertura').value  || null,
   });
-  localStorage.setItem('aqua_afr', JSON.stringify(incidents));
+  _secSave('aqua_afr', JSON.stringify(incidents));
   document.getElementById('afrEditOverlay').style.display = 'none';
   _afrEditTs = null;
   renderAFRIncidents();
@@ -2897,7 +3470,7 @@ function updateReportSummary() {
 
   const desde = log.length ? log[log.length - 1].fecha : null;
   const hasta  = log.length ? log[0].fecha : null;
-  const allAfr = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
+  const allAfr = (() => { try { return JSON.parse(localStorage.getItem('aqua_afr') || '[]'); } catch { return []; } })().filter(_isValidAFREntry);
   const incidents = desde && hasta
     ? allAfr.filter(i => { const f = i.fecha || ''; return f >= desde && f <= hasta; })
     : [];
@@ -2989,16 +3562,22 @@ function generatePDF() {
     restore();
     showToast('Error al cargar el generador de PDF. Verifica tu conexión.', 'error');
   };
-  const loadScript = (src, cb) => {
+  const loadScript = (src, integrity, cb) => {
     const s = document.createElement('script');
-    s.src = src; s.onload = cb; s.onerror = onError;
+    s.src = src;
+    s.integrity = integrity;
+    s.crossOrigin = 'anonymous';
+    s.onload = cb;
+    s.onerror = onError;
     document.head.appendChild(s);
   };
 
   loadScript(
     'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+    'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==',
     () => loadScript(
       'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+      'sha512-2/YdOMV+YNpanLCF5MdQwaoFRVbTmrJ4u4EpqS/USXAQNUDgI5uwYi6J98WVtJKcfe1AbgerygzDFToxAlOGEQ==',
       () => { restore(); _doPDF(); }
     )
   );
@@ -3018,12 +3597,40 @@ function _loadImgB64(src) {
   });
 }
 
+async function _sha256Hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function _pdfIntegrityCheck() {
+  const checks = [];
+  for (const key of ['aqua_bitacora', 'aqua_afr']) {
+    const json = localStorage.getItem(key);
+    const sig  = localStorage.getItem(key + '_sig');
+    if (!json || !sig) { checks.push({ key, status: 'unsigned' }); continue; }
+    try {
+      const ok = await _INTEGRITY.verify(json, sig);
+      checks.push({ key, status: ok ? 'ok' : 'tampered' });
+    } catch { checks.push({ key, status: 'error' }); }
+  }
+  const tampered = checks.filter(c => c.status === 'tampered');
+  return { clean: tampered.length === 0, tampered };
+}
+
 async function _doPDF() {
   const btn = document.getElementById('btnGeneratePDF');
   if (btn) { btn.disabled = true; btn.dataset.orig = btn.dataset.orig || btn.innerHTML; btn.innerHTML = '⏳ Generando PDF…'; }
   try {
-    const logoB64 = await _loadImgB64('Multimedia/logo1.png').catch(() => null);
-    __buildPDF(logoB64);
+    const integrity = await _pdfIntegrityCheck();
+    if (!integrity.clean) {
+      const keys = integrity.tampered.map(c => c.key).join(', ');
+      showToast(`Advertencia de integridad: los datos de ${keys} pueden haber sido modificados externamente. El PDF incluirá una advertencia.`, 'warning', 7000);
+    }
+    const [logoB64, logHash] = await Promise.all([
+      _loadImgB64('Multimedia/logo1.png').catch(() => null),
+      _sha256Hex(localStorage.getItem('aqua_bitacora') || '[]'),
+    ]);
+    await __buildPDF(logoB64, integrity, logHash);
   } catch (err) {
     showToast('Error al generar el PDF. Intenta de nuevo.', 'error');
   } finally {
@@ -3031,7 +3638,7 @@ async function _doPDF() {
   }
 }
 
-function __buildPDF(logoB64) {
+async function __buildPDF(logoB64, integrity, logHash) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
@@ -3042,12 +3649,25 @@ function __buildPDF(logoB64) {
   const log    = getReportLog();
   const desde  = log.length ? log[log.length - 1].fecha : null;
   const hasta  = log.length ? log[0].fecha : null;
-  const allAfr = JSON.parse(localStorage.getItem('aqua_afr') || '[]');
+  const allAfr = (() => { try { return JSON.parse(localStorage.getItem('aqua_afr') || '[]'); } catch { return []; } })().filter(_isValidAFREntry);
   const incidents = desde && hasta
     ? allAfr.filter(i => { const f = i.fecha || ''; return f >= desde && f <= hasta; })
     : [];
   const periodo = desde && hasta && desde !== hasta ? `${desde} al ${hasta}` : (desde || '–');
   const pct = (arr, ok) => arr.length ? ((arr.filter(ok).length / arr.length) * 100).toFixed(0) + '%' : '–';
+
+  const genTs    = new Date();
+  const genLocal = genTs.toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'medium' });
+  const hashShort = logHash ? logHash.slice(0, 16) + '…' + logHash.slice(-8) : '–';
+
+  // ── Metadata del documento ────────────────────────────────
+  doc.setProperties({
+    title:    `Reporte Calidad del Agua — ${nombre}`,
+    subject:  `Período: ${periodo}`,
+    author:   responsable,
+    creator:  'Brazada Aqua Tech · PWA · Res. 234/2026',
+    keywords: 'piscina, calidad agua, resolución 234, Colombia',
+  });
 
   // ── Membrete ─────────────────────────────────────────────
   // Área blanca superior
@@ -3068,7 +3688,7 @@ function __buildPDF(logoB64) {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
   doc.text('Sistema de Gestión de Piscinas · Resolución 234 / 2026 · Colombia', 29, 18);
-  doc.text(`Generado: ${new Date().toLocaleDateString('es-CO')}`, 196, 11, { align: 'right' });
+  doc.text(`Generado: ${genLocal}`, 196, 11, { align: 'right' });
 
   // Banda oscura
   doc.setFillColor(30, 41, 59);
@@ -3328,6 +3948,52 @@ function __buildPDF(logoB64) {
     });
   }
 
+  // ── Sección de verificación de integridad ────────────────
+  {
+    const pageH = doc.internal.pageSize.getHeight();
+    let vY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 14 : 20;
+    if (vY + 38 > pageH - 20) { doc.addPage(); vY = 20; }
+
+    const integrityOk  = integrity?.clean !== false;
+    const headerColor  = integrityOk ? [12, 184, 106] : [220, 38, 38];
+    const headerLabel  = integrityOk
+      ? 'Verificación de integridad — OK'
+      : '⚠ Advertencia de integridad — datos posiblemente modificados';
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...headerColor);
+    doc.text(headerLabel, 14, vY);
+
+    doc.autoTable({
+      startY: vY + 4,
+      body: [
+        ['Fecha y hora de generación', genLocal],
+        ['SHA-256 bitácora (primeros/últimos bytes)', hashShort],
+        ['Origen de los datos', 'Brazada Aqua Tech — almacenamiento local del dispositivo (localStorage)'],
+        ['Verificación HMAC', integrityOk ? 'Firmas válidas — no se detectaron modificaciones externas' : `Falla de integridad detectada en: ${integrity.tampered.map(c => c.key).join(', ')}`],
+        ['Advertencia legal', 'Este documento fue generado por una aplicación cliente. No constituye un registro oficial certificado por autoridad sanitaria. La integridad de los datos depende del dispositivo y del navegador del operador.'],
+      ],
+      theme: 'plain',
+      styles:      { fontSize: 8, cellPadding: 2 },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 60, textColor: [100, 116, 139] },
+        1: { cellWidth: 126 },
+      },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.row.index === 3) {
+          data.cell.styles.textColor = integrityOk ? [22, 101, 52] : [185, 28, 28];
+          data.cell.styles.fontStyle = 'bold';
+        }
+        if (data.section === 'body' && data.row.index === 4) {
+          data.cell.styles.textColor = [120, 120, 120];
+          data.cell.styles.fontStyle = 'italic';
+        }
+      },
+      margin: { left: 14, right: 14 },
+    });
+  }
+
   // ── Pie de página ────────────────────────────────────────
   const pages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
@@ -3401,7 +4067,7 @@ function renderDocs() {
     <div class="docs-category">
       <div class="docs-category-label">${cat}</div>
       ${visible.filter(i => i.category === cat).map(item => `
-        <div class="docs-item ${state[item.id] ? 'checked' : ''}" onclick="toggleDocItem('${item.id}')">
+        <div class="docs-item ${state[item.id] ? 'checked' : ''}" data-doc-id="${item.id}">
           <div class="docs-item-check">${state[item.id] ? CHECK_ICON : ''}</div>
           <span class="docs-item-label">${item.label}</span>
         </div>
@@ -3502,7 +4168,10 @@ function initDateTimeFields() {
   if (timeEl) timeEl.value = time;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  _pinInit();                    // Muestra overlay de PIN antes que cualquier otra cosa
+  await _verifyIntegrity();      // Espera la verificación de integridad antes de renderizar datos
+
   // Sección visible — necesario para el primer paint
   renderDashboardGauges();
   renderDashboardIndices();
@@ -3534,6 +4203,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (el) el.style.setProperty('--pct', el.value + '%');
     });
   }, 0);
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && _PIN.exists() && _PIN.unlocked) lockApp();
+  });
 });
 
 // ── PRELOADER ─────────────────────────────────────────────

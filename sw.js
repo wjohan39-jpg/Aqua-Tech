@@ -40,8 +40,9 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
-  const url = e.request.url;
-  const isNetworkFirst = NETWORK_FIRST.some(f => url.includes(f));
+  const parsedUrl    = new URL(e.request.url);
+  const isSameOrigin = parsedUrl.origin === self.location.origin;
+  const isNetworkFirst = isSameOrigin && NETWORK_FIRST.some(f => parsedUrl.pathname.includes(f));
 
   if (isNetworkFirst) {
     // Network-first: siempre intenta la red; si falla (offline) usa caché
