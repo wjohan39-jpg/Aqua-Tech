@@ -4223,6 +4223,8 @@ function preloaderNext() {
   if (video && chip) {
     video.classList.add('preloader-avatar-sm');
     chip.replaceWith(video);
+    // En PC el movimiento del nodo DOM puede pausar el video; forzar reproducción
+    video.play().catch(() => {});
   }
 
   s1.classList.add('screen-exit');
