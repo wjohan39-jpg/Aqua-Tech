@@ -1,9 +1,9 @@
 const CACHE = 'brazada-v5';
 
 const PRECACHE = [
-  './Brazada.html',
-  './Brazada.css',
-  './Brazada.js',
+  './Aquatech.html',
+  './Aquatech.css',
+  './Aquatech.js',
   './manifest.json',
   './Multimedia/logo1.webp',
   './Multimedia/logo1.png',
@@ -14,9 +14,9 @@ const PRECACHE = [
 
 // Archivos de app shell — siempre red primero, caché como respaldo offline
 const NETWORK_FIRST = [
-  'Brazada.html',
-  'Brazada.css',
-  'Brazada.js',
+  'Aquatech.html',
+  'Aquatech.css',
+  'Aquatech.js',
 ];
 
 self.addEventListener('install', e => {

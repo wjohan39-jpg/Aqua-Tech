@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/Brazada.html" }
+    { "source": "/(.*)", "destination": "/Aquatech.html" }
   ],
   "headers": [
     {
@@ -18,13 +18,13 @@
       ]
     },
     {
-      "source": "/Brazada.js",
+      "source": "/Aquatech.js",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
       ]
     },
     {
-      "source": "/Brazada.css",
+      "source": "/Aquatech.css",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
       ]

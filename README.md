@@ -212,7 +212,7 @@ npx serve .
 python -m http.server 8080
 ```
 
-Abre `http://localhost:8080/Brazada.html` en el navegador.
+Abre `http://localhost:8080/Aquatech.html` en el navegador.
 
 > El Service Worker requiere HTTPS o `localhost`. No funciona abriendo el archivo directamente con `file://`.
 
@@ -243,9 +243,9 @@ Para desarrollo local con `python -m http.server`, las cabeceras no se aplican �
 
 ```
 SplashLab/
-├── Brazada.html       # App shell — estructura, plantillas y overlays
-├── Brazada.css        # Estilos — diseño responsivo mobile-first (~4 400 líneas)
-├── Brazada.js         # Lógica completa (~4 600 líneas)
+├── Aquatech.html       # App shell — estructura, plantillas y overlays
+├── Aquatech.css        # Estilos — diseño responsivo mobile-first (~4 400 líneas)
+├── Aquatech.js         # Lógica completa (~4 600 líneas)
 ├── sw.js              # Service Worker (cache brazada-v5)
 ├── manifest.json      # Manifiesto PWA (nombre: Aquatech)
 └── Multimedia/        # Íconos y recursos gráficos (WebP + PNG)

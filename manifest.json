@@ -1,9 +1,9 @@
 {
-  "id": "./Brazada.html",
+  "id": "./Aquatech.html",
   "name": "Brazada Aqua Tech",
   "short_name": "Aquatech",
   "description": "Sistema de gestión de piscinas · Resolución 234/2026 · Colombia",
-  "start_url": "./Brazada.html",
+  "start_url": "./Aquatech.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0a192f",
