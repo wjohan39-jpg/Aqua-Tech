@@ -251,20 +251,11 @@ input, select, textarea { font-family: inherit; }
   z-index: 50;
 }
 
-.topbar > picture {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 44px;        /* iOS Safari: ancla el tamaño de la columna auto en Grid */
-  flex-shrink: 0;
-}
-
 .topbar-logo {
   height: 65px;
   width: auto;
-  max-width: 44px;
   display: block;
-  object-fit: contain;
+  justify-self: center;
 }
 
 .sidebar-toggle {
@@ -3973,8 +3964,9 @@ a.docs-ref-item:hover { background: var(--border); }
 [data-theme="dark"] .topbar                { background: #1e293b; border-color: #334155; }
 [data-theme="dark"] .sidebar-toggle:hover  { background: #334155; }
 [data-theme="dark"] .brand-logo-img,
-[data-theme="dark"] .topbar-logo,
-[data-theme="dark"] .preloader-logo        { filter: brightness(0) invert(1); }
+[data-theme="dark"] .topbar-logo           { filter: brightness(0) invert(1); }
+/* El preloader-logo-card tiene fondo blanco fijo → el logo NO se invierte para que sea visible */
+[data-theme="dark"] .preloader-logo        { filter: none; }
 
 /* ── Cards ── */
 [data-theme="dark"] .card,
