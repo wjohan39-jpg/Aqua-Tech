@@ -1,4 +1,4 @@
-const CACHE = 'brazada-v5';
+const CACHE = 'brazada-v6';
 
 const PRECACHE = [
   './Aquatech.html',

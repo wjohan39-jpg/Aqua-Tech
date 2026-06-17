@@ -254,12 +254,17 @@ input, select, textarea { font-family: inherit; }
 .topbar > picture {
   display: flex;
   justify-content: center;
+  align-items: center;
+  width: 44px;        /* iOS Safari: ancla el tamaño de la columna auto en Grid */
+  flex-shrink: 0;
 }
 
 .topbar-logo {
   height: 65px;
   width: auto;
+  max-width: 44px;
   display: block;
+  object-fit: contain;
 }
 
 .sidebar-toggle {
