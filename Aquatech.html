@@ -136,6 +136,15 @@
             </button>
           </li>
 
+          <li class="nav-item" data-section="perfil">
+            <button type="button" class="nav-link" data-navigate="perfil">
+              <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              <span class="nav-text">Perfil</span>
+            </button>
+          </li>
+
           <li class="nav-item" data-section="documentos">
             <button type="button" class="nav-link" data-navigate="documentos">
               <svg aria-hidden="true" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -164,6 +173,10 @@
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
           <span>Limpiar datos</span>
         </button>
+        <a href="https://wa.me/573015816761" target="_blank" rel="noopener" class="sidebar-action-btn sidebar-whatsapp-btn" aria-label="Soporte por WhatsApp">
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>Soporte WhatsApp</span>
+        </a>
       </div>
 
     </aside>
@@ -215,6 +228,7 @@
               </button>
             </div>
           </div>
+          <div class="dash-establishment js-hidden" id="dashEstablishment"></div>
           <!-- Panel de inicio guiado (visible solo sin datos) -->
           <div id="dashEmptyGuide" class="dash-empty-guide js-hidden">
             <div class="deg-header">
@@ -358,6 +372,10 @@
                   <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                   Ver normativa
                 </button>
+                <a href="https://wa.me/573015816761" target="_blank" rel="noopener" class="quick-btn quick-btn-whatsapp">
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  Soporte WhatsApp
+                </a>
               </div>
             </div>
           </div>
@@ -710,6 +728,92 @@
             </div>
           </div>
 
+          <!-- Registro de laboratorio trimestral -->
+          <div class="card lab-reg-card">
+            <div class="card-header">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0h10m-10 0a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2m-10 0V9m10 5V9M5 21l4-4m0 0 4 4m-4-4v4"/><path d="M3 7h18M3 17h18"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              <h3>Registro de laboratorio trimestral</h3>
+              <span class="lab-reg-badge" id="labRegBadge" hidden></span>
+            </div>
+            <p class="lab-reg-intro">Res. 234/2026 exige análisis microbiológico certificado cada 90 días. Al guardar, el resultado alimenta automáticamente el componente microbiológico del IRAPI.</p>
+
+            <div id="labRegAlert" class="lab-reg-alert" hidden></div>
+
+            <!-- Formulario -->
+            <div class="lab-reg-form">
+              <div class="lab-reg-row">
+                <div class="form-group">
+                  <label class="form-label" for="labFecha">FECHA DE TOMA DE MUESTRA</label>
+                  <input type="date" class="form-input" id="labFecha" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="labLaboratorio">LABORATORIO CERTIFICADO</label>
+                  <input type="text" class="form-input" id="labLaboratorio" placeholder="Nombre del laboratorio" maxlength="80" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="labAcreditacion">N° ACREDITACIÓN (opcional)</label>
+                  <input type="text" class="form-input" id="labAcreditacion" placeholder="Ej. INV-00123" maxlength="30" />
+                </div>
+              </div>
+
+              <div class="lab-reg-micro-title">Resultados microbiológicos</div>
+              <div class="lab-reg-micro-grid">
+                <div class="lab-micro-item">
+                  <label class="form-label" for="labColiformes">Coliformes totales</label>
+                  <select class="form-select" id="labColiformes">
+                    <option value="">— Seleccionar —</option>
+                    <option value="ausente">Ausente ✓</option>
+                    <option value="presente">Presente ✗</option>
+                  </select>
+                </div>
+                <div class="lab-micro-item">
+                  <label class="form-label" for="labEcoli">E. coli</label>
+                  <select class="form-select" id="labEcoli">
+                    <option value="">— Seleccionar —</option>
+                    <option value="ausente">Ausente ✓</option>
+                    <option value="presente">Presente ✗</option>
+                  </select>
+                </div>
+                <div class="lab-micro-item">
+                  <label class="form-label" for="labPseudomonas">Pseudomonas aeruginosa</label>
+                  <select class="form-select" id="labPseudomonas">
+                    <option value="">— Seleccionar —</option>
+                    <option value="ausente">Ausente ✓</option>
+                    <option value="presente">Presente ✗</option>
+                  </select>
+                </div>
+                <div class="lab-micro-item">
+                  <label class="form-label" for="labStaph">Staphylococcus aureus</label>
+                  <select class="form-select" id="labStaph">
+                    <option value="">— Seleccionar —</option>
+                    <option value="ausente">Ausente ✓</option>
+                    <option value="presente">Presente ✗</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="lab-reg-row" style="margin-top:12px">
+                <div class="form-group">
+                  <label class="form-label" for="labCya">ÁCIDO CIANÚRICO — laboratorio (mg/L)</label>
+                  <div class="input-unit">
+                    <input type="number" class="form-input" id="labCya" min="0" max="300" step="0.1" placeholder="0" />
+                    <span class="unit">mg/L</span>
+                  </div>
+                  <span class="form-hint">Límite Res. 234/2026: 75 mg/L</span>
+                </div>
+              </div>
+
+              <button class="btn btn-primary" id="btnSaveLab" style="margin-top:4px">
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Guardar resultado y actualizar IRAPI
+              </button>
+            </div>
+
+            <!-- Historial -->
+            <div class="lab-reg-history-title">Historial de análisis</div>
+            <div id="labRegHistory"></div>
+          </div>
+
           <div class="flow-next-step">
             <div class="fns-left">
               <div class="fns-label">Análisis completo</div>
@@ -744,7 +848,63 @@
                 <input type="text" class="form-input" id="logOperador" placeholder="" list="operadorList" autocomplete="off" />
                 <datalist id="operadorList"></datalist>
               </div>
+              <div class="form-group">
+                <label class="form-label" for="logSalvavidas">SALVAVIDAS DE TURNO</label>
+                <input type="text" class="form-input" id="logSalvavidas" placeholder="Nombre" list="salvavidasList" autocomplete="off" oninput="onSalvavidasInput()" />
+                <datalist id="salvavidasList"></datalist>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="logSalvavidasNia">NIA</label>
+                <input type="text" class="form-input" id="logSalvavidasNia" placeholder="Identificación acuática" autocomplete="off" />
+              </div>
             </div>
+            <div class="momento-toggle-wrap">
+              <label class="form-label">MOMENTO DEL DÍA</label>
+              <div class="momento-toggle" id="momentoToggle">
+                <button type="button" class="momento-btn active" data-momento="apertura">Apertura</button>
+                <button type="button" class="momento-btn" data-momento="mediodia">Mediodía</button>
+                <button type="button" class="momento-btn" data-momento="cierre">Cierre</button>
+              </div>
+            </div>
+
+            <!-- CALIDAD FÍSICA DEL AGUA — Alistamiento 1 -->
+            <div class="fis-wrap">
+              <div class="fis-header">
+                <span class="fis-title">CALIDAD FÍSICA DEL AGUA</span>
+                <span class="fis-sub">Alistamiento 1 &mdash; Res. 234/2026</span>
+              </div>
+              <div class="fis-grid">
+                <div class="fis-row">
+                  <span class="fis-label">Color (visual)</span>
+                  <div class="fis-opts" data-fis-id="fisColor">
+                    <button type="button" class="fis-btn fis-ok active" data-val="aceptable">Aceptable</button>
+                    <button type="button" class="fis-btn fis-bad" data-val="no-aceptable">No aceptable</button>
+                  </div>
+                </div>
+                <div class="fis-row">
+                  <span class="fis-label">Materias flotantes</span>
+                  <div class="fis-opts" data-fis-id="fisFlotantes">
+                    <button type="button" class="fis-btn fis-ok active" data-val="ausentes">Ausentes</button>
+                    <button type="button" class="fis-btn fis-bad" data-val="presentes">Presentes</button>
+                  </div>
+                </div>
+                <div class="fis-row">
+                  <span class="fis-label">Olor (olfativo)</span>
+                  <div class="fis-opts" data-fis-id="fisOlor">
+                    <button type="button" class="fis-btn fis-ok active" data-val="aceptable">Aceptable</button>
+                    <button type="button" class="fis-btn fis-bad" data-val="no-aceptable">No aceptable</button>
+                  </div>
+                </div>
+                <div class="fis-row">
+                  <span class="fis-label">Transparencia (visual)</span>
+                  <div class="fis-opts" data-fis-id="fisTransp">
+                    <button type="button" class="fis-btn fis-ok active" data-val="visible">Fondo visible</button>
+                    <button type="button" class="fis-btn fis-bad" data-val="no-visible">No visible</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="form-grid-4">
               <div class="form-group">
                 <label class="form-label lsi-plabel" for="logCloro">CLORO LIBRE <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logCloro" aria-label="Ayuda: cloro libre">?</button> <span class="lsi-pbadge" id="logCloroBadge"></span></label>
@@ -799,6 +959,16 @@
                 </div>
               </div>
               <div class="form-group">
+                <label class="form-label lsi-plabel" for="logBromo">BROMO TOTAL (Br₂) <button class="param-help-btn" type="button" data-tooltip="tt-logBromo" aria-label="Ayuda: bromo total">?</button> <span class="lsi-pbadge" id="logBromoBadge"></span></label>
+                <input type="number" class="form-input" id="logBromo" step="0.1" min="0" max="20" placeholder="ej. 4.0" />
+                <div class="lsi-param-hint">4.0&ndash;6.0 ppm &middot; Solo piscinas con bromo</div>
+                <div class="param-tooltip-card" id="tt-logBromo" hidden>
+                  <div class="tt-what">Desinfectante alternativo al cloro. Más estable a altas temperaturas y pH alto. No registrar si se usa cloro.</div>
+                  <div class="tt-equipo">Equipo: tiras reactivas de bromo o fotómetro con reactivo DPD adaptado para Br₂</div>
+                  <div class="tt-range">Normal: 4.0–6.0 ppm &middot; Bitácora estándar Res. 234/2026 &middot; Máx. operacional: 10 ppm</div>
+                </div>
+              </div>
+              <div class="form-group">
                 <label class="form-label lsi-plabel" for="logTurb">TRANSPARENCIA DEL AGUA <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logTurb" aria-label="Ayuda: turbiedad">?</button> <span class="lsi-pbadge" id="logTurbBadge"></span></label>
                 <input type="number" class="form-input" id="logTurb" step="0.01" min="0" max="2" placeholder="ej. 0.3" />
                 <div class="lsi-param-hint">Menor valor = agua más clara &middot; Máx. 0.5 UNT</div>
@@ -809,14 +979,24 @@
                 </div>
               </div>
               <div class="form-group">
-                <label class="form-label lsi-plabel" for="logTemp">TEMPERATURA <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logTemp" aria-label="Ayuda: temperatura">?</button> <span class="lsi-pbadge" id="logTempBadge"></span></label>
-                <input type="number" class="form-input" id="logTemp" min="0" max="40" placeholder="ej. 27" />
+                <label class="form-label lsi-plabel" for="logTemp">TEMPERATURA AGUA <span class="req">*</span> <button class="param-help-btn" type="button" data-tooltip="tt-logTemp" aria-label="Ayuda: temperatura">?</button> <span class="lsi-pbadge" id="logTempBadge"></span></label>
+                <div class="input-unit"><input type="number" class="form-input" id="logTemp" min="0" max="40" placeholder="ej. 27" /><span class="unit">°C</span></div>
                 <div class="lsi-param-hint">M&aacute;x. 40 °C</div>
                 <div class="param-tooltip-card" id="tt-logTemp" hidden>
                   <div class="tt-what">La temperatura del agua. Agua muy caliente favorece la proliferación bacteriana y reduce la eficacia del cloro.</div>
                   <div class="tt-equipo">Equipo: termómetro de agua flotante o de bolsillo (tipo piscina o spa)</div>
                   <div class="tt-range">Normal: máx. 40 °C (Res. 234/2026)</div>
                 </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logTempAire">TEMPERATURA AIRE <span class="lsi-pbadge" id="logTempAireBadge"></span></label>
+                <div class="input-unit"><input type="number" class="form-input" id="logTempAire" min="-10" max="55" step="0.5" placeholder="ej. 30" /><span class="unit">°C</span></div>
+                <div class="lsi-param-hint">Temperatura ambiental</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logHumedad">HUMEDAD RELATIVA <span class="lsi-pbadge" id="logHumedadBadge"></span></label>
+                <div class="input-unit"><input type="number" class="form-input" id="logHumedad" min="0" max="100" step="1" placeholder="ej. 55" /><span class="unit">%</span></div>
+                <div class="lsi-param-hint">40&ndash;60 % &middot; Solo piscinas cubiertas</div>
               </div>
               <div class="form-group">
                 <label class="form-label lsi-plabel" for="logDureza">DUREZA CÁLCICA <span class="freq-badge-weekly"><svg aria-hidden="true" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Semanal</span> <button class="param-help-btn" type="button" data-tooltip="tt-logDureza" aria-label="Ayuda: dureza cálcica">?</button> <span class="lsi-pbadge" id="logDurezaBadge"></span></label>
@@ -845,18 +1025,36 @@
               <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               <span class="log-art16-label">Art. 16 Res. 234/2026 &mdash; Registro operacional (recomendado completar diariamente)</span>
             </div>
+            <div class="form-row">
+              <div class="form-group fg-1">
+                <label class="form-label" for="logHoraInicio">HORA DE APERTURA AL PÚBLICO</label>
+                <input type="time" class="form-input" id="logHoraInicio" oninput="calcHorasFun()" />
+              </div>
+              <div class="form-group fg-1">
+                <label class="form-label" for="logHoraFin">HORA DE CIERRE AL PÚBLICO</label>
+                <input type="time" class="form-input" id="logHoraFin" oninput="calcHorasFun()" />
+              </div>
+            </div>
             <div class="form-grid-4">
               <div class="form-group">
                 <label class="form-label" for="logCaudal">CAUDAL DE CIRCULACIÓN</label>
                 <div class="input-unit">
-                  <input type="number" class="form-input" id="logCaudal" min="0" max="500" step="0.1" placeholder="ej. 45" />
+                  <input type="number" class="form-input" id="logCaudal" min="0" max="500" step="0.1" placeholder="ej. 45" oninput="updateCaudalLpm()" />
                   <span class="unit">m&sup3;/h</span>
                 </div>
+                <div class="lsi-param-hint" id="caudalLpmHint"></div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="logHorasFun">HORAS DE FUNCIONAMIENTO</label>
                 <div class="input-unit">
                   <input type="number" class="form-input" id="logHorasFun" min="0" max="24" step="0.5" placeholder="ej. 8" />
+                  <span class="unit">h</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="logHorasFilt">HORAS DE FILTRACIÓN</label>
+                <div class="input-unit">
+                  <input type="number" class="form-input" id="logHorasFilt" min="0" max="24" step="0.5" placeholder="ej. 6" />
                   <span class="unit">h</span>
                 </div>
               </div>
@@ -867,9 +1065,22 @@
                   <span class="unit">m&sup3;</span>
                 </div>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="logBanistas">BAÑISTAS</label>
-                <input type="number" class="form-input" id="logBanistas" placeholder="ej. 15" min="0" />
+              <div class="form-group banistas-group">
+                <label class="form-label">BAÑISTAS</label>
+                <div class="banistas-row">
+                  <div class="banistas-sub">
+                    <span class="banistas-sub-label">&lt; 6 años</span>
+                    <input type="number" class="form-input" id="logBanistasMenores" placeholder="0" min="0" />
+                  </div>
+                  <div class="banistas-sub">
+                    <span class="banistas-sub-label">&gt; 6 años</span>
+                    <input type="number" class="form-input" id="logBanistasMayores" placeholder="0" min="0" />
+                  </div>
+                  <div class="banistas-total">
+                    <span class="banistas-sub-label">Total</span>
+                    <span class="banistas-total-val" id="banistasTotal">–</span>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="form-row">
@@ -877,7 +1088,52 @@
                 <label class="form-label" for="logRetrolav">RETROLAVADOS REALIZADOS</label>
                 <input type="number" class="form-input" id="logRetrolav" min="0" max="20" step="1" placeholder="ej. 1" />
               </div>
+              <div class="form-group">
+                <label class="form-label" for="logPresion">PRESIÓN FILTRO</label>
+                <div class="input-unit">
+                  <input type="number" class="form-input" id="logPresion" min="0" max="60" step="0.5" placeholder="ej. 18" />
+                  <span class="unit">psi</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label lsi-plabel" for="logNivelAgua">NIVEL DEL AGUA <span class="lsi-pbadge" id="logNivelAguaBadge"></span></label>
+                <div class="input-unit">
+                  <input type="number" class="form-input" id="logNivelAgua" min="0" max="3" step="0.05" placeholder="ej. 0.3" />
+                  <span class="unit">m</span>
+                </div>
+                <div class="lsi-param-hint">M&aacute;x. 0.6 m bajo la borda</div>
+              </div>
             </div>
+            <!-- ALISTAMIENTO 5 — Ajuste del agua -->
+            <div class="fis-wrap alis5-wrap">
+              <div class="fis-header">
+                <span class="fis-title">AJUSTE QUÍMICO DEL AGUA</span>
+                <span class="fis-sub">Alistamiento 5 &mdash; Res. 234/2026</span>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-1">
+                  <label class="form-label" for="logNeutralizador">CLORO ALTO &rarr; NEUTRALIZADOR</label>
+                  <div class="input-unit">
+                    <input type="number" class="form-input" id="logNeutralizador" min="0" max="100" step="0.01" placeholder="ej. 0.5" />
+                    <span class="unit">kg/L</span>
+                  </div>
+                  <div class="lsi-param-hint">Cantidad de neutralizador dosificado</div>
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="logCloroDos">CLORO BAJO &rarr; CLORO DOSIFICADO</label>
+                  <div class="input-unit">
+                    <input type="number" class="form-input" id="logCloroDos" min="0" max="100" step="0.01" placeholder="ej. 0.2" />
+                    <span class="unit">kg/L</span>
+                  </div>
+                  <div class="lsi-param-hint">Cantidad de cloro aplicado</div>
+                </div>
+                <div class="form-group fg-time">
+                  <label class="form-label" for="logHoraAjuste">HORA DE AJUSTE</label>
+                  <input type="time" class="form-input" id="logHoraAjuste" />
+                </div>
+              </div>
+            </div>
+
             <div class="form-group">
               <label class="form-label" for="logProdQuim">PRODUCTOS QUÍMICOS DOSIFICADOS</label>
               <input type="text" class="form-input" id="logProdQuim" placeholder="ej. Cloro granulado 200 g &middot; Lote CL-2026-A" maxlength="200" />
@@ -933,6 +1189,85 @@
               <label class="form-label" for="logNotas">NOTAS</label>
               <textarea class="form-input form-textarea" id="logNotas" placeholder="Observaciones de la jornada"></textarea>
             </div>
+
+            <div class="seg-block">
+              <div class="seg-block-header">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span>LABORES DIARIAS</span>
+                <span class="seg-counter" id="labCounter">0 / 6</span>
+              </div>
+              <div class="seg-items-grid">
+                <label class="seg-item"><input type="checkbox" id="lab_flotante"      onchange="updateLabCounter()" /><span>Material flotante</span></label>
+                <label class="seg-item"><input type="checkbox" id="lab_paredesRompe"  onchange="updateLabCounter()" /><span>Paredes y rompebolas</span></label>
+                <label class="seg-item"><input type="checkbox" id="lab_fondo"         onchange="updateLabCounter()" /><span>Aspirado del fondo</span></label>
+                <label class="seg-item"><input type="checkbox" id="lab_desnatadores"  onchange="updateLabCounter()" /><span>Desnatadores</span></label>
+                <label class="seg-item"><input type="checkbox" id="lab_duchasLavapies" onchange="updateLabCounter()" /><span>Duchas preimmersión y lavapies</span></label>
+                <label class="seg-item"><input type="checkbox" id="lab_andenes"       onchange="updateLabCounter()" /><span>Andenes perimetrales</span></label>
+              </div>
+            </div>
+
+            <div class="seg-block">
+              <div class="seg-block-header">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span>SEGURIDAD DIARIA</span>
+                <span class="seg-counter" id="segCounter">0 / 7</span>
+              </div>
+              <div class="seg-items-grid">
+                <label class="seg-item"><input type="checkbox" id="seg_cierrePer" onchange="updateSegCounter()" /><span>Cierre perimetral</span></label>
+                <label class="seg-item"><input type="checkbox" id="seg_alarmaPer" onchange="updateSegCounter()" /><span>Alarma perimetral</span></label>
+                <label class="seg-item"><input type="checkbox" id="seg_svr"       onchange="updateSegCounter()" /><span>Sistema de liberación de vacío (SVR)</span></label>
+                <label class="seg-item"><input type="checkbox" id="seg_alarmaIm"  onchange="updateSegCounter()" /><span>Alarma de inmersión</span></label>
+                <label class="seg-item"><input type="checkbox" id="seg_btnParo"   onchange="updateSegCounter()" /><span>Botón de parada de emergencia</span></label>
+                <label class="seg-item"><input type="checkbox" id="seg_rejilla"   onchange="updateSegCounter()" /><span>Rejilla antiatrapamiento</span></label>
+                <label class="seg-item"><input type="checkbox" id="seg_tapones"   onchange="updateSegCounter()" /><span>Tapones de succión de pared</span></label>
+              </div>
+            </div>
+
+            <div class="seg-block">
+              <div class="seg-block-header">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                <span>INSTALACIÓN — ALIST. 7</span>
+                <span class="seg-counter" id="instCounter">0 / 5</span>
+              </div>
+              <div class="seg-items-grid">
+                <label class="seg-item"><input type="checkbox" id="inst_lavapies"  onchange="updateInstCounter()" /><span>Lavapies y duchas preimmersión</span></label>
+                <label class="seg-item"><input type="checkbox" id="inst_estanque"  onchange="updateInstCounter()" /><span>Estanque (revestimiento)</span></label>
+                <label class="seg-item"><input type="checkbox" id="inst_pedaneos"  onchange="updateInstCounter()" /><span>Pedaneos, escaleras y pasamanos</span></label>
+                <label class="seg-item"><input type="checkbox" id="inst_tapas"     onchange="updateInstCounter()" /><span>Tapas desnatadoras</span></label>
+                <label class="seg-item"><input type="checkbox" id="inst_rejillas"  onchange="updateInstCounter()" /><span>Rejillas desnatadoras</span></label>
+              </div>
+            </div>
+
+            <div class="apt-block">
+              <div class="apt-block-header">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <span>EVALUACIÓN DE APTITUD DEL ESTANQUE</span>
+              </div>
+              <div class="apt-suggestion" id="aptSuggestion"></div>
+              <div class="apt-options">
+                <label class="apt-option" id="aptLabelApta">
+                  <input type="radio" name="aptitud" id="apt_apta" value="apta" onchange="onAptitudChange()" />
+                  <span class="apt-option-icon apt-icon-ok">✓</span>
+                  <span class="apt-option-text">
+                    <strong>1. Apta para el servicio</strong>
+                    <span class="apt-option-sub">El estanque cumple condiciones para operar</span>
+                  </span>
+                </label>
+                <label class="apt-option" id="aptLabelNoApta">
+                  <input type="radio" name="aptitud" id="apt_no_apta" value="no_apta" onchange="onAptitudChange()" />
+                  <span class="apt-option-icon apt-icon-nok">✗</span>
+                  <span class="apt-option-text">
+                    <strong>2. No apta para el servicio</strong>
+                    <span class="apt-option-sub">El estanque no puede operar</span>
+                  </span>
+                </label>
+              </div>
+              <div id="aptRazonWrap" class="apt-razon-wrap" hidden>
+                <label class="form-label" for="aptRazon">CAUSA DE NO APTITUD</label>
+                <textarea class="form-input form-textarea" id="aptRazon" placeholder="Ej: pH fuera de rango · avería de motobomba · contaminación fecal" maxlength="300"></textarea>
+              </div>
+            </div>
+
             <div id="logComplianceBar" class="log-compliance-bar js-hidden"></div>
             <div class="form-footer">
               <div id="logEditBanner" class="log-edit-banner js-hidden">
@@ -1010,6 +1345,8 @@
                 <button class="afr-type-btn active"              id="btnSolido"    data-afr-type="solido">Sólido</button>
                 <button class="afr-type-btn afr-btn-diarreico"   id="btnDiarreico" data-afr-type="diarreico">Diarreico</button>
                 <button class="afr-type-btn afr-btn-vomito"      id="btnVomito"    data-afr-type="vomito">Vómito</button>
+                <button class="afr-type-btn afr-btn-sangre"      id="btnSangre"    data-afr-type="sangre">Sangre</button>
+                <button class="afr-type-btn afr-btn-quimicos"    id="btnQuimicos"  data-afr-type="quimicos">Químico</button>
               </div>
               <div class="afr-content" id="afrContent">
                 <h2 class="afr-step-title" id="afrTitle">Evacuar la piscina</h2>
@@ -1080,8 +1417,17 @@
                   <label class="form-label" for="mntArea">ÁREA <span class="req">*</span></label>
                   <select class="form-input" id="mntArea">
                     <option value="">Seleccionar área...</option>
-                    <option value="motobomba">Motobomba</option>
-                    <option value="caldera">Caldera</option>
+                    <optgroup label="Equipos">
+                      <option value="motobomba">Motobomba</option>
+                      <option value="caldera">Caldera</option>
+                    </optgroup>
+                    <optgroup label="Saneamiento básico — Art. 17">
+                      <option value="san_limpieza">Limpieza y desinfección</option>
+                      <option value="san_vectores">Control de vectores y plagas</option>
+                      <option value="san_residuos">Gestión de residuos sólidos</option>
+                      <option value="san_agua">Suministro de agua potable</option>
+                      <option value="san_aguas_res">Manejo de aguas residuales</option>
+                    </optgroup>
                   </select>
                 </div>
               </div>
@@ -1133,6 +1479,18 @@
             </div>
 
           </div>
+
+          <!-- Plan de Saneamiento Básico — Art. 17 -->
+          <div class="card san-card">
+            <div class="card-header">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              <h3>Plan de saneamiento básico</h3>
+              <span class="san-norm-tag">Art. 17 · Res. 234/2026</span>
+            </div>
+            <p class="san-intro">Estado de los 5 programas obligatorios. Registra cada ejecución usando el formulario de arriba — selecciona el programa en "Área".</p>
+            <div id="sanTracker"></div>
+          </div>
+
         </section>
 
         <!-- SECCION: REPORTE -->
@@ -1166,6 +1524,10 @@
             </div>
             <div class="card">
               <h3 class="card-title" id="repSummaryTitle">Resumen del periodo</h3>
+              <div class="rep-quick-select">
+                <button class="btn btn-sm btn-outline" id="btnRepMesActual">Mes actual</button>
+                <button class="btn btn-sm btn-outline" id="btnRepMesAnterior">Mes anterior</button>
+              </div>
               <div class="rep-range-row">
                 <div class="form-group rep-range-fg">
                   <label class="form-label" for="repDesde">DESDE</label>
@@ -1328,6 +1690,182 @@
           </div>
         </section>
 
+        <!-- SECCION: PERFIL -->
+        <section class="page-section" id="section-perfil">
+          <div class="perfil-wrap">
+
+            <!-- Identificación -->
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+                <h3>Identificación del establecimiento</h3>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-2">
+                  <label class="form-label" for="pfRazonSocial">RAZÓN SOCIAL / NOMBRE DE LA PISCINA</label>
+                  <input type="text" class="form-input" id="pfRazonSocial" placeholder="Ej. Club Campestre Los Pinos" maxlength="150" />
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfMatricula">MATRÍCULA MERCANTIL</label>
+                  <input type="text" class="form-input" id="pfMatricula" placeholder="Ej. 00-123456-7" maxlength="30" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfNit">NIT</label>
+                  <input type="text" class="form-input" id="pfNit" placeholder="Ej. 900.123.456-7" maxlength="20" />
+                </div>
+                <div class="form-group fg-2">
+                  <label class="form-label" for="pfDireccion">DIRECCIÓN</label>
+                  <input type="text" class="form-input" id="pfDireccion" placeholder="Ej. Cra 15 # 80-25" maxlength="120" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfMunicipio">MUNICIPIO</label>
+                  <input type="text" class="form-input" id="pfMunicipio" placeholder="Ej. Bogotá" maxlength="80" />
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfDepartamento">DEPARTAMENTO</label>
+                  <input type="text" class="form-input" id="pfDepartamento" placeholder="Ej. Cundinamarca" maxlength="60" />
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfTelefono">TELÉFONO</label>
+                  <input type="tel" class="form-input" id="pfTelefono" placeholder="Ej. 601 234 5678" maxlength="20" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-2">
+                  <label class="form-label" for="pfCorreo">CORREO ELECTRÓNICO</label>
+                  <input type="email" class="form-input" id="pfCorreo" placeholder="Ej. gerencia@establecimiento.com" maxlength="100" />
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfPropietario">PROPIETARIO / REPRESENTANTE LEGAL</label>
+                  <input type="text" class="form-input" id="pfPropietario" placeholder="Nombre completo" maxlength="100" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Clasificación -->
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                <h3>Clasificación de la piscina</h3>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-1">
+                  <label class="form-label">TIPO DE USO</label>
+                  <div class="perfil-radio-group">
+                    <label class="perfil-radio-opt"><input type="radio" name="pfTipoUso" value="colectivo" /><span>Colectivo</span></label>
+                    <label class="perfil-radio-opt"><input type="radio" name="pfTipoUso" value="restringido" /><span>Restringido</span></label>
+                  </div>
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label">PRESENTACIÓN</label>
+                  <div class="perfil-radio-group">
+                    <label class="perfil-radio-opt"><input type="radio" name="pfPresentacion" value="cubierta" /><span>Cubierta</span></label>
+                    <label class="perfil-radio-opt"><input type="radio" name="pfPresentacion" value="descubierta" /><span>Descubierta</span></label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-1">
+                  <label class="form-label">SISTEMA DE OPERACIÓN</label>
+                  <div class="perfil-radio-group">
+                    <label class="perfil-radio-opt"><input type="radio" name="pfSistemaOp" value="recirculacion" /><span>Recirculación</span></label>
+                    <label class="perfil-radio-opt"><input type="radio" name="pfSistemaOp" value="desalojo" /><span>Desalojo</span></label>
+                  </div>
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfFuenteAbast">FUENTE DE ABASTECIMIENTO</label>
+                  <input type="text" class="form-input" id="pfFuenteAbast" placeholder="Ej. Acueducto municipal" maxlength="80" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Dimensiones -->
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                <h3>Dimensiones del estanque</h3>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfLargo">LARGO (m)</label>
+                  <input type="number" class="form-input" id="pfLargo" min="1" max="200" step="0.1" placeholder="0.0" oninput="calcPerfilVolumen()" />
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfAncho">ANCHO (m)</label>
+                  <input type="number" class="form-input" id="pfAncho" min="1" max="100" step="0.1" placeholder="0.0" oninput="calcPerfilVolumen()" />
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfProfMin">PROF. MÍNIMA (m)</label>
+                  <input type="number" class="form-input" id="pfProfMin" min="0.5" max="10" step="0.05" placeholder="0.0" oninput="calcPerfilVolumen()" />
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfProfMax">PROF. MÁXIMA (m)</label>
+                  <input type="number" class="form-input" id="pfProfMax" min="0.5" max="10" step="0.05" placeholder="0.0" oninput="calcPerfilVolumen()" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-2">
+                  <label class="form-label" for="pfAforo">N° MÁXIMO DE BAÑISTAS (AFORO)</label>
+                  <input type="number" class="form-input" id="pfAforo" min="1" max="9999" step="1" placeholder="ej. 140" />
+                  <div class="lsi-param-hint">Simultáneos en el agua · <span id="pfAforoSug"></span></div>
+                </div>
+              </div>
+              <div class="perfil-vol-result" id="pfVolResult" hidden>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/></svg>
+                Volumen: <strong id="pfVolVal">–</strong>
+                &nbsp;·&nbsp;
+                Perímetro: <strong id="pfPerimVal">–</strong>
+              </div>
+            </div>
+
+            <!-- Operador piscinero -->
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <h3>Operador piscinero</h3>
+              </div>
+              <div class="form-row">
+                <div class="form-group fg-2">
+                  <label class="form-label" for="pfOpNombre">NOMBRE / RAZÓN SOCIAL</label>
+                  <input type="text" class="form-input" id="pfOpNombre" placeholder="Nombre del operador o empresa" maxlength="120" />
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfOpNit">NIT / CÉDULA</label>
+                  <input type="text" class="form-input" id="pfOpNit" placeholder="Ej. 800.123.456-1" maxlength="30" />
+                </div>
+                <div class="form-group fg-1">
+                  <label class="form-label" for="pfOpTel">TELÉFONO</label>
+                  <input type="tel" class="form-input" id="pfOpTel" placeholder="Ej. 314 567 8901" maxlength="20" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Personal de rescate -->
+            <div class="card">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="14.31" y1="8" x2="20.05" y2="17.94"/><line x1="9.69" y1="8" x2="21.17" y2="8"/><line x1="7.38" y1="12" x2="13.12" y2="2.06"/><line x1="9.69" y1="16" x2="3.95" y2="6.06"/><line x1="14.31" y1="16" x2="2.83" y2="16"/><line x1="16.62" y1="12" x2="10.88" y2="21.94"/></svg>
+                <h3>Personal de rescate — Salvavidas</h3>
+              </div>
+              <p class="perfil-hint">Incluya el número de identificación acuática (NIA) de cada salvavidas.</p>
+              <div id="pfSalvavidasList"></div>
+              <button type="button" class="btn btn-outline perfil-add-btn" id="btnAddSalvavidas">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Agregar salvavidas
+              </button>
+            </div>
+
+            <button class="btn btn-primary perfil-save-btn" id="btnSavePerfil">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Guardar perfil del establecimiento
+            </button>
+
+          </div>
+        </section>
+
         <!-- SECCION: DOCUMENTOS -->
         <section class="page-section" id="section-documentos">
 
@@ -1434,6 +1972,147 @@
 
             </div>
           </div>
+
+          <!-- Botiquín y DEA -->
+          <div class="card botiquin-card" id="cardBotiquin">
+            <div class="card-header">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="15" rx="2"/><path d="M3 10h18"/><path d="M8 6V4h8v2"/><path d="M12 13v4"/><path d="M10 15h4"/></svg>
+              <h3>Botiquín y DEA</h3>
+              <span class="botiquin-status-badge" id="botiquinBadge" hidden></span>
+            </div>
+            <p class="botiquin-note">Res. 234/2026 · Lista orientativa — verifique los artículos exactos de la norma con su autoridad sanitaria.</p>
+
+            <div class="botiquin-tipo-wrap">
+              <span class="form-label">TIPO DE ESTABLECIMIENTO</span>
+              <div class="botiquin-tipo-toggle">
+                <button class="botiquin-tipo-btn active" id="btnBotA" data-bot-tipo="A">
+                  <strong>Tipo A</strong><span>Pequeño / doméstico</span>
+                </button>
+                <button class="botiquin-tipo-btn" id="btnBotB" data-bot-tipo="B">
+                  <strong>Tipo B</strong><span>Mediano / semipúblico</span>
+                </button>
+                <button class="botiquin-tipo-btn" id="btnBotC" data-bot-tipo="C">
+                  <strong>Tipo C</strong><span>Público / alta afluencia</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="botiquin-fecha-row">
+              <div class="form-group" style="flex:1;max-width:220px">
+                <label class="form-label" for="fechaBotiquin">FECHA DE ÚLTIMA VERIFICACIÓN</label>
+                <input type="date" class="form-input" id="fechaBotiquin" />
+              </div>
+              <span class="docs-venc-status" id="statusBotiquin" style="align-self:flex-end;margin-bottom:4px">&ndash;</span>
+            </div>
+
+            <div id="botiquinChecklist" class="botiquin-checklist"></div>
+
+            <!-- DEA — solo Tipo C -->
+            <div id="botiquinDeaSection" hidden>
+              <div class="botiquin-dea-title">
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                DEA — Desfibrilador Externo Automático
+              </div>
+              <div class="botiquin-dea-row">
+                <div class="form-group">
+                  <label class="form-label" for="fechaDeaMant">ÚLTIMO MANTENIMIENTO</label>
+                  <input type="date" class="form-input" id="fechaDeaMant" />
+                  <span class="docs-venc-status" id="statusDeaMant">&ndash;</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="fechaDeaElectrodos">VENC. ELECTRODOS / BATERÍA</label>
+                  <input type="date" class="form-input" id="fechaDeaElectrodos" />
+                  <span class="docs-venc-status" id="statusDeaElectrodos">&ndash;</span>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" id="btnSaveBotiquin" style="margin-top:8px">
+              <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Guardar verificación
+            </button>
+          </div>
+
+          <!-- Visitas de inspección sanitaria -->
+          <div class="card" id="cardVisitas">
+            <div class="card-header">
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <h3>Visitas de inspección sanitaria</h3>
+            </div>
+            <p class="visita-nota">Art. 10 &mdash; Los registros de visitas de la autoridad sanitaria deben estar disponibles en todo momento.</p>
+
+            <div id="visitaEditBanner" class="log-edit-banner js-hidden" style="margin-bottom:12px">
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Editando visita del <strong id="visitaEditDate"></strong>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group fg-1">
+                <label class="form-label" for="visitaFecha">FECHA DE VISITA *</label>
+                <input type="date" class="form-input" id="visitaFecha" />
+              </div>
+              <div class="form-group fg-1">
+                <label class="form-label" for="visitaHora">HORA</label>
+                <input type="time" class="form-input" id="visitaHora" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group fg-2">
+                <label class="form-label" for="visitaFuncionario">NOMBRE DEL FUNCIONARIO *</label>
+                <input type="text" class="form-input" id="visitaFuncionario" placeholder="Nombre completo" maxlength="100" />
+              </div>
+              <div class="form-group fg-2">
+                <label class="form-label" for="visitaEntidad">ENTIDAD</label>
+                <input type="text" class="form-input" id="visitaEntidad" placeholder="Ej. Secretaría de Salud Municipal" maxlength="120" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">CONCEPTO EMITIDO *</label>
+              <div class="visita-concepto-opts">
+                <label class="visita-concepto-opt" id="vcOptFav">
+                  <input type="radio" name="visitaConcepto" value="favorable" onchange="onVisitaConceptoChange()" />
+                  <span class="vc-icon vc-ok">✓</span>
+                  <span>Favorable</span>
+                </label>
+                <label class="visita-concepto-opt" id="vcOptReq">
+                  <input type="radio" name="visitaConcepto" value="requerimientos" onchange="onVisitaConceptoChange()" />
+                  <span class="vc-icon vc-warn">⚠</span>
+                  <span>Con requerimientos</span>
+                </label>
+                <label class="visita-concepto-opt" id="vcOptDes">
+                  <input type="radio" name="visitaConcepto" value="desfavorable" onchange="onVisitaConceptoChange()" />
+                  <span class="vc-icon vc-nok">✗</span>
+                  <span>Desfavorable</span>
+                </label>
+              </div>
+            </div>
+
+            <div id="visitaObsWrap" hidden>
+              <div class="form-group">
+                <label class="form-label" for="visitaObs">OBSERVACIONES / REQUERIMIENTOS</label>
+                <textarea class="form-input form-textarea" id="visitaObs" placeholder="Detalle los requerimientos o causas del concepto desfavorable" maxlength="500"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="visitaPlazo">PLAZO PARA CUMPLIMIENTO</label>
+                <input type="date" class="form-input" id="visitaPlazo" />
+              </div>
+            </div>
+
+            <div class="form-footer" style="margin-top:12px">
+              <button class="btn btn-primary" id="btnSaveVisita">
+                <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Registrar visita
+              </button>
+              <button class="btn btn-outline btn-danger-outline js-hidden" id="btnCancelVisita">Cancelar edición</button>
+            </div>
+
+            <div class="visita-hist-title" style="margin-top:20px">Historial de visitas</div>
+            <div id="visitasHistory">
+              <p class="empty-state">Sin visitas registradas aún.</p>
+            </div>
+          </div>
+
         </section>
 
       </main>
@@ -1454,6 +2133,8 @@
           <option value="solido">Sólido</option>
           <option value="diarreico">Diarreico</option>
           <option value="vomito">Vómito</option>
+          <option value="sangre">Sangre</option>
+          <option value="quimicos">Químico</option>
         </select>
       </div>
       <div class="form-row">
@@ -1551,6 +2232,20 @@
         <div class="log-detail-meta" id="mntDetailMeta"></div>
       </div>
       <div class="log-detail-body" id="mntDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE VISITA SANITARIA -->
+  <div id="visitaDetailOverlay" class="log-detail-overlay js-hidden" role="dialog" aria-modal="true" aria-label="Detalle de visita sanitaria">
+    <div class="log-detail-modal">
+      <button class="log-detail-close" aria-label="Cerrar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="log-detail-header">
+        <div class="log-detail-title" id="visitaDetailTitle">Visita de inspección</div>
+        <div class="log-detail-meta" id="visitaDetailMeta"></div>
+      </div>
+      <div class="log-detail-body" id="visitaDetailBody"></div>
     </div>
   </div>
 

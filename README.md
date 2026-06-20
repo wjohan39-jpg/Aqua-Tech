@@ -2,7 +2,7 @@
 
 **Sistema de gestión de calidad de agua en piscinas — Resolución 234/2026 · Colombia**
 
-Aplicación web progresiva (PWA) diseñada para operadores y técnicos de piscinas en Colombia. Permite llevar el control diario de parámetros fisicoquímicos, calcular dosificaciones con productos comerciales colombianos, gestionar protocolos de respuesta ante incidentes de fecalismo, registrar mantenimiento preventivo y correctivo, y generar reportes PDF normativos — todo desde el navegador, sin instalación y con soporte offline completo.
+Aplicación web progresiva (PWA) diseñada para operadores y técnicos de piscinas públicas y comerciales en Colombia. Permite llevar la bitácora sanitaria diaria con todos los campos exigidos por la Res. 234/2026, calcular dosificaciones con productos comerciales colombianos, gestionar protocolos de respuesta ante incidentes de fecalismo, registrar mantenimiento preventivo y correctivo, y generar reportes PDF normativos — todo desde el navegador, sin instalación y con soporte offline completo.
 
 > **Nombre de instalación PWA:** Aquatech  
 > **Nombre completo:** Brazada Aqua Tech  
@@ -62,15 +62,53 @@ Interpolación lineal entre puntos de tabla, diagnóstico automático (agua corr
 Requiere mínimo 10 registros en 30 días con al menos 2 fechas distintas. Sin dato microbiológico, el score se normaliza sobre el 55 % medible. Bandas de riesgo: Sin riesgo · Bajo · Medio · Alto.
 
 ### Bitácora diaria
-Registro de parámetros con validación en tiempo real contra rangos Res. 234/2026:
+Registro completo conforme a la Res. 234/2026 con validación en tiempo real:
 
-- Cloro libre, cloro combinado, pH, alcalinidad, dureza cálcica
-- Turbiedad, temperatura, CYA, ORP, TDS, conductividad
-- ORP con zona de eficacia (< 650 mV = advertencia · > 700 mV = fuera de rango)
-- ISL calculado automáticamente en cada guardado
-- Gráfico de tendencia histórica por parámetro (7 / 14 / 30 días)
+**Alistamiento 1 — Calidad física del agua**
+- Color visual, materias flotantes, olor y transparencia (fondo visible)
+- Toggles aceptable / no aceptable con defecto en estado conforme
+
+**Parámetros fisicoquímicos** (badge semáforo en tiempo real contra rangos normativos)
+- Cloro libre residual, cloro combinado, bromo total (Br₂)
+- pH, alcalinidad total, dureza cálcica, CYA (ácido cianúrico)
+- Turbiedad, temperatura del agua, temperatura ambiente, humedad relativa
+- ORP (con zona de eficacia < 650 mV), TDS, conductividad
+- ISL (Índice de Saturación de Langelier) — calculado automáticamente al guardar
+
+**Alistamiento 5 — Ajuste químico**
+- Neutralizador aplicado (cloro alto) y cloro dosificado (cloro bajo)
+- Hora de ajuste
+
+**Parámetros operacionales (Art. 16)**
+- Hora de apertura y hora de cierre al público
+- Horas de funcionamiento y horas de filtración
+- Caudal de recirculación, agua repuesta (m³)
+- Retrolavados y presión del filtro (psi)
+- Nivel del agua bajo la borda (≤ 0.6 m)
+- Productos químicos aplicados y novedades / averías
+
+**Alistamiento 7 — Instalación**
+- Checklist de 5 ítems: lavapies y duchas, estanque (revestimiento), pedaneos / escaleras / pasamanos, tapas desnatadoras, rejillas desnatadoras
+
+**Seguridad y aptitud**
+- Checklist de seguridad (salvavidas, botiquín, señalización, tabla de rescate, aro salvavidas, teléfono de emergencias)
+- Labores de limpieza ejecutadas
+- Aptitud del agua (apta / no apta) con justificación de cierre
+- Bañistas registrados en el momento de la medición con alerta si supera el aforo máximo
+
+**Funcionalidades adicionales**
 - Fotos adjuntas por registro (compresión automática)
+- Gráfico de tendencia histórica por parámetro (7 / 14 / 30 días)
 - Edición y eliminación de registros existentes
+
+### Perfil del establecimiento
+- Razón social, NIT, dirección, municipio, departamento
+- Tipo de uso (colectivo / restringido) y sistema operacional
+- Dimensiones: largo, ancho, profundidad mín./máx. — volumen y **perímetro calculados automáticamente**
+- Aforo máximo de bañistas simultáneos con sugerencia normativa (1 persona / 2.5 m²)
+- Datos del operador piscinero (nombre, NIT, certificación)
+- Datos del salvavidas
+- Documentos legales con seguimiento de vencimientos
 
 ### Mantenimiento
 Registro de trabajos de mantenimiento preventivo y correctivo de la piscina:
@@ -93,9 +131,9 @@ Calcula dosis de hipoclorito según volumen y cloro actual. Registra turbidez fi
 
 ### Reporte mensual (PDF)
 Reporte generado con jsPDF + AutoTable, con verificación de integridad HMAC antes de exportar:
-- Portada con datos del establecimiento y periodo
+- Portada con datos del establecimiento, dimensiones, perímetro, aforo y periodo
 - Tabla de bitácora completa
-- Resumen estadístico (promedio, mín., máx., % en rango por parámetro)
+- Resumen estadístico (promedio, mín., máx., % en rango por parámetro — incluye parámetros categóricos de calidad física)
 - IRAPI calculado sobre los registros del periodo
 - Tabla de incidentes AFR con datos de cierre
 - Filtrable por rango de fechas
@@ -133,7 +171,8 @@ Todos los datos se almacenan exclusivamente en el dispositivo mediante `localSto
 | `aqua_bitacora` | Registros diarios de calidad del agua |
 | `aqua_afr` | Incidentes de fecalismo y su resolución |
 | `aqua_mantenimiento` | Registros de mantenimiento |
-| `aqua_config` | Configuración del establecimiento |
+| `aqua_perfil` | Perfil del establecimiento y operadores |
+| `aqua_config` | Configuración de la app |
 
 ### Límite y rotación automática
 
@@ -174,14 +213,16 @@ Los únicos 3 casos en que se borran los datos:
 |-----------|----------------|------|
 | Cloro libre residual | 2.0 – 4.0 ppm | |
 | Cloro combinado | máx. 0.3 ppm | |
+| Bromo total (Br₂) | 4.0 – 6.0 mg/L | Solo piscinas con bromo como desinfectante |
 | pH | 6.8 – 7.3 | |
 | Alcalinidad total | 20 – 150 ppm | |
 | Dureza cálcica | 200 – 700 ppm | |
 | CYA (ácido cianúrico) | máx. 75 ppm | |
 | Turbiedad | máx. 0.5 UNT | |
-| Temperatura | máx. 40 °C | |
-| ORP | 0 – 700 mV | Eficacia óptima: 650–700 mV |
+| Temperatura del agua | máx. 40 °C | |
+| ORP | 0 – 700 mV | Eficacia óptima: 650 – 700 mV |
 | ISL (Langelier) | −0.3 a +0.5 | |
+| Nivel del agua (bajo la borda) | máx. 0.6 m | Art. 16 Res. 234/2026 |
 
 ---
 
@@ -195,7 +236,7 @@ Los únicos 3 casos en que se borran los datos:
 | PDF | jsPDF 2.5 + jsPDF-AutoTable 3.8 (carga bajo demanda al generar reporte) |
 | PWA | Web App Manifest, instalable en Android / iOS / Desktop |
 | Seguridad | PBKDF2-SHA256 (600k iter.) · HMAC-SHA256 · SubtleCrypto API |
-| Código | ~4 600 líneas JS · ~4 400 líneas CSS · ~1 700 líneas HTML |
+| Código | ~6 000 líneas JS · ~5 400 líneas CSS · ~2 400 líneas HTML |
 
 ---
 
@@ -243,12 +284,13 @@ Para desarrollo local con `python -m http.server`, las cabeceras no se aplican �
 
 ```
 SplashLab/
-├── Aquatech.html       # App shell — estructura, plantillas y overlays
-├── Aquatech.css        # Estilos — diseño responsivo mobile-first (~4 400 líneas)
-├── Aquatech.js         # Lógica completa (~4 600 líneas)
-├── sw.js              # Service Worker (cache brazada-v5)
-├── manifest.json      # Manifiesto PWA (nombre: Aquatech)
-└── Multimedia/        # Íconos y recursos gráficos (WebP + PNG)
+├── Aquatech.html       # App shell — estructura, plantillas y overlays (~2 400 líneas)
+├── Aquatech.css        # Estilos — diseño responsivo mobile-first (~5 400 líneas)
+├── Aquatech.js         # Lógica completa (~6 000 líneas)
+├── sw.js               # Service Worker (cache offline)
+├── manifest.json       # Manifiesto PWA (nombre: Aquatech)
+├── vercel.json         # Cabeceras de seguridad HTTP para Vercel
+└── Multimedia/         # Íconos PWA (192/512 px), logo y video intro
 ```
 
 ---

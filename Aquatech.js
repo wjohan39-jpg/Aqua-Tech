@@ -385,7 +385,7 @@ async function _secSave(lsKey, json) {
 
 // Verifica la firma HMAC de cada clave protegida y avisa al usuario si falla.
 async function _verifyIntegrity() {
-  for (const k of ['aqua_bitacora', 'aqua_afr', 'aqua_mantenimiento']) {
+  for (const k of ['aqua_bitacora', 'aqua_afr', 'aqua_mantenimiento', 'aqua_lab', 'aqua_visitas']) {
     const json = localStorage.getItem(k);
     const sig  = localStorage.getItem(k + '_sig');
     if (!json || !sig) continue;
@@ -411,15 +411,16 @@ const APP = {
 
 // ── NAVEGACIÓN ───────────────────────────────────────────
 function sectionInit(section) {
-  if (section === 'dashboard')  { renderDashboardIndices(); renderDashboardVencimientos(); renderDashboardGauges(); updateDashReportBtn(); }
-  if (section === 'reporte')    { updateReportSummary(); updateReportBtn(); }
+  if (section === 'dashboard')  { renderDashboardIndices(); renderDashboardVencimientos(); renderDashboardGauges(); updateDashReportBtn(); _renderDashEstablishment(); }
+  if (section === 'reporte')    { _prefillReporteFromPerfil(); updateReportSummary(); updateReportBtn(); }
   if (section === 'calculadora'){ calcVolume(); calcDosificacion(); }
   if (section === 'lsi')        { _lsiFromBitacora = false; calcLSI(); }
-  if (section === 'irapi')      { calcIRAPI(); updateIRAPIBitacoraBtn(); }
-  if (section === 'documentos') { renderDocs(); updateVencimientos(); }
-  if (section === 'bitacora')      { renderLog(); updateOperadorDatalist(); }
+  if (section === 'irapi')      { calcIRAPI(); updateIRAPIBitacoraBtn(); renderLabReg(); }
+  if (section === 'perfil')     { renderPerfil(); }
+  if (section === 'documentos') { renderDocs(); updateVencimientos(); renderBotiquinCard(); renderVisitas(); clearVisitaForm(); }
+  if (section === 'bitacora')      { renderLog(); updateOperadorDatalist(); updateSalvavidasDatalist(); }
   if (section === 'protocolo')     { renderAFR(); renderAFRIncidents(); }
-  if (section === 'mantenimiento') { renderMnt(); checkMntForm(); }
+  if (section === 'mantenimiento') { renderMnt(); renderSaneamiento(); checkMntForm(); }
 }
 
 function navigate(section, event) {
@@ -575,6 +576,23 @@ document.addEventListener('click', e => {
   if (t.closest('.calc-to-bitacora'))    { navigateCalcToBitacora(e); return; }
   if (t.closest('#btnCalcLSIBitacora'))  { calcLSIFromBitacora();     return; }
   if (t.closest('#btnCalcIRAPIBitacora')) { calcIRAPIFromBitacora();  return; }
+  if (t.closest('#btnSaveLab'))           { saveLabRecord();          return; }
+  if (t.closest('.btn-delete-lab'))       { deleteLabRecord(Number(t.closest('[data-ts]').dataset.ts)); return; }
+  if (t.closest('#btnSavePerfil'))        { savePerfil();             return; }
+  if (t.closest('#btnAddSalvavidas'))     { addSalvavidas();          return; }
+  const svDelBtn = t.closest('.perfil-sv-del[data-sv-idx]');
+  if (svDelBtn) { removeSalvavidas(Number(svDelBtn.dataset.svIdx)); return; }
+  if (t.closest('#btnSaveBotiquin'))      { saveBotiquin();           return; }
+  if (t.closest('#btnSaveVisita'))        { saveVisita();             return; }
+  if (t.closest('#btnCancelVisita'))      { clearVisitaForm(); renderVisitas(); return; }
+  const visitaEditBtn = t.closest('.visita-edit-btn[data-ts]');
+  if (visitaEditBtn) { editVisita(Number(visitaEditBtn.dataset.ts)); return; }
+  const visitaDelBtn  = t.closest('.visita-del-btn[data-ts]');
+  if (visitaDelBtn)  { deleteVisita(Number(visitaDelBtn.dataset.ts)); return; }
+  const visitaItem = t.closest('.visita-item[data-ts]');
+  if (visitaItem && !t.closest('.visita-item-actions')) { viewVisita(Number(visitaItem.dataset.ts)); return; }
+  const botTipoBtn = t.closest('[data-bot-tipo]');
+  if (botTipoBtn) { _setBotiquinTipo(botTipoBtn.dataset.botTipo); return; }
 
   const tooltipBtn = t.closest('[data-tooltip]');
   if (tooltipBtn) { toggleTooltip(tooltipBtn.dataset.tooltip); return; }
@@ -587,12 +605,31 @@ document.addEventListener('click', e => {
 
   if (t.closest('#btnSaveLog'))    { saveLog();        return; }
   if (t.closest('#btnSaveMnt'))       { saveMnt();          return; }
+  const sanRegBtn = t.closest('[data-san-id]');
+  if (sanRegBtn) { _sanPreFill(sanRegBtn.dataset.sanId); return; }
+  const sanEditBtn = t.closest('.san-edit-btn[data-ts]');
+  if (sanEditBtn) { editMnt(Number(sanEditBtn.dataset.ts)); return; }
+  const sanDelBtn  = t.closest('.san-del-btn[data-ts]');
+  if (sanDelBtn)  { deleteMnt(Number(sanDelBtn.dataset.ts)); return; }
   if (t.closest('#btnCancelEdit'))    { cancelEditLog();    return; }
   if (t.closest('#btnCancelEditMnt')) { cancelEditMnt();    return; }
   if (t.closest('#btnClearFilter')) { clearLogFilter(); return; }
 
   const afrTypeBtn = t.closest('[data-afr-type]');
   if (afrTypeBtn) { setAFRType(afrTypeBtn.dataset.afrType); return; }
+
+  const momentoBtn = t.closest('.momento-btn[data-momento]');
+  if (momentoBtn) { _setMomento(momentoBtn.dataset.momento); return; }
+
+  const fisBtn = t.closest('.fis-btn[data-val]');
+  if (fisBtn) {
+    const group = fisBtn.closest('[data-fis-id]');
+    if (group) {
+      group.querySelectorAll('.fis-btn').forEach(b => b.classList.remove('active'));
+      fisBtn.classList.add('active');
+    }
+    return;
+  }
 
   if (t.closest('#afrPrev')) { afrStep(-1); return; }
   if (t.closest('#afrNext')) {
@@ -603,8 +640,10 @@ document.addEventListener('click', e => {
   }
   if (t.closest('#btnResetAFR')) { resetAFR(); return; }
 
-  if (t.closest('#btnClearRepRange')) { clearRepRange();  return; }
-  if (t.closest('#btnGeneratePDF'))   { generatePDF();    return; }
+  if (t.closest('#btnClearRepRange'))   { clearRepRange();  return; }
+  if (t.closest('#btnRepMesActual'))    { setRepMes(0);    return; }
+  if (t.closest('#btnRepMesAnterior'))  { setRepMes(-1);   return; }
+  if (t.closest('#btnGeneratePDF'))     { generatePDF();   return; }
 
   const profileBtn = t.closest('[data-profile]');
   if (profileBtn) { setDocsProfile(profileBtn.dataset.profile); return; }
@@ -633,6 +672,9 @@ document.addEventListener('click', e => {
 
   if (t.id === 'mntDetailOverlay')       { closeMntDetail(e);        return; }
   if (t.closest('#mntDetailOverlay .log-detail-close')) { closeMntDetail(); return; }
+  if (t.id === 'visitaDetailOverlay' || t.closest('#visitaDetailOverlay .log-detail-close')) {
+    document.getElementById('visitaDetailOverlay')?.classList.add('js-hidden'); return;
+  }
 
   if (t.closest('#preloaderBtn')) { preloaderNext(); return; }
   const dismissBtn = t.closest('[data-dismiss]');
@@ -710,8 +752,12 @@ document.addEventListener('input', e => {
   if (id === 'sliderCloro' || id === 'sliderAlk' || id === 'sliderOtros') { calcIRAPI(); return; }
 
   if (['logDate','logTime','logCloro','logPh','logAlc','logCya',
-       'logCloroComb','logTurb','logTemp','logDureza','logOrp','logTds','logCond'].includes(id)) {
+       'logCloroComb','logBromo','logTurb','logTemp','logTempAire','logHumedad','logDureza','logOrp','logTds','logCond'].includes(id)) {
     checkLogForm(); return;
+  }
+
+  if (id === 'logBanistasMenores' || id === 'logBanistasMayores') {
+    _updateBanistasTotal(); return;
   }
 
   if (['mntFecha','mntTecnico','mntDescripcion'].includes(id)) { checkMntForm(); return; }
@@ -721,6 +767,7 @@ document.addEventListener('input', e => {
   }
 
   if (id === 'fechaSalvavidas') { updateVencimientos(); return; }
+  if (id === 'fechaBotiquin' || id === 'fechaDeaMant' || id === 'fechaDeaElectrodos') { _updateBotiquinDates(); return; }
 
   if (id === 'filterDesde' || id === 'filterHasta' || id === 'filterOperador') { renderLog(); return; }
 });
@@ -1096,6 +1143,18 @@ function renderTrendChart() {
   }
 }
 
+function _renderDashEstablishment() {
+  const el = document.getElementById('dashEstablishment');
+  if (!el) return;
+  const p = getPerfil();
+  if (!p.razonSocial) { el.classList.add('js-hidden'); return; }
+  const loc = [p.municipio, p.departamento].filter(Boolean).join(', ');
+  el.innerHTML = `<span class="dash-est-icon">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  </span><span class="dash-est-name">${escapeHtml(p.razonSocial)}</span>${loc ? `<span class="dash-est-loc"> · ${escapeHtml(loc)}</span>` : ''}${p.aforo ? `<span class="dash-est-loc"> · Aforo: ${p.aforo} bañistas</span>` : ''}`;
+  el.classList.remove('js-hidden');
+}
+
 function renderDashboardIndices() {
   const el = document.getElementById('dashIndices');
   if (!el) return;
@@ -1179,9 +1238,75 @@ function renderDashboardVencimientos() {
     }
   }
 
-  const concepto = dates['concepto'];
-  if (concepto === 'rojo')    alerts.push({ label: 'Concepto sanitario', msg: 'Desfavorable',          cls: 'venc-danger'  });
-  else if (concepto === 'amarillo') alerts.push({ label: 'Concepto sanitario', msg: 'Con Requerimientos', cls: 'venc-warning' });
+  // Concepto sanitario — lee de la última visita registrada
+  const ultimaVisita = _visitasRaw()[0];
+  if (ultimaVisita) {
+    if (ultimaVisita.concepto === 'desfavorable') alerts.push({ label: 'Concepto sanitario', msg: 'Desfavorable', cls: 'venc-danger' });
+    else if (ultimaVisita.concepto === 'requerimientos') alerts.push({ label: 'Concepto sanitario', msg: 'Con requerimientos', cls: 'venc-warning' });
+    if (ultimaVisita.plazo) {
+      const plazoD = Math.ceil((new Date(ultimaVisita.plazo + 'T00:00:00') - new Date()) / 86400000);
+      if (plazoD < 0)       alerts.push({ label: 'Plazo sanitario', msg: 'VENCIDO',           cls: 'venc-danger'  });
+      else if (plazoD <= 7) alerts.push({ label: 'Plazo sanitario', msg: `Vence en ${plazoD}d`, cls: 'venc-warning' });
+    }
+  } else {
+    const concepto = dates['concepto'];
+    if (concepto === 'rojo')         alerts.push({ label: 'Concepto sanitario', msg: 'Desfavorable',          cls: 'venc-danger'  });
+    else if (concepto === 'amarillo') alerts.push({ label: 'Concepto sanitario', msg: 'Con requerimientos', cls: 'venc-warning' });
+  }
+
+  // Saneamiento básico
+  const mntRaw = _mntLogRaw();
+  SANEAMIENTO_PROGRAMS.forEach(prog => {
+    const shortLabel = (MNT_AREA_LABELS[prog.id] || { label: prog.label }).label;
+    const last = mntRaw.find(e => e.area === prog.id);
+    if (!last) {
+      alerts.push({ label: shortLabel, msg: 'Sin registro', cls: 'venc-warning' });
+      return;
+    }
+    const ds = Math.floor((Date.now() - new Date(last.fecha + 'T00:00:00')) / 86400000);
+    if (ds > prog.dias) alerts.push({ label: shortLabel, msg: 'VENCIDO', cls: 'venc-danger' });
+    else if (ds > prog.dias - Math.ceil(prog.dias * 0.3)) alerts.push({ label: shortLabel, msg: `Vence en ${prog.dias - ds}d`, cls: 'venc-warning' });
+  });
+
+  // Botiquín
+  const botData = getBotiquin();
+  if (botData.fechaVerificacion) {
+    const botDays = Math.floor((Date.now() - new Date(botData.fechaVerificacion + 'T00:00:00')) / 86400000);
+    if (botDays > 30) alerts.push({ label: 'Botiquín', msg: `Hace ${botDays}d`, cls: 'venc-danger' });
+    else if (botDays > 20) alerts.push({ label: 'Botiquín', msg: `Hace ${botDays}d`, cls: 'venc-warning' });
+  } else {
+    alerts.push({ label: 'Botiquín', msg: 'Sin verificar', cls: 'venc-warning' });
+  }
+  if (botData.tipo === 'C' && botData.fechaDeaElectrodos) {
+    const deaDays = Math.ceil((new Date(botData.fechaDeaElectrodos + 'T00:00:00') - new Date()) / 86400000);
+    if (deaDays < 0)       alerts.push({ label: 'DEA electrodos', msg: 'VENCIDO',          cls: 'venc-danger'  });
+    else if (deaDays <= 30) alerts.push({ label: 'DEA electrodos', msg: `Vence en ${deaDays}d`, cls: 'venc-warning' });
+  }
+
+  // Aptitud del estanque
+  const todayStr   = localDateStr(new Date());
+  const todayEntry = _logRaw().find(e => e.fecha === todayStr);
+  if (todayEntry && todayEntry.aptitud === 'no_apta') {
+    alerts.push({ label: 'Estanque', msg: 'No apta para el servicio', cls: 'venc-danger' });
+  }
+
+  // Seguridad diaria
+  if (todayEntry) {
+    const segN = _segCount(todayEntry.seguridad);
+    if (segN < 0) alerts.push({ label: 'Seguridad diaria', msg: 'Sin verificar hoy', cls: 'venc-warning' });
+    else if (segN < SEG_ITEMS.length) alerts.push({ label: 'Seguridad diaria', msg: `${segN}/${SEG_ITEMS.length} verificados`, cls: 'venc-warning' });
+  }
+
+  // Análisis de laboratorio trimestral
+  const labRecords   = getLabRecords();
+  const labDaysSince = _labDaysSince(labRecords[0] || null);
+  if (labDaysSince === null) {
+    alerts.push({ label: 'Lab. trimestral', msg: 'Sin registro', cls: 'venc-warning' });
+  } else if (labDaysSince > 90) {
+    alerts.push({ label: 'Lab. trimestral', msg: 'VENCIDO', cls: 'venc-danger' });
+  } else if (labDaysSince > 75) {
+    alerts.push({ label: 'Lab. trimestral', msg: `Vence en ${90 - labDaysSince}d`, cls: 'venc-warning' });
+  }
 
   if (!alerts.length) { el.style.display = 'none'; return; }
 
@@ -2400,6 +2525,117 @@ function updateOperadorDatalist() {
   dl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
 }
 
+function calcHorasFun() {
+  const ini = document.getElementById('logHoraInicio')?.value;
+  const fin = document.getElementById('logHoraFin')?.value;
+  if (!ini || !fin) return;
+  const [hI, mI] = ini.split(':').map(Number);
+  const [hF, mF] = fin.split(':').map(Number);
+  let mins = (hF * 60 + mF) - (hI * 60 + mI);
+  if (mins <= 0) return;
+  const horas = +(mins / 60).toFixed(1);
+  const el = document.getElementById('logHorasFun');
+  if (el && !el.value) el.value = horas;
+}
+
+function updateCaudalLpm() {
+  const el   = document.getElementById('logCaudal');
+  const hint = document.getElementById('caudalLpmHint');
+  if (!el || !hint) return;
+  const v = parseFloat(el.value);
+  hint.textContent = isNaN(v) || v <= 0 ? '' : `≈ ${Math.round(v * 1000 / 60)} lpm`;
+}
+
+function updateSalvavidasDatalist() {
+  const dl = document.getElementById('salvavidasList');
+  if (!dl) return;
+  const fromPerfil = (getPerfil().salvavidas || []).filter(s => s.nombre);
+  const fromHistory = [...new Set(
+    _logRaw().map(e => e.salvavidas).filter(n => n && n.trim())
+  )];
+  const combined = [...new Set([...fromPerfil.map(s => s.nombre), ...fromHistory])].sort();
+  dl.innerHTML = combined.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+}
+
+function onSalvavidasInput() {
+  const name = document.getElementById('logSalvavidas')?.value.trim();
+  if (!name) return;
+  const match = (getPerfil().salvavidas || []).find(s => s.nombre.trim() === name);
+  if (match && match.nia) {
+    const niaEl = document.getElementById('logSalvavidasNia');
+    if (niaEl && !niaEl.value) niaEl.value = match.nia;
+  }
+}
+
+// ── LABORES DIARIAS ───────────────────────────────────────
+const LAB_ITEMS = [
+  { id: 'flotante',      label: 'Material flotante' },
+  { id: 'paredesRompe',  label: 'Paredes y rompebolas' },
+  { id: 'fondo',         label: 'Aspirado del fondo' },
+  { id: 'desnatadores',  label: 'Desnatadores' },
+  { id: 'duchasLavapies',label: 'Duchas preimmersión y lavapies' },
+  { id: 'andenes',       label: 'Andenes perimetrales' },
+];
+
+function _labCount(lab) {
+  if (!lab || typeof lab !== 'object') return -1;
+  return LAB_ITEMS.filter(i => lab[i.id]).length;
+}
+
+function updateLabCounter() {
+  const checked = LAB_ITEMS.filter(i => document.getElementById('lab_' + i.id)?.checked).length;
+  const el = document.getElementById('labCounter');
+  if (!el) return;
+  el.textContent = `${checked} / ${LAB_ITEMS.length}`;
+  el.className = 'seg-counter' + (checked === LAB_ITEMS.length ? ' seg-counter-ok' : checked > 0 ? ' seg-counter-partial' : '');
+}
+
+// ── SEGURIDAD DIARIA ──────────────────────────────────────
+const SEG_ITEMS = [
+  { id: 'cierrePer', label: 'Cierre perimetral' },
+  { id: 'alarmaPer', label: 'Alarma perimetral' },
+  { id: 'svr',       label: 'Sistema de liberación de vacío (SVR)' },
+  { id: 'alarmaIm',  label: 'Alarma de inmersión' },
+  { id: 'btnParo',   label: 'Botón de parada de emergencia' },
+  { id: 'rejilla',   label: 'Rejilla antiatrapamiento' },
+  { id: 'tapones',   label: 'Tapones de succión de pared' },
+];
+
+function _segCount(seg) {
+  if (!seg || typeof seg !== 'object') return -1;
+  return SEG_ITEMS.filter(i => seg[i.id]).length;
+}
+
+function updateSegCounter() {
+  const checked = SEG_ITEMS.filter(i => document.getElementById('seg_' + i.id)?.checked).length;
+  const el = document.getElementById('segCounter');
+  if (!el) return;
+  el.textContent = `${checked} / ${SEG_ITEMS.length}`;
+  el.className = 'seg-counter' + (checked === SEG_ITEMS.length ? ' seg-counter-ok' : checked > 0 ? ' seg-counter-partial' : '');
+}
+
+// ── INSTALACIÓN — ALISTAMIENTO 7 ─────────────────────────
+const INST_ITEMS = [
+  { id: 'lavapies',  label: 'Lavapies y duchas preimmersión' },
+  { id: 'estanque',  label: 'Estanque (revestimiento)' },
+  { id: 'pedaneos',  label: 'Pedaneos, escaleras y pasamanos' },
+  { id: 'tapas',     label: 'Tapas desnatadoras' },
+  { id: 'rejillas',  label: 'Rejillas desnatadoras' },
+];
+
+function _instCount(inst) {
+  if (!inst || typeof inst !== 'object') return -1;
+  return INST_ITEMS.filter(i => inst[i.id]).length;
+}
+
+function updateInstCounter() {
+  const checked = INST_ITEMS.filter(i => document.getElementById('inst_' + i.id)?.checked).length;
+  const el = document.getElementById('instCounter');
+  if (!el) return;
+  el.textContent = `${checked} / ${INST_ITEMS.length}`;
+  el.className = 'seg-counter' + (checked === INST_ITEMS.length ? ' seg-counter-ok' : checked > 0 ? ' seg-counter-partial' : '');
+}
+
 // ── Validadores de esquema ────────────────────────────────
 function _isValidLogEntry(e) {
   return e !== null && typeof e === 'object'
@@ -2416,8 +2652,15 @@ function _isValidLogEntry(e) {
 function _isValidAFREntry(e) {
   return e !== null && typeof e === 'object'
     && typeof e.ts    === 'number' && isFinite(e.ts)
-    && ['solido', 'vomito', 'diarreico'].includes(e.tipo)
+    && ['solido', 'vomito', 'diarreico', 'sangre', 'quimicos'].includes(e.tipo)
     && typeof e.fecha === 'string' && e.fecha.length > 0;
+}
+
+function _logRaw() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('aqua_bitacora') || '[]');
+    return Array.isArray(raw) ? raw.filter(_isValidLogEntry) : [];
+  } catch { return []; }
 }
 
 function getLog() {
@@ -2430,8 +2673,9 @@ function getLog() {
 }
 
 const LOG_REQUIRED = ['logDate','logTime','logCloro','logCloroComb','logPh','logAlc','logTurb','logTemp'];
-let editingLogTs = null;
-let editingMntTs = null;
+let editingLogTs   = null;
+let editingMntTs   = null;
+let _momentoActual = 'apertura';
 let _newLogTs    = 0;
 let _trendParam  = 'cloro';
 let _trendDays   = 7;
@@ -2440,16 +2684,43 @@ let _trendDays   = 7;
 const LOG_PARAM_RANGES = [
   { id: 'logCloro',     badge: 'logCloroBadge',     min: 2.0, max: 4.0  },
   { id: 'logCloroComb', badge: 'logCloroCombBadge', min: 0,   max: 0.3  },
+  { id: 'logBromo',     badge: 'logBromoBadge',     min: 4.0, max: 6.0  },
   { id: 'logPh',        badge: 'logPhBadge',        min: 6.8, max: 7.3  },
   { id: 'logAlc',       badge: 'logAlcBadge',       min: 20,  max: 150  },
   { id: 'logDureza',   badge: 'logDurezaBadge',    min: 200, max: 700  },
   { id: 'logCya',       badge: 'logCyaBadge',       min: 0,   max: 75   },
   { id: 'logTurb',      badge: 'logTurbBadge',      min: 0,   max: 0.5  },
   { id: 'logTemp',      badge: 'logTempBadge',      min: 0,   max: 40   },
-  { id: 'logOrp',       badge: 'logOrpBadge',       min: 0,    max: 700, warnBelow: 650 },
-  { id: 'logTds',       badge: 'logTdsBadge',       min: 1000, max: 1200 },
-  { id: 'logCond',      badge: 'logCondBadge',      min: 2000, max: 2400 },
+  { id: 'logHumedad',  badge: 'logHumedadBadge',   min: 40,  max: 60   },
+  { id: 'logOrp',        badge: 'logOrpBadge',        min: 0,    max: 700, warnBelow: 650 },
+  { id: 'logTds',        badge: 'logTdsBadge',        min: 1000, max: 1200 },
+  { id: 'logCond',       badge: 'logCondBadge',       min: 2000, max: 2400 },
+  { id: 'logNivelAgua',  badge: 'logNivelAguaBadge',  min: 0,    max: 0.6  },
 ];
+
+function onAptitudChange() {
+  const noApta = document.getElementById('apt_no_apta')?.checked;
+  const wrap   = document.getElementById('aptRazonWrap');
+  if (wrap) wrap.hidden = !noApta;
+  const sug = document.getElementById('aptSuggestion');
+  if (sug) sug.textContent = '';
+  document.getElementById('aptLabelApta')?.classList.toggle('apt-selected', !noApta && !!document.getElementById('apt_apta')?.checked);
+  document.getElementById('aptLabelNoApta')?.classList.toggle('apt-selected', !!noApta);
+}
+
+function _updateAptitudSuggestion(outRange, filled) {
+  const sug = document.getElementById('aptSuggestion');
+  if (!sug) return;
+  const anySelected = document.getElementById('apt_apta')?.checked || document.getElementById('apt_no_apta')?.checked;
+  if (anySelected || filled === 0) { sug.textContent = ''; return; }
+  if (outRange === 0) {
+    sug.className = 'apt-suggestion apt-sug-ok';
+    sug.textContent = '✓ Todos los parámetros en rango — se sugiere: Apta';
+  } else {
+    sug.className = 'apt-suggestion apt-sug-warn';
+    sug.textContent = `⚠ ${outRange} parámetro${outRange > 1 ? 's' : ''} fuera de rango — se sugiere: No apta`;
+  }
+}
 
 function checkLogForm() {
   const ok = LOG_REQUIRED.every(id => {
@@ -2479,7 +2750,7 @@ function checkLogForm() {
 
   const bar = document.getElementById('logComplianceBar');
   if (!bar) return;
-  if (filled === 0) { bar.style.display = 'none'; return; }
+  if (filled === 0) { bar.style.display = 'none'; _updateAptitudSuggestion(0, 0); return; }
   bar.style.display = 'flex';
   if (outRange === 0) {
     bar.className = 'log-compliance-bar log-comp-ok';
@@ -2490,6 +2761,7 @@ function checkLogForm() {
     bar.innerHTML = `<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <strong>${outRange} de ${filled} par&aacute;metro${outRange > 1 ? 's' : ''} fuera del rango</strong> &nbsp;·&nbsp; Res. 234/2026 &nbsp;&middot;&nbsp; El registro se guardar&aacute; igual.`;
   }
+  _updateAptitudSuggestion(outRange, filled);
 }
 
 function _lastDureza() {
@@ -2547,32 +2819,114 @@ function _compressPhoto(file, cb) {
   img.src = url;
 }
 
+function _updateBanistasTotal() {
+  const m = parseInt(document.getElementById('logBanistasMenores')?.value) || 0;
+  const M = parseInt(document.getElementById('logBanistasMayores')?.value) || 0;
+  const totalEl = document.getElementById('banistasTotal');
+  if (!totalEl) return;
+  const hasMenores = document.getElementById('logBanistasMenores')?.value !== '';
+  const hasMayores = document.getElementById('logBanistasMayores')?.value !== '';
+  totalEl.textContent = (hasMenores || hasMayores) ? (m + M) : '–';
+}
+
+function _setMomento(val) {
+  _momentoActual = val;
+  document.querySelectorAll('.momento-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.momento === val);
+  });
+}
+
+function _getFisVal(id) {
+  return document.querySelector(`[data-fis-id="${id}"] .fis-btn.active`)?.dataset.val || null;
+}
+function _setFisVal(id, val) {
+  if (!val) return;
+  document.querySelectorAll(`[data-fis-id="${id}"] .fis-btn`).forEach(b => {
+    b.classList.toggle('active', b.dataset.val === val);
+  });
+}
+function _resetFis() {
+  _setFisVal('fisColor',    'aceptable');
+  _setFisVal('fisFlotantes','ausentes');
+  _setFisVal('fisOlor',     'aceptable');
+  _setFisVal('fisTransp',   'visible');
+}
+function _fisTodosOk(entry) {
+  return (entry.fisColor     || 'aceptable')    === 'aceptable'
+      && (entry.fisFlotantes || 'ausentes')      === 'ausentes'
+      && (entry.fisOlor      || 'aceptable')     === 'aceptable'
+      && (entry.fisTransp    || 'visible')       === 'visible';
+}
+const _FIS_LABELS = {
+  aceptable:    'Aceptable',
+  'no-aceptable': 'No aceptable',
+  ausentes:     'Ausentes',
+  presentes:    'Presentes',
+  visible:      'Fondo visible',
+  'no-visible': 'No visible',
+};
+
 function clearLogForm() {
   const now  = new Date();
   document.getElementById('logDate').value      = localDateStr(now);
   document.getElementById('logTime').value      = now.toTimeString().slice(0, 5);
-  document.getElementById('logOperador').value  = '';
-  document.getElementById('logCloro').value     = '';
+  document.getElementById('logOperador').value     = '';
+  document.getElementById('logSalvavidas').value   = '';
+  document.getElementById('logSalvavidasNia').value= '';
+  document.getElementById('logCloro').value        = '';
   document.getElementById('logCloroComb').value = '';
+  document.getElementById('logBromo').value     = '';
   document.getElementById('logPh').value        = '';
   document.getElementById('logAlc').value       = '';
   document.getElementById('logCya').value       = '';
   document.getElementById('logTurb').value      = '';
   document.getElementById('logTemp').value      = '';
+  document.getElementById('logTempAire').value  = '';
+  document.getElementById('logHumedad').value   = '';
   document.getElementById('logDureza').value    = '';
-  document.getElementById('logBanistas').value  = '';
+  document.getElementById('logBanistasMenores').value = '';
+  document.getElementById('logBanistasMayores').value = '';
+  _updateBanistasTotal();
   document.getElementById('logOrp').value       = '';
   document.getElementById('logTds').value       = '';
   document.getElementById('logCond').value      = '';
   document.getElementById('logCaudal').value    = '';
   document.getElementById('logHorasFun').value  = '';
+  document.getElementById('logHorasFilt').value = '';
   document.getElementById('logAguaRep').value   = '';
-  document.getElementById('logRetrolav').value  = '';
+  document.getElementById('logRetrolav').value   = '';
+  document.getElementById('logPresion').value    = '';
+  document.getElementById('logNivelAgua').value  = '';
+  document.getElementById('logHoraInicio').value    = '';
+  document.getElementById('logHoraFin').value       = '';
+  document.getElementById('logNeutralizador').value = '';
+  document.getElementById('logCloroDos').value      = '';
+  document.getElementById('logHoraAjuste').value    = '';
   document.getElementById('logProdQuim').value  = '';
   document.getElementById('logAverias').value   = '';
   document.getElementById('logNotas').value     = '';
   _applyPhoto('fotoAgua',   null);
   _applyPhoto('fotoAveria', null);
+  _setMomento('apertura');
+  _resetFis();
+  LAB_ITEMS.forEach(i => { const el = document.getElementById('lab_' + i.id); if (el) el.checked = false; });
+  updateLabCounter();
+  SEG_ITEMS.forEach(i  => { const el = document.getElementById('seg_'  + i.id); if (el) el.checked = false; });
+  updateSegCounter();
+  INST_ITEMS.forEach(i => { const el = document.getElementById('inst_' + i.id); if (el) el.checked = false; });
+  updateInstCounter();
+  const aptApta   = document.getElementById('apt_apta');
+  const aptNoApta = document.getElementById('apt_no_apta');
+  if (aptApta)   aptApta.checked   = false;
+  if (aptNoApta) aptNoApta.checked = false;
+  document.getElementById('aptLabelApta')?.classList.remove('apt-selected');
+  document.getElementById('aptLabelNoApta')?.classList.remove('apt-selected');
+  const aptRazonWrap = document.getElementById('aptRazonWrap');
+  if (aptRazonWrap) aptRazonWrap.hidden = true;
+  const aptRazon = document.getElementById('aptRazon');
+  if (aptRazon) aptRazon.value = '';
+  const aptSug = document.getElementById('aptSuggestion');
+  if (aptSug) aptSug.textContent = '';
   checkLogForm();
 }
 
@@ -2582,28 +2936,59 @@ function editLog(ts) {
   editingLogTs = ts;
   document.getElementById('logDate').value      = entry.fecha     || '';
   document.getElementById('logTime').value      = entry.hora      || '';
-  document.getElementById('logOperador').value  = entry.operador  || '';
-  document.getElementById('logCloro').value     = entry.cloro     ?? '';
+  document.getElementById('logOperador').value     = entry.operador     || '';
+  document.getElementById('logSalvavidas').value   = entry.salvavidas   || '';
+  document.getElementById('logSalvavidasNia').value= entry.salvavidasNia|| '';
+  document.getElementById('logCloro').value        = entry.cloro        ?? '';
   document.getElementById('logCloroComb').value = entry.clorocomb ?? '';
+  document.getElementById('logBromo').value     = entry.bromo     ?? '';
   document.getElementById('logPh').value        = entry.ph        ?? '';
   document.getElementById('logAlc').value       = entry.alc       ?? '';
   document.getElementById('logCya').value       = entry.cya       ?? '';
   document.getElementById('logTurb').value      = entry.turb      ?? '';
   document.getElementById('logTemp').value      = entry.temp      ?? '';
+  document.getElementById('logTempAire').value  = entry.tempAire  ?? '';
+  document.getElementById('logHumedad').value   = entry.humedad   ?? '';
   document.getElementById('logDureza').value    = entry.dureza    ?? '';
-  document.getElementById('logBanistas').value  = entry.banistas  ?? '';
+  document.getElementById('logBanistasMenores').value = entry.banistasMenores ?? '';
+  document.getElementById('logBanistasMayores').value = entry.banistasMayores ?? (entry.banistasMenores == null && entry.banistas != null ? entry.banistas : '');
+  _updateBanistasTotal();
   document.getElementById('logOrp').value       = entry.orp       ?? '';
   document.getElementById('logTds').value       = entry.tds       ?? '';
   document.getElementById('logCond').value      = entry.cond      ?? '';
   document.getElementById('logCaudal').value    = entry.caudal    ?? '';
+  updateCaudalLpm();
   document.getElementById('logHorasFun').value  = entry.horasFun  ?? '';
+  document.getElementById('logHorasFilt').value = entry.horasFilt ?? '';
   document.getElementById('logAguaRep').value   = entry.aguaRep   ?? '';
-  document.getElementById('logRetrolav').value  = entry.retrolav  ?? '';
+  document.getElementById('logRetrolav').value   = entry.retrolav   ?? '';
+  document.getElementById('logPresion').value    = entry.presion    ?? '';
+  document.getElementById('logNivelAgua').value  = entry.nivelAgua  ?? '';
+  document.getElementById('logHoraInicio').value    = entry.horaInicio    || '';
+  document.getElementById('logHoraFin').value       = entry.horaFin       || '';
+  document.getElementById('logNeutralizador').value = entry.neutralizador ?? '';
+  document.getElementById('logCloroDos').value      = entry.cloroDos      ?? '';
+  document.getElementById('logHoraAjuste').value    = entry.horaAjuste    || '';
   document.getElementById('logProdQuim').value  = entry.prodQuim  || '';
   document.getElementById('logAverias').value   = entry.averias   || '';
   document.getElementById('logNotas').value     = entry.notas     || '';
   _applyPhoto('fotoAgua',   entry.fotoAgua   || null);
   _applyPhoto('fotoAveria', entry.fotoAveria || null);
+  _setMomento(entry.momento || 'apertura');
+  _setFisVal('fisColor',     entry.fisColor     || 'aceptable');
+  _setFisVal('fisFlotantes', entry.fisFlotantes || 'ausentes');
+  _setFisVal('fisOlor',      entry.fisOlor      || 'aceptable');
+  _setFisVal('fisTransp',    entry.fisTransp    || 'visible');
+  LAB_ITEMS.forEach(i => { const el = document.getElementById('lab_' + i.id); if (el) el.checked = !!(entry.labores && entry.labores[i.id]); });
+  updateLabCounter();
+  SEG_ITEMS.forEach(i  => { const el = document.getElementById('seg_'  + i.id); if (el) el.checked = !!(entry.seguridad   && entry.seguridad[i.id]);   });
+  updateSegCounter();
+  INST_ITEMS.forEach(i => { const el = document.getElementById('inst_' + i.id); if (el) el.checked = !!(entry.instalacion && entry.instalacion[i.id]); });
+  updateInstCounter();
+  const aptEl = document.getElementById(entry.aptitud === 'no_apta' ? 'apt_no_apta' : entry.aptitud === 'apta' ? 'apt_apta' : '');
+  if (aptEl) { aptEl.checked = true; onAptitudChange(); }
+  const aptRazonEl = document.getElementById('aptRazon');
+  if (aptRazonEl) aptRazonEl.value = entry.aptitudRazon || '';
   document.getElementById('btnSaveLogText').textContent   = 'Actualizar registro';
   document.getElementById('logEditDate').textContent      = entry.fecha || '';
   document.getElementById('logEditBanner').style.display  = 'flex';
@@ -2621,41 +3006,72 @@ function cancelEditLog() {
 }
 
 function _buildLogEntry() {
-  const banistasRaw = parseInt(document.getElementById('logBanistas').value);
+  const banistasMenoresRaw = parseInt(document.getElementById('logBanistasMenores').value);
+  const banistasMayoresRaw = parseInt(document.getElementById('logBanistasMayores').value);
+  const banistasRaw = (!isNaN(banistasMenoresRaw) || !isNaN(banistasMayoresRaw))
+    ? (isNaN(banistasMenoresRaw) ? 0 : banistasMenoresRaw) + (isNaN(banistasMayoresRaw) ? 0 : banistasMayoresRaw)
+    : NaN;
   const orpRaw      = parseFloat(document.getElementById('logOrp').value);
   const tdsRaw      = parseFloat(document.getElementById('logTds').value);
   const condRaw     = parseFloat(document.getElementById('logCond').value);
   const caudalRaw   = parseFloat(document.getElementById('logCaudal').value);
-  const horasFunRaw = parseFloat(document.getElementById('logHorasFun').value);
+  const horasFunRaw  = parseFloat(document.getElementById('logHorasFun').value);
+  const horasFiltRaw = parseFloat(document.getElementById('logHorasFilt').value);
   const aguaRepRaw  = parseFloat(document.getElementById('logAguaRep').value);
   const retrolavRaw = parseInt(document.getElementById('logRetrolav').value);
+  const presionRaw  = parseFloat(document.getElementById('logPresion').value);
   const durezaRaw   = parseFloat(document.getElementById('logDureza').value);
   const cyaRaw      = parseFloat(document.getElementById('logCya').value);
   return {
     fecha:      document.getElementById('logDate').value,
     hora:       document.getElementById('logTime').value,
-    operador:   document.getElementById('logOperador').value,
+    momento:    _momentoActual,
+    fisColor:    _getFisVal('fisColor'),
+    fisFlotantes:_getFisVal('fisFlotantes'),
+    fisOlor:     _getFisVal('fisOlor'),
+    fisTransp:   _getFisVal('fisTransp'),
+    operador:      document.getElementById('logOperador').value,
+    salvavidas:    document.getElementById('logSalvavidas').value.trim(),
+    salvavidasNia: document.getElementById('logSalvavidasNia').value.trim(),
     cloro:      parseFloat(document.getElementById('logCloro').value),
     clorocomb:  parseFloat(document.getElementById('logCloroComb').value),
+    bromo:      (() => { const v = parseFloat(document.getElementById('logBromo').value); return isNaN(v) ? null : v; })(),
     ph:         parseFloat(document.getElementById('logPh').value),
     alc:        parseFloat(document.getElementById('logAlc').value),
     cya:        isNaN(cyaRaw)      ? null : cyaRaw,
     turb:       parseFloat(document.getElementById('logTurb').value),
     temp:       parseFloat(document.getElementById('logTemp').value),
+    tempAire:   (() => { const v = parseFloat(document.getElementById('logTempAire').value); return isNaN(v) ? null : v; })(),
+    humedad:    (() => { const v = parseFloat(document.getElementById('logHumedad').value);  return isNaN(v) ? null : v; })(),
     dureza:     isNaN(durezaRaw)   ? null : durezaRaw,
-    banistas:   isNaN(banistasRaw) ? null : banistasRaw,
+    banistasMenores: isNaN(banistasMenoresRaw) ? null : banistasMenoresRaw,
+    banistasMayores: isNaN(banistasMayoresRaw) ? null : banistasMayoresRaw,
+    banistas:        isNaN(banistasRaw)         ? null : banistasRaw,
     orp:        isNaN(orpRaw)      ? null : orpRaw,
     tds:        isNaN(tdsRaw)      ? null : tdsRaw,
     cond:       isNaN(condRaw)     ? null : condRaw,
     caudal:     isNaN(caudalRaw)   ? null : caudalRaw,
-    horasFun:   isNaN(horasFunRaw) ? null : horasFunRaw,
+    horasFun:   isNaN(horasFunRaw)  ? null : horasFunRaw,
+    horasFilt:  isNaN(horasFiltRaw) ? null : horasFiltRaw,
     aguaRep:    isNaN(aguaRepRaw)  ? null : aguaRepRaw,
     retrolav:   isNaN(retrolavRaw) ? null : retrolavRaw,
+    presion:    isNaN(presionRaw)  ? null : presionRaw,
+    nivelAgua:  (() => { const v = parseFloat(document.getElementById('logNivelAgua').value); return isNaN(v) ? null : v; })(),
+    horaInicio: document.getElementById('logHoraInicio').value || null,
+    horaFin:    document.getElementById('logHoraFin').value    || null,
+    neutralizador: (() => { const v = parseFloat(document.getElementById('logNeutralizador').value); return isNaN(v) ? null : v; })(),
+    cloroDos:      (() => { const v = parseFloat(document.getElementById('logCloroDos').value);      return isNaN(v) ? null : v; })(),
+    horaAjuste:    document.getElementById('logHoraAjuste').value || null,
     prodQuim:   document.getElementById('logProdQuim').value.trim(),
     averias:    document.getElementById('logAverias').value.trim(),
     notas:      document.getElementById('logNotas').value,
     fotoAgua:   _photos.fotoAgua   || null,
     fotoAveria: _photos.fotoAveria || null,
+    labores:    Object.fromEntries(LAB_ITEMS.map(i  => [i.id, !!(document.getElementById('lab_'  + i.id)?.checked)])),
+    seguridad:  Object.fromEntries(SEG_ITEMS.map(i  => [i.id, !!(document.getElementById('seg_'  + i.id)?.checked)])),
+    instalacion:Object.fromEntries(INST_ITEMS.map(i => [i.id, !!(document.getElementById('inst_' + i.id)?.checked)])),
+    aptitud:      document.getElementById('apt_apta')?.checked ? 'apta' : document.getElementById('apt_no_apta')?.checked ? 'no_apta' : null,
+    aptitudRazon: (document.getElementById('apt_no_apta')?.checked ? (document.getElementById('aptRazon')?.value.trim() || '') : ''),
     ts:         editingLogTs || Date.now(),
   };
 }
@@ -2785,6 +3201,10 @@ function saveLog() {
   updateDashReportBtn();
   updateOperadorDatalist();
   showToast(toastMsg, 'success');
+  const _aforo = getPerfil().aforo;
+  if (_aforo && entry.banistas != null && entry.banistas > _aforo) {
+    setTimeout(() => showToast(`⚠ Aforo superado: ${entry.banistas} bañistas registrados (máx. ${_aforo}).`, 'warning', 6000), 600);
+  }
 }
 
 function deleteLog(ts) {
@@ -2867,31 +3287,45 @@ function renderLog() {
     <table class="log-table">
       <thead>
         <tr>
-          <th>Fecha</th><th>Hora</th><th>Operador</th>
-          <th>Cl. Libre</th><th>Cl. Comb</th><th>pH</th><th>Alcalinidad</th><th>Dureza</th>
-          <th>CYA</th><th>Turbiedad</th><th>Temp</th><th>ORP</th><th>TDS</th><th>Conduct.</th><th>ISL</th><th>Art.16</th><th>Bañistas</th><th></th>
+          <th>Fecha</th><th>Hora</th><th>Operador</th><th>Salvavidas</th>
+          <th>Cal.Fís.</th>
+          <th>Cl. Libre</th><th>Cl. Comb</th><th>Bromo</th><th>pH</th><th>Alcalinidad</th><th>Dureza</th>
+          <th>CYA</th><th>Turbiedad</th><th>T°Agua</th><th>T°Aire</th><th>Humedad</th><th>ORP</th><th>TDS</th><th>Conduct.</th><th>ISL</th><th>Art.16</th><th>Bañistas</th><th>Labores</th><th>Seguridad</th><th>Inst.</th><th>Aptitud</th><th></th>
         </tr>
       </thead>
       <tbody>
         ${pageLog.map(e => `
           <tr class="log-row-clickable" data-ts="${e.ts}" title="Ver detalle del registro">
             <td data-label="Fecha">${escapeHtml(e.fecha) || '–'}</td>
-            <td data-label="Hora">${escapeHtml(fmt12h(e.hora))}</td>
+            <td data-label="Hora">${escapeHtml(fmt12h(e.hora))}${e.momento ? `<span class="momento-badge ${e.momento}">${e.momento === 'apertura' ? 'Aper.' : e.momento === 'mediodia' ? 'Medio.' : 'Cierre'}</span>` : ''}</td>
             <td data-label="Operador">${escapeHtml(e.operador) || '–'}</td>
+            <td data-label="Salvavidas" title="${e.salvavidasNia ? 'NIA: ' + escapeHtml(e.salvavidasNia) : ''}">${e.salvavidas ? escapeHtml(e.salvavidas) : '–'}</td>
+            <td data-label="Cal.Fís.">${(() => { const ok = _fisTodosOk(e); return (e.fisColor || e.fisFlotantes || e.fisOlor || e.fisTransp) ? `<span class="${ok ? 'fis-badge-ok' : 'fis-badge-bad'}">${ok ? '✓' : '⚠'}</span>` : '<span class="fis-badge-na">–</span>'; })()}</td>
             <td data-label="Cl. Libre"${cc('cloro',     e.cloro    )}>${e.cloro     ?? '–'} ppm</td>
             <td data-label="Cl. Comb" ${cc('clorocomb', e.clorocomb)}>${e.clorocomb != null && !isNaN(e.clorocomb) ? e.clorocomb + ' ppm' : '–'}</td>
+            <td data-label="Bromo"${e.bromo != null ? (e.bromo >= 4.0 && e.bromo <= 6.0 ? ' class="cell-ok"' : ' class="cell-out"') : ''}>${e.bromo != null ? e.bromo + ' ppm' : '–'}</td>
             <td data-label="pH"       ${cc('ph',         e.ph       )}>${e.ph        ?? '–'}</td>
             <td data-label="Alcalinidad"${cc('alc',   e.alc  )}>${e.alc   ?? '–'} ppm</td>
             <td data-label="Dureza"${cc('dureza', e.dureza)}>${e.dureza != null && !isNaN(e.dureza) ? e.dureza + ' ppm' : '–'}</td>
             <td data-label="CYA"${cc('cya',   e.cya  )}>${e.cya   ?? '–'} ppm</td>
             <td data-label="Turbiedad"${cc('turb',  e.turb )}>${e.turb  ?? '–'} UNT</td>
-            <td data-label="Temp."${cc('temp',  e.temp )}>${e.temp  ?? '–'} °C</td>
+            <td data-label="T°Agua"${cc('temp', e.temp)}>${e.temp ?? '–'} °C</td>
+            <td data-label="T°Aire">${e.tempAire != null ? e.tempAire + ' °C' : '–'}</td>
+            <td data-label="Humedad"${e.humedad != null ? (e.humedad >= 40 && e.humedad <= 60 ? ' class="cell-ok"' : ' class="cell-out"') : ''}>${e.humedad != null ? e.humedad + ' %' : '–'}</td>
             <td data-label="ORP"${e.orp != null && !isNaN(e.orp) ? (e.orp <= 700 ? ' class="cell-ok"' : ' class="cell-out"') : ''}>${e.orp != null && !isNaN(e.orp) ? e.orp + ' mV' : '–'}</td>
             <td data-label="TDS"${cc('tds', e.tds)}>${e.tds != null && !isNaN(e.tds) ? e.tds + ' mg/L' : '–'}</td>
             <td data-label="Conduct."${cc('cond', e.cond)}>${e.cond != null && !isNaN(e.cond) ? e.cond + ' µS/cm' : '–'}</td>
             <td data-label="ISL">${e.isl != null ? `<span style="font-weight:700;color:${e.islStatus==='Equilibrada'?'#0cb86a':e.islStatus==='Incrustante'?'#f59e0b':'#ef4444'}">${e.isl.toFixed(2)}</span>` : '–'}</td>
-            <td data-label="Art.16" title="${[e.caudal != null ? 'Caudal: ' + e.caudal + ' m³/h' : '', e.horasFun != null ? 'Horas: ' + e.horasFun + 'h' : '', e.aguaRep != null ? 'Agua: ' + e.aguaRep + ' m³' : '', e.retrolav != null ? 'Retrolavados: ' + e.retrolav : '', e.prodQuim ? 'Prod: ' + escapeHtml(e.prodQuim) : '', e.averias ? 'Averías: ' + escapeHtml(e.averias) : ''].filter(Boolean).join(' · ') || 'Sin datos Art.16'}">${(e.caudal != null || e.horasFun != null || e.aguaRep != null || e.retrolav != null || e.prodQuim || e.averias) ? '✓' : '–'}</td>
-            <td data-label="Bañistas">${e.banistas ?? '–'}</td>
+            <td data-label="Art.16" title="${[e.caudal != null ? 'Caudal: ' + e.caudal + ' m³/h' : '', e.horasFun != null ? 'H. func.: ' + e.horasFun + 'h' : '', e.horasFilt != null ? 'H. filt.: ' + e.horasFilt + 'h' : '', e.aguaRep != null ? 'Agua: ' + e.aguaRep + ' m³' : '', e.retrolav != null ? 'Retrolavados: ' + e.retrolav : '', e.presion != null ? 'Presión: ' + e.presion + ' psi' : '', e.prodQuim ? 'Prod: ' + escapeHtml(e.prodQuim) : '', e.averias ? 'Averías: ' + escapeHtml(e.averias) : ''].filter(Boolean).join(' · ') || 'Sin datos Art.16'}">${(e.caudal != null || e.horasFun != null || e.horasFilt != null || e.aguaRep != null || e.retrolav != null || e.presion != null || e.prodQuim || e.averias) ? '✓' : '–'}</td>
+            <td data-label="Bañistas">${(() => {
+              const men = e.banistasMenores; const may = e.banistasMayores; const tot = e.banistas;
+              if (men == null && may == null) return tot != null ? String(tot) : '–';
+              return `<span class="ban-cell"><span class="ban-line"><span class="ban-sub">&lt;6</span>${men ?? '–'}</span><span class="ban-line"><span class="ban-sub">&gt;6</span>${may ?? '–'}</span><span class="ban-total">${tot ?? '–'}</span></span>`;
+            })()}</td>
+            <td data-label="Labores">${(() => { const n = _labCount(e.labores); return n < 0 ? '<span class="seg-badge seg-badge-none">–</span>' : n === LAB_ITEMS.length ? `<span class="seg-badge seg-badge-ok">✓ ${n}/${LAB_ITEMS.length}</span>` : `<span class="seg-badge seg-badge-warn">⚠ ${n}/${LAB_ITEMS.length}</span>`; })()}</td>
+            <td data-label="Seguridad">${(() => { const n = _segCount(e.seguridad); return n < 0 ? '<span class="seg-badge seg-badge-none">–</span>' : n === SEG_ITEMS.length ? `<span class="seg-badge seg-badge-ok">✓ ${n}/${SEG_ITEMS.length}</span>` : `<span class="seg-badge seg-badge-warn">⚠ ${n}/${SEG_ITEMS.length}</span>`; })()}</td>
+            <td data-label="Inst.">${(() => { const n = _instCount(e.instalacion); return n < 0 ? '<span class="seg-badge seg-badge-none">–</span>' : n === INST_ITEMS.length ? `<span class="seg-badge seg-badge-ok">✓ ${n}/${INST_ITEMS.length}</span>` : `<span class="seg-badge seg-badge-warn">⚠ ${n}/${INST_ITEMS.length}</span>`; })()}</td>
+            <td data-label="Aptitud">${e.aptitud === 'apta' ? '<span class="apt-badge apt-badge-ok">Apta</span>' : e.aptitud === 'no_apta' ? '<span class="apt-badge apt-badge-nok">No apta</span>' : '<span class="apt-badge apt-badge-none">–</span>'}</td>
             <td data-label="">
               <div class="log-row-actions">
                 ${(e.fotoAgua || e.fotoAveria) ? `<button class="btn-cam-log" title="Ver foto adjunta" aria-label="Ver foto del registro"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>` : ''}
@@ -2940,18 +3374,22 @@ function viewLog(ts) {
   const meta    = document.getElementById('logDetailMeta');
   const body    = document.getElementById('logDetailBody');
 
+  const momentoLabel = { apertura: 'Apertura', mediodia: 'Mediodía', cierre: 'Cierre' };
   title.textContent = `Registro del ${entry.fecha || '–'}`;
-  meta.textContent  = `${fmt12h(entry.hora, '')} · ${entry.operador || 'Sin operador'}`;
+  meta.textContent  = `${fmt12h(entry.hora, '')}${entry.momento ? ' · ' + (momentoLabel[entry.momento] || entry.momento) : ''} · ${entry.operador || 'Sin operador'}`;
 
   const paramRows = [
     { key: 'cloro',     label: 'Cloro libre residual',  unit: 'ppm',   normMin: 2.0,  normMax: 4.0  },
     { key: 'clorocomb', label: 'Cloro combinado',        unit: 'ppm',   normMin: 0,    normMax: 0.3  },
+    { key: 'bromo',     label: 'Bromo total (Br₂)',      unit: 'ppm',   normMin: 4.0,  normMax: 6.0  },
     { key: 'ph',        label: 'pH',                     unit: '',      normMin: 6.8,  normMax: 7.3  },
     { key: 'alc',       label: 'Alcalinidad total',      unit: 'ppm',   normMin: 20,   normMax: 150  },
     { key: 'dureza',    label: 'Dureza cálcica',         unit: 'ppm',   normMin: 200,  normMax: 700  },
     { key: 'cya',       label: 'Estabilizador (CYA)',    unit: 'ppm',   normMin: 0,    normMax: 75   },
     { key: 'turb',      label: 'Transparencia',          unit: 'UNT',   normMin: 0,    normMax: 0.5  },
-    { key: 'temp',      label: 'Temperatura',            unit: '°C',    normMin: 0,    normMax: 40   },
+    { key: 'temp',      label: 'Temperatura del agua',   unit: '°C',    normMin: 0,    normMax: 40   },
+    { key: 'tempAire',  label: 'Temperatura del aire',   unit: '°C',    normMin: null, normMax: null },
+    { key: 'humedad',   label: 'Humedad relativa',       unit: '%',     normMin: 40,   normMax: 60   },
     { key: 'orp',       label: 'Oxidación (ORP)',        unit: 'mV',    normMin: 0,    normMax: 700, warnBelow: 650 },
     { key: 'tds',       label: 'Sólidos disueltos (TDS)',unit: 'mg/L',  normMin: 1000, normMax: 1200 },
     { key: 'cond',      label: 'Conductividad eléctrica',unit: 'µS/cm', normMin: 2000, normMax: 2400 },
@@ -2960,22 +3398,23 @@ function viewLog(ts) {
   const paramHTML = paramRows.map(p => {
     const val = entry[p.key];
     if (val == null || isNaN(val)) return '';
-    const inRange = val >= p.normMin && val <= p.normMax;
-    const isWarn  = inRange && p.warnBelow !== undefined && val < p.warnBelow;
-    const badge   = inRange
+    const hasRange = p.normMin !== null && p.normMax !== null;
+    const inRange  = !hasRange || (val >= p.normMin && val <= p.normMax);
+    const isWarn   = inRange && p.warnBelow !== undefined && val < p.warnBelow;
+    const badge    = !hasRange ? '' : inRange
       ? (isWarn
         ? '<span class="log-detail-badge warn">⚠ Eficacia baja</span>'
         : '<span class="log-detail-badge ok">✓ En rango</span>')
       : '<span class="log-detail-badge out">✗ Fuera</span>';
     let devHTML = '';
-    if (!inRange) {
+    if (hasRange && !inRange) {
       const raw     = val < p.normMin ? val - p.normMin : val - p.normMax;
       const sign    = raw > 0 ? '+' : '−';
       const abs     = parseFloat(Math.abs(raw).toFixed(2));
       const unitLbl = p.unit || 'unidades';
       devHTML = `<span class="log-detail-deviation">${sign}${abs} ${unitLbl} fuera del rango permitido (${p.normMin}–${p.normMax}${p.unit ? ' ' + p.unit : ''})</span>`;
     }
-    return `<div class="log-detail-param ${inRange ? '' : 'param-out'}">
+    return `<div class="log-detail-param ${hasRange && !inRange ? 'param-out' : ''}">
       <span class="log-detail-param-label">${p.label}</span>
       <span class="log-detail-param-val">${_safeNum(val)}${p.unit ? ' ' + p.unit : ''}</span>
       ${badge}${devHTML}
@@ -2983,10 +3422,17 @@ function viewLog(ts) {
   }).join('');
 
   const art16Items = [
+    (entry.horaInicio || entry.horaFin) ? `<li>Servicio: <strong>${escapeHtml(entry.horaInicio || '?')} – ${escapeHtml(entry.horaFin || '?')}</strong></li>` : '',
     entry.caudal    != null ? `<li>Caudal: <strong>${_safeNum(entry.caudal)} m³/h</strong></li>` : '',
     entry.horasFun  != null ? `<li>Horas de funcionamiento: <strong>${_safeNum(entry.horasFun)} h</strong></li>` : '',
+    entry.horasFilt != null ? `<li>Horas de filtración: <strong>${_safeNum(entry.horasFilt)} h</strong></li>` : '',
     entry.aguaRep   != null ? `<li>Agua repuesta: <strong>${_safeNum(entry.aguaRep)} m³</strong></li>` : '',
     entry.retrolav  != null ? `<li>Retrolavados: <strong>${_safeNum(entry.retrolav)}</strong></li>` : '',
+    entry.presion   != null ? `<li>Presión filtro: <strong>${_safeNum(entry.presion)} psi</strong></li>` : '',
+    entry.nivelAgua != null ? `<li>Nivel del agua: <strong>${_safeNum(entry.nivelAgua)} m</strong>${entry.nivelAgua > 0.6 ? ' <span style="color:#ef4444">⚠ supera 0.6 m</span>' : ''}</li>` : '',
+    entry.neutralizador != null ? `<li>Neutralizador (cloro alto): <strong>${_safeNum(entry.neutralizador)} kg/L</strong></li>` : '',
+    entry.cloroDos      != null ? `<li>Cloro dosificado (cloro bajo): <strong>${_safeNum(entry.cloroDos)} kg/L</strong></li>` : '',
+    (entry.horaAjuste && (entry.neutralizador != null || entry.cloroDos != null)) ? `<li>Hora de ajuste: <strong>${escapeHtml(entry.horaAjuste)}</strong></li>` : '',
     entry.prodQuim              ? `<li>Productos químicos: <strong>${escapeHtml(entry.prodQuim)}</strong></li>` : '',
     entry.averias               ? `<li>Averías / novedades: <strong>${escapeHtml(entry.averias)}</strong></li>` : '',
   ].filter(Boolean).join('');
@@ -2997,11 +3443,29 @@ function viewLog(ts) {
         <ul class="log-detail-art16">${art16Items}</ul>
       </div>` : '';
 
-  const extraHTML = (entry.banistas != null || entry.notas)
+  const hasBanistas = entry.banistas != null || entry.banistasMenores != null || entry.banistasMayores != null;
+  const banistasHTML = hasBanistas ? `<div class="log-detail-section">
+      <div class="log-detail-section-title">Aforo de bañistas</div>
+      <div class="ban-detail-grid">
+        <div class="ban-detail-card ban-det-menor">
+          <span class="ban-det-label">&lt; 6 años</span>
+          <strong class="ban-det-val">${entry.banistasMenores ?? '–'}</strong>
+        </div>
+        <div class="ban-detail-card ban-det-mayor">
+          <span class="ban-det-label">&gt; 6 años</span>
+          <strong class="ban-det-val">${entry.banistasMayores ?? '–'}</strong>
+        </div>
+        <div class="ban-detail-card ban-det-total">
+          <span class="ban-det-label">Total</span>
+          <strong class="ban-det-val">${entry.banistas ?? '–'}</strong>
+        </div>
+      </div>
+    </div>` : '';
+
+  const extraHTML = entry.notas
     ? `<div class="log-detail-section">
-        <div class="log-detail-section-title">Información adicional</div>
-        ${entry.banistas != null ? `<div class="log-detail-extra-row"><span>Bañistas</span><strong>${_safeNum(entry.banistas)}</strong></div>` : ''}
-        ${entry.notas ? `<div class="log-detail-notas"><em>${escapeHtml(entry.notas)}</em></div>` : ''}
+        <div class="log-detail-section-title">Notas</div>
+        <div class="log-detail-notas"><em>${escapeHtml(entry.notas)}</em></div>
       </div>` : '';
 
   let islHTML = '';
@@ -3022,6 +3486,48 @@ function viewLog(ts) {
     </div>`;
   }
 
+  let labHTML = '';
+  if (entry.labores) {
+    const n = _labCount(entry.labores);
+    labHTML = `<div class="log-detail-section">
+      <div class="log-detail-section-title">Labores diarias — ${n}/${LAB_ITEMS.length} realizadas</div>
+      <div class="seg-detail-grid">
+        ${LAB_ITEMS.map(i => `<div class="seg-detail-item ${entry.labores[i.id] ? 'seg-det-ok' : 'seg-det-nok'}">
+          <span class="seg-det-icon">${entry.labores[i.id] ? '✓' : '✗'}</span>
+          <span>${i.label}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  let segHTML = '';
+  if (entry.seguridad) {
+    const n = _segCount(entry.seguridad);
+    segHTML = `<div class="log-detail-section">
+      <div class="log-detail-section-title">Seguridad diaria — ${n}/${SEG_ITEMS.length} verificados</div>
+      <div class="seg-detail-grid">
+        ${SEG_ITEMS.map(i => `<div class="seg-detail-item ${entry.seguridad[i.id] ? 'seg-det-ok' : 'seg-det-nok'}">
+          <span class="seg-det-icon">${entry.seguridad[i.id] ? '✓' : '✗'}</span>
+          <span>${i.label}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  let instHTML = '';
+  if (entry.instalacion) {
+    const n = _instCount(entry.instalacion);
+    instHTML = `<div class="log-detail-section">
+      <div class="log-detail-section-title">Instalación (Alist. 7) — ${n}/${INST_ITEMS.length} aceptables</div>
+      <div class="seg-detail-grid">
+        ${INST_ITEMS.map(i => `<div class="seg-detail-item ${entry.instalacion[i.id] ? 'seg-det-ok' : 'seg-det-nok'}">
+          <span class="seg-det-icon">${entry.instalacion[i.id] ? '✓' : '✗'}</span>
+          <span>${i.label}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
   const fotosHTML = (entry.fotoAgua || entry.fotoAveria) ? `
     <div class="log-detail-section">
       <div class="log-detail-section-title">Evidencia fotográfica</div>
@@ -3031,13 +3537,53 @@ function viewLog(ts) {
       </div>
     </div>` : '';
 
+  const aptHTML = entry.aptitud ? (() => {
+    const isApta = entry.aptitud === 'apta';
+    return `<div class="apt-detail-banner ${isApta ? 'apt-det-ok' : 'apt-det-nok'}">
+      <span class="apt-det-icon">${isApta ? '✓' : '✗'}</span>
+      <div>
+        <strong>${isApta ? '1. Apta para el servicio' : '2. No apta para el servicio'}</strong>
+        ${!isApta && entry.aptitudRazon ? `<div class="apt-det-razon">${escapeHtml(entry.aptitudRazon)}</div>` : ''}
+      </div>
+    </div>`;
+  })() : '';
+
+  const _fisBadge = (key, val) => {
+    if (!val) return '<span class="badge-na">–</span>';
+    const good = {fisColor:'aceptable', fisFlotantes:'ausentes', fisOlor:'aceptable', fisTransp:'visible'}[key];
+    const cls  = val === good ? 'badge-ok' : 'badge-out';
+    return `<span class="${cls}">${_FIS_LABELS[val] || val}</span>`;
+  };
+  const hasFis = entry.fisColor || entry.fisFlotantes || entry.fisOlor || entry.fisTransp;
+  const fisHTML = hasFis ? `<div class="log-detail-section">
+    <div class="log-detail-section-title">Calidad física del agua</div>
+    <div class="log-detail-extra-row"><span>Color (visual)</span><strong>${_fisBadge('fisColor', entry.fisColor)}</strong></div>
+    <div class="log-detail-extra-row"><span>Materias flotantes</span><strong>${_fisBadge('fisFlotantes', entry.fisFlotantes)}</strong></div>
+    <div class="log-detail-extra-row"><span>Olor (olfativo)</span><strong>${_fisBadge('fisOlor', entry.fisOlor)}</strong></div>
+    <div class="log-detail-extra-row"><span>Transparencia</span><strong>${_fisBadge('fisTransp', entry.fisTransp)}</strong></div>
+  </div>` : '';
+
+  const personalHTML = (entry.salvavidas || entry.salvavidasNia) ? `<div class="log-detail-section">
+    <div class="log-detail-section-title">Personal de turno</div>
+    <div class="log-detail-extra-row"><span>Operador</span><strong>${escapeHtml(entry.operador || '–')}</strong></div>
+    <div class="log-detail-extra-row"><span>Salvavidas</span><strong>${escapeHtml(entry.salvavidas || '–')}</strong></div>
+    ${entry.salvavidasNia ? `<div class="log-detail-extra-row"><span>NIA</span><strong>${escapeHtml(entry.salvavidasNia)}</strong></div>` : ''}
+  </div>` : '';
+
   body.innerHTML = `
+    ${aptHTML}
     ${islHTML}
+    ${fisHTML}
+    ${personalHTML}
     <div class="log-detail-section">
       <div class="log-detail-section-title">Parámetros del agua</div>
       <div class="log-detail-params">${paramHTML || '<p class="log-detail-empty">Sin parámetros registrados.</p>'}</div>
     </div>
     ${art16HTML}
+    ${banistasHTML}
+    ${labHTML}
+    ${segHTML}
+    ${instHTML}
     ${extraHTML}
     ${fotosHTML}
     <div style="display:flex;gap:8px;margin-top:20px">
@@ -3113,6 +3659,24 @@ const AFR_STEPS = {
     { title: 'Filtrar y registrar', desc: 'Active filtración continua. Registre el incidente en la bitácora con operador a cargo y bañistas.' },
     { title: 'Reapertura', desc: 'Reabra solo tras verificar cloro ≥ 2 ppm, pH 6.8–7.3 y turbiedad ≤ 0.5 UNT.' },
   ],
+  sangre: [
+    { title: 'Evacuar la piscina', desc: 'Solicite a todos los bañistas salir del agua de inmediato. Restrinja el acceso al área.' },
+    { title: 'Identificar el incidente', desc: 'Confirme la presencia de sangre. Registre la hora exacta y la zona afectada. Identifique al bañista involucrado si es posible.' },
+    { title: 'Remover el residuo', desc: 'Use una red dedicada. Coloque el material en bolsa hermética y deséchelo como residuo biológico.' },
+    { title: 'Hipercloración', desc: 'Eleve el cloro residual a 10 ppm. Tiempo mínimo de contacto: 30 minutos con pH entre 6.8 y 7.3.' },
+    { title: 'Verificar pH', desc: 'Mantenga el pH entre 6.8 y 7.3 durante todo el proceso para garantizar la eficacia desinfectante del cloro.' },
+    { title: 'Filtrar y registrar', desc: 'Active el sistema de filtración. Registre el incidente en la bitácora con hora, bañistas presentes y operador a cargo.' },
+    { title: 'Reapertura', desc: 'Reabra solo tras verificar cloro ≥ 2 ppm, pH 6.8–7.3 y turbiedad ≤ 0.5 UNT.' },
+  ],
+  quimicos: [
+    { title: 'Evacuar la piscina de inmediato', desc: 'Retire a todos los bañistas del agua y del área circundante. Restrinja el acceso. No permita el ingreso sin equipos de protección personal.' },
+    { title: 'Identificar el agente químico', desc: 'Determine qué producto se derramó consultando la ficha técnica o etiqueta. NO agregue correctivos ni contrarreactivos sin conocer el agente — una reacción incorrecta puede generar gases tóxicos.' },
+    { title: 'Ventilar el área', desc: 'Si la instalación es cubierta, abra ventanas y puertas para garantizar circulación de aire. En exteriores, mantenga alejadas a las personas de la zona afectada y de los vapores.' },
+    { title: 'Notificar a autoridad sanitaria y emergencias', desc: 'Contacte a la Secretaría de Salud local y a la línea de emergencias química. Bomberos / CISPROQUIM: 018000 916012. Registre la hora de notificación y el funcionario contactado.' },
+    { title: 'No reabrir sin análisis de laboratorio', desc: 'No corrija el agua a ciegas. Espere el resultado de un análisis de laboratorio que valide pH, cloro, conductividad y ausencia de contaminantes antes de cualquier acción correctiva.' },
+    { title: 'Aplicar correctivos y filtrar', desc: 'Una vez identificado el agente y con concepto de la autoridad sanitaria, aplique los correctivos indicados y active la filtración continua. Registre cada acción tomada.' },
+    { title: 'Reapertura', desc: 'Solo reabra cuando la autoridad sanitaria lo autorice expresamente y los parámetros (cloro 2–4 ppm, pH 6.8–7.3, turbiedad ≤ 0.5 UNT) estén en rango.' },
+  ],
 };
 
 function renderAFR() {
@@ -3154,11 +3718,11 @@ function renderAFRDoseBlock() {
   const block = document.getElementById('afrDoseBlock');
   if (!block) return;
 
-  const HYPER_STEP = APP.afrType === 'diarreico' ? 4 : 3; // diarreico: +1 por paso "Notificar autoridad" en índice 2
-  if (APP.afrStep !== HYPER_STEP) { block.hidden = true; return; }
+  const HYPER_STEP = APP.afrType === 'diarreico' ? 4 : APP.afrType === 'quimicos' ? -1 : 3;
+  if (HYPER_STEP < 0 || APP.afrStep !== HYPER_STEP) { block.hidden = true; return; }
   block.hidden = false;
 
-  const TARGET = { solido: 10, diarreico: 20, vomito: 2 };
+  const TARGET = { solido: 10, diarreico: 20, vomito: 2, sangre: 10 };
   const target = TARGET[APP.afrType] || 10;
   const vol    = _afrVol();
 
@@ -3203,7 +3767,7 @@ function renderAFRDoseBlock() {
 }
 
 function calcAFRDose(volArg, targetArg, cloroArg) {
-  const TARGET = { solido: 10, diarreico: 20, vomito: 2 };
+  const TARGET = { solido: 10, diarreico: 20, vomito: 2, sangre: 10 };
   const target = targetArg !== undefined ? targetArg : TARGET[APP.afrType] || 10;
 
   let vol = volArg !== undefined ? volArg : 0;
@@ -3272,6 +3836,8 @@ function setAFRType(type) {
   document.getElementById('btnSolido').classList.toggle('active',    type === 'solido');
   document.getElementById('btnDiarreico').classList.toggle('active', type === 'diarreico');
   document.getElementById('btnVomito').classList.toggle('active',    type === 'vomito');
+  document.getElementById('btnSangre').classList.toggle('active',    type === 'sangre');
+  document.getElementById('btnQuimicos').classList.toggle('active',  type === 'quimicos');
   renderAFR();
 }
 
@@ -3343,10 +3909,12 @@ function renderAFRIncidents() {
   el.innerHTML = incidents.map(i => {
     const isDiar = i.tipo === 'diarreico';
     const isVom  = i.tipo === 'vomito';
-    const incClass   = isDiar ? 'afr-inc-diarreico' : isVom ? 'afr-inc-vomito' : 'afr-inc-solido';
-    const badgeClass = isDiar ? 'afr-inc-badge-emergencia' : isVom ? 'afr-inc-badge-vomito' : 'afr-inc-badge-solido';
-    const badgeText  = isDiar ? 'EMERGENCIA' : isVom ? 'Vómito' : 'Sólido';
-    const iconColor  = isDiar ? '#dc2626' : isVom ? '#d97706' : 'var(--warning)';
+    const isSang = i.tipo === 'sangre';
+    const isQui  = i.tipo === 'quimicos';
+    const incClass   = isDiar ? 'afr-inc-diarreico' : isVom ? 'afr-inc-vomito' : isSang ? 'afr-inc-sangre' : isQui ? 'afr-inc-quimicos' : 'afr-inc-solido';
+    const badgeClass = isDiar ? 'afr-inc-badge-emergencia' : isVom ? 'afr-inc-badge-vomito' : isSang ? 'afr-inc-badge-sangre' : isQui ? 'afr-inc-badge-quimicos' : 'afr-inc-badge-solido';
+    const badgeText  = isDiar ? 'EMERGENCIA' : isVom ? 'Vómito' : isSang ? 'Sangre' : isQui ? 'Químico' : 'Sólido';
+    const iconColor  = isDiar ? '#dc2626' : isVom ? '#d97706' : isSang ? '#be123c' : isQui ? '#7c3aed' : 'var(--warning)';
     return `
     <div class="afr-incident-item ${incClass}" data-ts="${i.ts}" title="Ver detalle del incidente">
       <div class="afr-incident-info">
@@ -3411,13 +3979,19 @@ function viewAFRIncident(ts) {
 
   const isDiar = i.tipo === 'diarreico';
   const isVom  = i.tipo === 'vomito';
-  const tipoLabel  = isDiar ? 'Diarreico' : isVom ? 'Vómito' : 'Sólido';
-  const badgeClass = isDiar ? 'afr-inc-badge-emergencia' : isVom ? 'afr-inc-badge-vomito' : 'afr-inc-badge-solido';
-  const badgeText  = isDiar ? 'EMERGENCIA' : isVom ? 'Vómito' : 'Sólido';
+  const isSang = i.tipo === 'sangre';
+  const isQui  = i.tipo === 'quimicos';
+  const tipoLabel  = isDiar ? 'Diarreico' : isVom ? 'Vómito' : isSang ? 'Sangre' : isQui ? 'Químico' : 'Sólido';
+  const badgeClass = isDiar ? 'afr-inc-badge-emergencia' : isVom ? 'afr-inc-badge-vomito' : isSang ? 'afr-inc-badge-sangre' : isQui ? 'afr-inc-badge-quimicos' : 'afr-inc-badge-solido';
+  const badgeText  = isDiar ? 'EMERGENCIA' : isVom ? 'Vómito' : isSang ? 'Sangre' : isQui ? 'Químico' : 'Sólido';
   const protDesc   = isDiar
     ? 'Hipercloración a 20 ppm · Cierre mínimo 13 horas · Riesgo de Cryptosporidium. Se requiere notificación a autoridad sanitaria.'
     : isVom
     ? 'Ajuste de cloro libre a 2 ppm · Inspección y limpieza inmediata del área afectada.'
+    : isSang
+    ? 'Hipercloración a 10 ppm · Tiempo de contacto mínimo 30 minutos · pH 6.8–7.3.'
+    : isQui
+    ? 'No aplicar correctivos sin identificar el agente. Notificar autoridad sanitaria y CISPROQUIM. Esperar análisis de laboratorio.'
     : 'Extracción física del material · Sin cierre obligatorio · Verificar niveles de cloro residual.';
 
   document.getElementById('afrDetailTitle').innerHTML =
@@ -3566,12 +4140,43 @@ function onRepRangeChange() {
   updateReportBtn();
 }
 
+function setRepMes(offset) {
+  const d = new Date();
+  d.setMonth(d.getMonth() + offset);
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  const desde   = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+  const lastDay = new Date(y, m + 1, 0).getDate();
+  const hasta   = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  const dEl = document.getElementById('repDesde');
+  const hEl = document.getElementById('repHasta');
+  if (dEl) dEl.value = desde;
+  if (hEl) hEl.value = hasta;
+  const btn = document.getElementById('btnClearRepRange');
+  if (btn) btn.disabled = false;
+  updateReportSummary();
+  updateReportBtn();
+}
+
 function clearRepRange() {
   const d = document.getElementById('repDesde');
   const h = document.getElementById('repHasta');
   if (d) d.value = '';
   if (h) h.value = '';
   onRepRangeChange();
+}
+
+function _prefillReporteFromPerfil() {
+  const p = getPerfil();
+  const data = JSON.parse(localStorage.getItem('aqua_reporte') || '{}');
+  const setIfEmpty = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && !el.value && val) el.value = val;
+  };
+  setIfEmpty('repNombre',      data.repNombre      || p.razonSocial);
+  setIfEmpty('repResponsable', data.repResponsable || p.propietario);
+  setIfEmpty('repUbicacion',   data.repUbicacion   || [p.municipio, p.departamento].filter(Boolean).join(', '));
+  setIfEmpty('repVolumen',     data.repVolumen      || (p.volumen ? p.volumen.toFixed(1) : ''));
 }
 
 function updateReportSummary() {
@@ -3764,10 +4369,11 @@ async function __buildPDF(logoB64, integrity, logHash) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
-  const nombre      = document.getElementById('repNombre').value      || 'Sin nombre';
-  const responsable = document.getElementById('repResponsable').value  || '–';
-  const ubicacion   = document.getElementById('repUbicacion').value   || '–';
-  const volumen     = document.getElementById('repVolumen').value      || '–';
+  const _pf         = getPerfil();
+  const nombre      = document.getElementById('repNombre').value      || _pf.razonSocial || 'Sin nombre';
+  const responsable = document.getElementById('repResponsable').value  || _pf.propietario || '–';
+  const ubicacion   = document.getElementById('repUbicacion').value   || [_pf.municipio, _pf.departamento].filter(Boolean).join(', ') || '–';
+  const volumen     = document.getElementById('repVolumen').value      || (_pf.volumen ? _pf.volumen.toFixed(1) : '–');
   const log    = getReportLog();
   const desde  = log.length ? log[log.length - 1].fecha : null;
   const hasta  = log.length ? log[0].fecha : null;
@@ -3814,25 +4420,35 @@ async function __buildPDF(logoB64, integrity, logHash) {
 
   // Banda oscura
   doc.setFillColor(30, 41, 59);
-  doc.rect(0, 28, 210, 9, 'F');
+  doc.rect(0, 28, 210, 13, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.text('Reporte Mensual de Calidad del Agua', 105, 34, { align: 'center' });
+  doc.text('Reporte Mensual de Calidad del Agua', 105, 33, { align: 'center' });
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(148, 163, 184);
+  doc.text('Publicación obligatoria · Art. 16 §2 · Resolución 234 de 2026 · Colombia', 105, 38.5, { align: 'center' });
 
   // ── Datos del establecimiento ────────────────────────────
   doc.setTextColor(30, 41, 59);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('Datos del establecimiento', 14, 47);
+  doc.text('Datos del establecimiento', 14, 51);
+
+  const _pfRows = [
+    ['Nombre / Razón social', nombre,                         'Responsable',  responsable],
+    ['Ubicación',             ubicacion,                      'Volumen base', volumen + ' m³'],
+    _pf.nit       ? ['NIT',            _pf.nit,       'Matrícula', _pf.matricula || '–'] : null,
+    _pf.tipoUso   ? ['Tipo de uso',    _pf.tipoUso === 'colectivo' ? 'Colectivo' : 'Restringido', 'Sistema',    _pf.sistemaOp === 'recirculacion' ? 'Recirculación' : _pf.sistemaOp === 'desalojo' ? 'Desalojo' : '–'] : null,
+    (_pf.largo && _pf.ancho) ? ['Dimensiones', `${_pf.largo} × ${_pf.ancho} m`, 'Perímetro', (2 * (_pf.largo + _pf.ancho)).toFixed(2) + ' m'] : null,
+    _pf.aforo     ? ['Aforo máximo',   _pf.aforo + ' bañistas simultáneos', '', ''] : null,
+    _pf.opNombre  ? ['Operador',       _pf.opNombre + (_pf.opNit ? ' · NIT ' + _pf.opNit : ''), 'Período', periodo] : ['Período', periodo, '', ''],
+  ].filter(Boolean);
 
   doc.autoTable({
-    startY: 51,
-    body: [
-      ['Nombre de la piscina', nombre,     'Responsable', responsable],
-      ['Ubicación',            ubicacion,  'Volumen base', volumen + ' m³'],
-      ['Período',              periodo,     '',             ''],
-    ],
+    startY: 55,
+    body: _pfRows,
     theme: 'plain',
     styles:      { fontSize: 9, cellPadding: 2 },
     columnStyles: {
@@ -3861,15 +4477,23 @@ async function __buildPDF(logoB64, integrity, logHash) {
   const paramRows = [
     { label: 'Cloro libre residual', unit: 'ppm', field: 'cloro',     dec: 1, ok: e => e.cloro >= 2.0 && e.cloro <= 4.0,                                                    range: '2.0 – 4.0 ppm' },
     { label: 'Cloro combinado',      unit: 'ppm', field: 'clorocomb', dec: 2, ok: e => { const v = +e.clorocomb; return isNaN(v) ? true : v >= 0 && v <= 0.3; },             range: '0 – 0.3 ppm'   },
+    { label: 'Bromo total (Br₂)',   unit: 'ppm', field: 'bromo',     dec: 1, ok: e => e.bromo == null || (e.bromo >= 4.0 && e.bromo <= 6.0), range: '4.0 – 6.0 ppm'  },
     { label: 'pH',                   unit: '',    field: 'ph',        dec: 2, ok: e => e.ph   >= 6.8 && e.ph   <= 7.3,                                                    range: '6.8 – 7.3'     },
     { label: 'Alcalinidad total',     unit: 'ppm', field: 'alc',    dec: 0, ok: e => e.alc    >= 20  && e.alc    <= 150, range: '20 – 150 ppm'    },
     { label: 'Dureza cálcica',        unit: 'ppm', field: 'dureza', dec: 0, ok: e => e.dureza == null || (e.dureza >= 200 && e.dureza <= 700), range: '200 – 700 ppm'  },
     { label: 'Estabilizador (CYA)',    unit: 'ppm', field: 'cya',    dec: 0, ok: e => e.cya == null || (e.cya >= 0 && e.cya <= 75), range: '0 – 75 ppm' },
     { label: 'Transparencia / Turbiedad', unit: 'UNT', field: 'turb', dec: 2, ok: e => e.turb >= 0   && e.turb <= 0.5,  range: '0 – 0.5 UNT'    },
-    { label: 'Temperatura del agua',  unit: '°C',   field: 'temp', dec: 1, ok: e => { const v = +e.temp; return isNaN(v) ? true : v <= 40; }, range: '≤ 40 °C'            },
-    { label: 'Potencial redox (ORP)',  unit: 'mV',   field: 'orp',  dec: 0, ok: e => { const v = +e.orp;  return isNaN(v) ? true : v >= 0    && v <= 700;  }, range: '0 – 700 mV'         },
+    { label: 'Temperatura del agua',  unit: '°C',   field: 'temp',     dec: 1, ok: e => { const v = +e.temp;     return isNaN(v) ? true : v <= 40; },          range: '≤ 40 °C'          },
+    { label: 'Temperatura del aire',  unit: '°C',   field: 'tempAire', dec: 1, ok: () => true,                                                              range: 'Informativo'      },
+    { label: 'Humedad relativa',      unit: '%',    field: 'humedad',  dec: 0, ok: e => { const v = +e.humedad; return isNaN(v) ? true : v >= 40 && v <= 60; }, range: '40 – 60 %'   },
+    { label: 'Potencial redox (ORP)',  unit: 'mV',   field: 'orp',     dec: 0, ok: e => { const v = +e.orp;     return isNaN(v) ? true : v >= 0 && v <= 700; }, range: '0 – 700 mV'  },
     { label: 'Sólidos disueltos (TDS)',unit: 'mg/L', field: 'tds',  dec: 0, ok: e => e.tds  == null || (e.tds  >= 1000 && e.tds  <= 1200), range: '1000 – 1200 mg/L'   },
     { label: 'Conductividad eléctrica',unit: 'µS/cm',field: 'cond', dec: 0, ok: e => e.cond == null || (e.cond >= 2000 && e.cond <= 2400), range: '2000 – 2400 µS/cm'  },
+    { label: 'Nivel del agua (bajo borda)',  unit: 'm', field: 'nivelAgua', dec: 2, ok: e => e.nivelAgua == null || e.nivelAgua <= 0.6, range: '≤ 0.6 m' },
+    { label: 'Color del agua (visual)',     categorical: true, range: 'Aceptable',    ok: e => !e.fisColor     || e.fisColor     === 'aceptable' },
+    { label: 'Materias flotantes',          categorical: true, range: 'Ausentes',     ok: e => !e.fisFlotantes || e.fisFlotantes === 'ausentes'  },
+    { label: 'Olor del agua (olfativo)',    categorical: true, range: 'Aceptable',    ok: e => !e.fisOlor      || e.fisOlor      === 'aceptable' },
+    { label: 'Transparencia (fondo visible)',categorical: true, range: 'Fondo visible',ok: e => !e.fisTransp   || e.fisTransp    === 'visible'   },
   ];
 
   doc.autoTable({
@@ -3878,6 +4502,10 @@ async function __buildPDF(logoB64, integrity, logHash) {
     body: [
       [{ content: `Mediciones: ${log.length}   ·   Incidentes AFR: ${incidents.length}`, colSpan: 6, styles: { fontStyle: 'bold', halign: 'center' } }],
       ...paramRows.map(p => {
+        if (p.categorical) {
+          const pc = _pct(p.ok);
+          return [p.label, p.range, '–', '–', '–', pc != null ? pc + '%' : '–'];
+        }
         const a  = _avg(p.field);
         const mn = _min(p.field);
         const mx = _max(p.field);
@@ -3993,20 +4621,26 @@ async function __buildPDF(logoB64, integrity, logHash) {
 
     doc.autoTable({
       startY: bitY + 4,
-      head: [['Fecha', 'Hora', 'Operador', 'Cl.Libre', 'Cl.Comb', 'pH', 'Alc.', 'CYA', 'Turb.', 'Temp.', 'ORP', 'Bañistas', 'Notas']],
+      head: [['Fecha', 'Hora', 'Operador', 'Salvavidas', 'Cl.L', 'Cl.C', 'Br₂', 'pH', 'Alc.', 'CYA', 'Turb.', 'T°Agua', 'T°Aire', 'HR%', 'ORP', '<6a', '>6a', 'Tot.', 'Notas']],
       body: log.map(e => [
         e.fecha    || '–',
         fmt12h(e.hora),
         e.operador || '–',
+        e.salvavidas ? e.salvavidas + (e.salvavidasNia ? '\n' + e.salvavidasNia : '') : '–',
         (e.cloro     ?? '–') + ' ppm',
         (e.clorocomb != null && !isNaN(e.clorocomb) ? e.clorocomb + ' ppm' : '–'),
+        (e.bromo     != null ? e.bromo + ' ppm' : '–'),
         e.ph       ?? '–',
         (e.alc  ?? '–') + ' ppm',
         (e.cya  ?? '–') + ' ppm',
-        (e.turb ?? '–') + ' UNT',
-        (e.temp ?? '–') + ' °C',
+        (e.turb    ?? '–') + ' UNT',
+        (e.temp    ?? '–') + ' °C',
+        (e.tempAire != null ? e.tempAire + ' °C' : '–'),
+        (e.humedad  != null ? e.humedad  + ' %'  : '–'),
         (e.orp  != null && !isNaN(e.orp) ? e.orp + ' mV' : '–'),
-        e.banistas ?? '–',
+        e.banistasMenores ?? '–',
+        e.banistasMayores ?? '–',
+        e.banistas        ?? '–',
         e.notas    || '',
       ]),
       theme: 'striped',
@@ -4043,7 +4677,7 @@ async function __buildPDF(logoB64, integrity, logHash) {
         return [
           i.fecha    || '–',
           fmt12h(i.hora),
-          i.tipo === 'diarreico' ? 'Diarreico — EMERGENCIA (Cryptosporidium)' : i.tipo === 'vomito' ? 'Vómito' : 'Sólido',
+          i.tipo === 'diarreico' ? 'Diarreico — EMERGENCIA (Cryptosporidium)' : i.tipo === 'vomito' ? 'Vómito' : i.tipo === 'sangre' ? 'Sangre' : i.tipo === 'quimicos' ? 'Derrame químico' : 'Sólido',
           i.operador || '–',
           i.cloroFinal  != null ? `${i.cloroFinal} ppm`             : '–',
           i.phFinal     != null ? String(i.phFinal)                  : '–',
@@ -4064,6 +4698,12 @@ async function __buildPDF(logoB64, integrity, logHash) {
           if (data.column.index === 2) data.cell.styles.fontStyle = 'bold';
         } else if (tipo === 'vomito') {
           data.cell.styles.fillColor = [254, 243, 199];
+        } else if (tipo === 'sangre') {
+          data.cell.styles.fillColor = [255, 228, 230];
+          data.cell.styles.textColor = [159, 18, 57];
+        } else if (tipo === 'quimicos') {
+          data.cell.styles.fillColor = [237, 233, 254];
+          data.cell.styles.textColor = [91, 33, 182];
         }
       },
       margin: { left: 14, right: 14 },
@@ -4221,6 +4861,689 @@ function selectConcepto(val) {
   renderDashboardVencimientos();
 }
 
+// ── PERFIL DEL ESTABLECIMIENTO ───────────────────────────
+const PERFIL_KEY = 'aqua_perfil';
+
+function getPerfil() {
+  try { return JSON.parse(localStorage.getItem(PERFIL_KEY) || '{}'); } catch { return {}; }
+}
+
+function savePerfil() {
+  if (!_requireUnlocked()) return;
+  const p = {
+    razonSocial:   document.getElementById('pfRazonSocial').value.trim(),
+    matricula:     document.getElementById('pfMatricula').value.trim(),
+    nit:           document.getElementById('pfNit').value.trim(),
+    direccion:     document.getElementById('pfDireccion').value.trim(),
+    municipio:     document.getElementById('pfMunicipio').value.trim(),
+    departamento:  document.getElementById('pfDepartamento').value.trim(),
+    telefono:      document.getElementById('pfTelefono').value.trim(),
+    correo:        document.getElementById('pfCorreo').value.trim(),
+    propietario:   document.getElementById('pfPropietario').value.trim(),
+    tipoUso:       document.querySelector('input[name="pfTipoUso"]:checked')?.value || '',
+    presentacion:  document.querySelector('input[name="pfPresentacion"]:checked')?.value || '',
+    sistemaOp:     document.querySelector('input[name="pfSistemaOp"]:checked')?.value || '',
+    fuenteAbast:   document.getElementById('pfFuenteAbast').value.trim(),
+    largo:         parseFloat(document.getElementById('pfLargo').value) || null,
+    ancho:         parseFloat(document.getElementById('pfAncho').value) || null,
+    profMin:       parseFloat(document.getElementById('pfProfMin').value) || null,
+    profMax:       parseFloat(document.getElementById('pfProfMax').value) || null,
+    volumen:       parseFloat(document.getElementById('pfVolVal')?.textContent) || null,
+    aforo:         parseInt(document.getElementById('pfAforo').value) || null,
+    opNombre:      document.getElementById('pfOpNombre').value.trim(),
+    opNit:         document.getElementById('pfOpNit').value.trim(),
+    opTel:         document.getElementById('pfOpTel').value.trim(),
+    salvavidas:    _readSalvavidasForm(),
+  };
+  localStorage.setItem(PERFIL_KEY, JSON.stringify(p));
+  _syncPerfilToReporte(p);
+  showToast('Perfil guardado correctamente.', 'success');
+}
+
+function _syncPerfilToReporte(p) {
+  const data = JSON.parse(localStorage.getItem('aqua_reporte') || '{}');
+  if (p.razonSocial) data.repNombre      = p.razonSocial;
+  if (p.propietario) data.repResponsable = p.propietario;
+  if (p.municipio)   data.repUbicacion   = [p.municipio, p.departamento].filter(Boolean).join(', ');
+  if (p.volumen)     data.repVolumen     = p.volumen.toFixed(1);
+  localStorage.setItem('aqua_reporte', JSON.stringify(data));
+}
+
+function renderPerfil() {
+  const p = getPerfil();
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  set('pfRazonSocial', p.razonSocial);
+  set('pfMatricula',   p.matricula);
+  set('pfNit',         p.nit);
+  set('pfDireccion',   p.direccion);
+  set('pfMunicipio',   p.municipio);
+  set('pfDepartamento',p.departamento);
+  set('pfTelefono',    p.telefono);
+  set('pfCorreo',      p.correo);
+  set('pfPropietario', p.propietario);
+  set('pfFuenteAbast', p.fuenteAbast);
+  set('pfLargo',       p.largo);
+  set('pfAncho',       p.ancho);
+  set('pfProfMin',     p.profMin);
+  set('pfProfMax',     p.profMax);
+  set('pfAforo',       p.aforo);
+  set('pfOpNombre',    p.opNombre);
+  set('pfOpNit',       p.opNit);
+  set('pfOpTel',       p.opTel);
+  if (p.tipoUso)      { const r = document.querySelector(`input[name="pfTipoUso"][value="${p.tipoUso}"]`);      if (r) r.checked = true; }
+  if (p.presentacion) { const r = document.querySelector(`input[name="pfPresentacion"][value="${p.presentacion}"]`); if (r) r.checked = true; }
+  if (p.sistemaOp)    { const r = document.querySelector(`input[name="pfSistemaOp"][value="${p.sistemaOp}"]`);  if (r) r.checked = true; }
+  calcPerfilVolumen();
+  _renderSalvavidasList(p.salvavidas || []);
+}
+
+function calcPerfilVolumen() {
+  const l  = parseFloat(document.getElementById('pfLargo').value);
+  const a  = parseFloat(document.getElementById('pfAncho').value);
+  const p1 = parseFloat(document.getElementById('pfProfMin').value);
+  const p2 = parseFloat(document.getElementById('pfProfMax').value);
+  const res  = document.getElementById('pfVolResult');
+  const val  = document.getElementById('pfVolVal');
+  if (!isFinite(l) || !isFinite(a) || !isFinite(p1) || !isFinite(p2)) {
+    if (res) res.hidden = true; return;
+  }
+  const vol = l * a * ((p1 + p2) / 2);
+  if (val) val.textContent = vol.toFixed(2) + ' m³';
+  const perimEl = document.getElementById('pfPerimVal');
+  if (perimEl) perimEl.textContent = (2 * (l + a)).toFixed(2) + ' m';
+  if (res) res.hidden = false;
+  const sug = document.getElementById('pfAforoSug');
+  if (sug) {
+    const sugerido = Math.floor(l * a / 2.5);
+    sug.textContent = `Norma sugiere ≈ ${sugerido} personas (1 c/2.5 m²)`;
+  }
+}
+
+// ── Gestión de salvavidas ──────────────────────────────────
+let _salvavidasArr = [];
+
+function _readSalvavidasForm() {
+  return _salvavidasArr.map((_, i) => ({
+    nombre: (document.getElementById(`sv_nombre_${i}`)?.value || '').trim(),
+    nia:    (document.getElementById(`sv_nia_${i}`)?.value    || '').trim(),
+  })).filter(s => s.nombre || s.nia);
+}
+
+function _renderSalvavidasList(arr) {
+  _salvavidasArr = arr.length ? arr.map(s => ({ ...s })) : [];
+  _paintSalvavidasList();
+}
+
+function addSalvavidas() {
+  _salvavidasArr.push({ nombre: '', nia: '' });
+  _paintSalvavidasList();
+  setTimeout(() => document.getElementById(`sv_nombre_${_salvavidasArr.length - 1}`)?.focus(), 50);
+}
+
+function removeSalvavidas(idx) {
+  _salvavidasArr.splice(idx, 1);
+  _paintSalvavidasList();
+}
+
+function _paintSalvavidasList() {
+  const el = document.getElementById('pfSalvavidasList');
+  if (!el) return;
+  if (!_salvavidasArr.length) {
+    el.innerHTML = '<p class="perfil-hint" style="margin-bottom:10px">Sin salvavidas registrados.</p>';
+    return;
+  }
+  el.innerHTML = _salvavidasArr.map((s, i) => `
+    <div class="perfil-sv-row">
+      <div class="form-group fg-2">
+        <label class="form-label" for="sv_nombre_${i}">NOMBRE COMPLETO</label>
+        <input type="text" class="form-input" id="sv_nombre_${i}" value="${escapeHtml(s.nombre)}" placeholder="Nombre del salvavidas" maxlength="100" />
+      </div>
+      <div class="form-group fg-1">
+        <label class="form-label" for="sv_nia_${i}">N.º IDENTIFICACIÓN ACUÁTICA (NIA)</label>
+        <input type="text" class="form-input" id="sv_nia_${i}" value="${escapeHtml(s.nia)}" placeholder="Ej. NIA-2024-00123" maxlength="40" />
+      </div>
+      <button type="button" class="btn-delete-log perfil-sv-del" data-sv-idx="${i}" title="Eliminar salvavidas">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+// ── VISITAS DE INSPECCIÓN SANITARIA ──────────────────────
+function _isValidVisita(v) {
+  return v !== null && typeof v === 'object'
+    && typeof v.ts          === 'number' && isFinite(v.ts)
+    && typeof v.fecha       === 'string' && v.fecha.length > 0
+    && typeof v.funcionario === 'string' && v.funcionario.length > 0
+    && ['favorable', 'requerimientos', 'desfavorable'].includes(v.concepto);
+}
+
+function _visitasRaw() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('aqua_visitas') || '[]');
+    return Array.isArray(raw) ? raw.filter(_isValidVisita) : [];
+  } catch { return []; }
+}
+
+function getVisitas() {
+  if (!_requireUnlocked()) return [];
+  return _visitasRaw();
+}
+
+let _editingVisitaTs = null;
+
+function onVisitaConceptoChange() {
+  const val = document.querySelector('input[name="visitaConcepto"]:checked')?.value;
+  const wrap = document.getElementById('visitaObsWrap');
+  if (wrap) wrap.hidden = (val === 'favorable' || !val);
+  ['vcOptFav','vcOptReq','vcOptDes'].forEach(id => document.getElementById(id)?.classList.remove('vc-selected'));
+  const map = { favorable: 'vcOptFav', requerimientos: 'vcOptReq', desfavorable: 'vcOptDes' };
+  if (val && map[val]) document.getElementById(map[val])?.classList.add('vc-selected');
+}
+
+function clearVisitaForm() {
+  const now = new Date();
+  document.getElementById('visitaFecha').value       = localDateStr(now);
+  document.getElementById('visitaHora').value        = now.toTimeString().slice(0,5);
+  document.getElementById('visitaFuncionario').value = '';
+  document.getElementById('visitaEntidad').value     = '';
+  document.querySelectorAll('input[name="visitaConcepto"]').forEach(r => r.checked = false);
+  ['vcOptFav','vcOptReq','vcOptDes'].forEach(id => document.getElementById(id)?.classList.remove('vc-selected'));
+  document.getElementById('visitaObsWrap').hidden    = true;
+  document.getElementById('visitaObs').value         = '';
+  document.getElementById('visitaPlazo').value       = '';
+  _editingVisitaTs = null;
+  document.getElementById('visitaEditBanner').style.display = 'none';
+  document.getElementById('btnCancelVisita').style.display  = 'none';
+  document.getElementById('btnSaveVisita').textContent = ' Registrar visita';
+}
+
+function saveVisita() {
+  if (!_requireUnlocked()) return;
+  const fecha       = document.getElementById('visitaFecha').value;
+  const funcionario = document.getElementById('visitaFuncionario').value.trim();
+  const concepto    = document.querySelector('input[name="visitaConcepto"]:checked')?.value;
+  if (!fecha || !funcionario || !concepto) {
+    showToast('Completa fecha, funcionario y concepto.', 'warning'); return;
+  }
+  const entry = {
+    ts:          _editingVisitaTs || Date.now(),
+    fecha,
+    hora:        document.getElementById('visitaHora').value,
+    funcionario,
+    entidad:     document.getElementById('visitaEntidad').value.trim(),
+    concepto,
+    obs:         concepto !== 'favorable' ? document.getElementById('visitaObs').value.trim() : '',
+    plazo:       concepto !== 'favorable' ? document.getElementById('visitaPlazo').value : '',
+  };
+  const list = _visitasRaw().filter(v => v.ts !== entry.ts);
+  list.unshift(entry);
+  list.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  _secSave('aqua_visitas', JSON.stringify(list));
+
+  // Sincroniza el concepto estático de Documentos con la última visita
+  const dates = JSON.parse(localStorage.getItem('aqua_docs_dates') || '{}');
+  dates['concepto'] = concepto === 'favorable' ? 'verde' : concepto === 'requerimientos' ? 'amarillo' : 'rojo';
+  localStorage.setItem('aqua_docs_dates', JSON.stringify(dates));
+
+  clearVisitaForm();
+  renderVisitas();
+  renderDashboardVencimientos();
+  showToast('Visita registrada correctamente.', 'success');
+}
+
+function editVisita(ts) {
+  if (!_requireUnlocked()) return;
+  const v = _visitasRaw().find(x => x.ts === ts);
+  if (!v) return;
+  _editingVisitaTs = ts;
+  document.getElementById('visitaFecha').value       = v.fecha;
+  document.getElementById('visitaHora').value        = v.hora || '';
+  document.getElementById('visitaFuncionario').value = v.funcionario;
+  document.getElementById('visitaEntidad').value     = v.entidad || '';
+  const radio = document.querySelector(`input[name="visitaConcepto"][value="${v.concepto}"]`);
+  if (radio) { radio.checked = true; onVisitaConceptoChange(); }
+  document.getElementById('visitaObs').value   = v.obs   || '';
+  document.getElementById('visitaPlazo').value = v.plazo || '';
+  document.getElementById('visitaEditBanner').style.display = 'flex';
+  document.getElementById('visitaEditDate').textContent     = v.fecha;
+  document.getElementById('btnCancelVisita').style.display  = 'inline-flex';
+  document.getElementById('btnSaveVisita').textContent = ' Actualizar visita';
+  document.getElementById('cardVisitas').scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteVisita(ts) {
+  if (!_requireUnlocked()) return;
+  if (!confirm('¿Eliminar este registro de visita?')) return;
+  const list = _visitasRaw().filter(v => v.ts !== ts);
+  _secSave('aqua_visitas', JSON.stringify(list));
+  renderVisitas();
+  renderDashboardVencimientos();
+  showToast('Visita eliminada.', 'success');
+}
+
+function viewVisita(ts) {
+  const v = _visitasRaw().find(x => x.ts === ts);
+  if (!v) return;
+
+  const overlay = document.getElementById('visitaDetailOverlay');
+  const title   = document.getElementById('visitaDetailTitle');
+  const meta    = document.getElementById('visitaDetailMeta');
+  const body    = document.getElementById('visitaDetailBody');
+
+  title.textContent = `Visita del ${v.fecha}`;
+  meta.textContent  = [v.hora || null, v.funcionario, v.entidad || null].filter(Boolean).join(' · ');
+
+  const CONCEPTO_CFG = {
+    favorable:      { label: 'Favorable',         cls: 'apt-det-ok',  icon: '✓' },
+    requerimientos: { label: 'Con requerimientos', cls: 'apt-det-warn', icon: '⚠' },
+    desfavorable:   { label: 'Desfavorable',       cls: 'apt-det-nok', icon: '✗' },
+  };
+  const cfg = CONCEPTO_CFG[v.concepto] || { label: v.concepto, cls: '', icon: '?' };
+
+  const plazoHTML = v.plazo ? (() => {
+    const days = Math.ceil((new Date(v.plazo + 'T00:00:00') - new Date()) / 86400000);
+    const cls  = days < 0 ? 'visita-plazo-venc' : days <= 7 ? 'visita-plazo-warn' : 'visita-plazo-ok';
+    const txt  = days < 0 ? `Plazo vencido · ${v.plazo}` : `Plazo: ${v.plazo} · quedan ${days} día${days === 1 ? '' : 's'}`;
+    return `<div class="log-detail-extra-row"><span>Plazo de cumplimiento</span><span class="visita-plazo ${cls}">${txt}</span></div>`;
+  })() : '';
+
+  body.innerHTML = `
+    <div class="apt-detail-banner ${cfg.cls}" style="margin-bottom:16px">
+      <span class="apt-det-icon">${cfg.icon}</span>
+      <strong>Concepto ${cfg.label}</strong>
+    </div>
+
+    <div class="log-detail-section">
+      <div class="log-detail-section-title">Datos de la visita</div>
+      <div class="log-detail-extra-row"><span>Fecha</span><strong>${escapeHtml(v.fecha)}</strong></div>
+      ${v.hora ? `<div class="log-detail-extra-row"><span>Hora</span><strong>${escapeHtml(v.hora)}</strong></div>` : ''}
+      <div class="log-detail-extra-row"><span>Funcionario</span><strong>${escapeHtml(v.funcionario)}</strong></div>
+      ${v.entidad ? `<div class="log-detail-extra-row"><span>Entidad</span><strong>${escapeHtml(v.entidad)}</strong></div>` : ''}
+    </div>
+
+    ${v.obs || v.plazo ? `
+    <div class="log-detail-section">
+      <div class="log-detail-section-title">Requerimientos</div>
+      ${v.obs ? `<div class="visita-obs" style="margin-bottom:10px">${escapeHtml(v.obs)}</div>` : ''}
+      ${plazoHTML}
+    </div>` : ''}
+
+    <div style="display:flex;gap:8px;margin-top:20px">
+      <button class="btn btn-outline btn-danger-outline" style="flex:1"
+        onclick="deleteVisita(${v.ts}); document.getElementById('visitaDetailOverlay').classList.add('js-hidden')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Eliminar
+      </button>
+      <button class="btn btn-outline" style="flex:1"
+        onclick="editVisita(${v.ts}); document.getElementById('visitaDetailOverlay').classList.add('js-hidden')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Editar
+      </button>
+    </div>
+  `;
+
+  overlay.classList.remove('js-hidden');
+}
+
+function renderVisitas() {
+  const el = document.getElementById('visitasHistory');
+  if (!el) return;
+  const list = _visitasRaw();
+  if (!list.length) { el.innerHTML = '<p class="empty-state">Sin visitas registradas aún.</p>'; return; }
+
+  const CONCEPTO_CFG = {
+    favorable:      { label: 'Favorable',         cls: 'vc-badge-ok',   icon: '✓' },
+    requerimientos: { label: 'Con requerimientos', cls: 'vc-badge-warn', icon: '⚠' },
+    desfavorable:   { label: 'Desfavorable',       cls: 'vc-badge-nok',  icon: '✗' },
+  };
+
+  el.innerHTML = list.map(v => {
+    const cfg = CONCEPTO_CFG[v.concepto] || { label: v.concepto, cls: '', icon: '?' };
+    const plazoHTML = v.plazo
+      ? (() => {
+          const days = Math.ceil((new Date(v.plazo + 'T00:00:00') - new Date()) / 86400000);
+          const cls  = days < 0 ? 'visita-plazo-venc' : days <= 7 ? 'visita-plazo-warn' : 'visita-plazo-ok';
+          const txt  = days < 0 ? `Plazo vencido (${v.plazo})` : `Plazo: ${v.plazo} (${days}d)`;
+          return `<span class="visita-plazo ${cls}">${txt}</span>`;
+        })()
+      : '';
+    return `
+    <div class="visita-item ${v.concepto === 'desfavorable' ? 'visita-item-nok' : v.concepto === 'requerimientos' ? 'visita-item-warn' : ''}" data-ts="${v.ts}" style="cursor:pointer" title="Ver ficha de la visita">
+      <div class="visita-item-top">
+        <div class="visita-item-info">
+          <span class="visita-fecha">${escapeHtml(v.fecha)}${v.hora ? ' · ' + escapeHtml(v.hora) : ''}</span>
+          <span class="vc-badge ${cfg.cls}">${cfg.icon} ${cfg.label}</span>
+          ${plazoHTML}
+        </div>
+        <div class="visita-item-actions">
+          <button class="btn-edit-log visita-edit-btn" data-ts="${v.ts}" title="Editar">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-delete-log visita-del-btn" data-ts="${v.ts}" title="Eliminar">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="visita-item-body">
+        <span class="visita-func">👤 ${escapeHtml(v.funcionario)}${v.entidad ? ' · ' + escapeHtml(v.entidad) : ''}</span>
+        ${v.obs ? `<p class="visita-obs">${escapeHtml(v.obs)}</p>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── BOTIQUÍN Y DEA ────────────────────────────────────────
+const _BOT_A = [
+  { id: 'guantes',        label: 'Guantes desechables (mín. 2 pares)' },
+  { id: 'vendas_gasa',    label: 'Vendas de gasa estéril (mín. 3)' },
+  { id: 'venda_elastica', label: 'Venda elástica' },
+  { id: 'esparadrapo',    label: 'Esparadrapo / cinta médica' },
+  { id: 'antiseptico',    label: 'Antiséptico (yodopovidona o equivalente)' },
+  { id: 'tijeras',        label: 'Tijeras de punta roma' },
+  { id: 'apositos',       label: 'Apósitos estériles surtidos' },
+  { id: 'manual_pa',      label: 'Manual de primeros auxilios' },
+];
+const _BOT_B_EXTRA = [
+  { id: 'colarin',       label: 'Collarín cervical (adulto y pediátrico)' },
+  { id: 'ferulas',       label: 'Férulas de inmovilización' },
+  { id: 'mascara_rcp',   label: 'Mascarilla barrera para RCP' },
+  { id: 'oximetro',      label: 'Oxímetro de pulso' },
+  { id: 'linterna',      label: 'Linterna con pilas de repuesto' },
+];
+const _BOT_C_EXTRA = [
+  { id: 'dea_item',       label: 'DEA operativo, visible y señalizado' },
+  { id: 'oxigeno_port',   label: 'Oxígeno portátil con mascarilla' },
+  { id: 'manta_termica',  label: 'Manta térmica de emergencia' },
+  { id: 'tabla_espinal',  label: 'Camilla rígida / tabla espinal' },
+  { id: 'kit_trauma',     label: 'Kit de trauma avanzado' },
+];
+const BOTIQUIN_ITEMS = {
+  A: _BOT_A,
+  B: [..._BOT_A, ..._BOT_B_EXTRA],
+  C: [..._BOT_A, ..._BOT_B_EXTRA, ..._BOT_C_EXTRA],
+};
+const BOTIQUIN_TIPO_DESC = {
+  A: 'Piscinas pequeñas o de uso doméstico/familiar.',
+  B: 'Establecimientos medianos o semipúblicos (conjuntos, clubes pequeños).',
+  C: 'Piscinas públicas de alta afluencia — DEA obligatorio.',
+};
+let _botTipoActual = 'A';
+
+function getBotiquin() {
+  try { return JSON.parse(localStorage.getItem('aqua_botiquin') || '{}'); } catch { return {}; }
+}
+
+function _setBotiquinTipo(tipo) {
+  _botTipoActual = tipo;
+  ['A','B','C'].forEach(t => {
+    const btn = document.getElementById('btnBot' + t);
+    if (btn) btn.classList.toggle('active', t === tipo);
+  });
+  const deaSec = document.getElementById('botiquinDeaSection');
+  if (deaSec) deaSec.hidden = tipo !== 'C';
+  _renderBotiquinChecklist(tipo);
+}
+
+function _renderBotiquinChecklist(tipo) {
+  const el = document.getElementById('botiquinChecklist');
+  if (!el) return;
+  const data = getBotiquin();
+  const items = BOTIQUIN_ITEMS[tipo] || BOTIQUIN_ITEMS.A;
+  const checked = data.items || {};
+  el.innerHTML = items.map(item => `
+    <label class="botiquin-check-item">
+      <input type="checkbox" class="botiquin-checkbox" data-bot-item="${item.id}"
+             ${checked[item.id] ? 'checked' : ''} />
+      <span>${item.label}</span>
+    </label>`).join('');
+}
+
+function _updateBotiquinDates() {
+  const fechaEl    = document.getElementById('fechaBotiquin');
+  const deaMantEl  = document.getElementById('fechaDeaMant');
+  const deaElecEl  = document.getElementById('fechaDeaElectrodos');
+  const statusEl   = document.getElementById('statusBotiquin');
+  const mantStEl   = document.getElementById('statusDeaMant');
+  const elecStEl   = document.getElementById('statusDeaElectrodos');
+  const badgeEl    = document.getElementById('botiquinBadge');
+
+  function _dayStatus(dateStr, statusTarget, warnDays, dangerDays) {
+    if (!statusTarget) return;
+    if (!dateStr) { statusTarget.textContent = '–'; statusTarget.className = 'docs-venc-status'; return; }
+    const days = Math.ceil((new Date(dateStr + 'T00:00:00') - new Date()) / 86400000);
+    if (days < 0)              { statusTarget.textContent = 'Vencido';    statusTarget.className = 'docs-venc-status status-danger'; }
+    else if (days <= dangerDays){ statusTarget.textContent = `${days}d`;  statusTarget.className = 'docs-venc-status status-danger'; }
+    else if (days <= warnDays)  { statusTarget.textContent = `${days}d`;  statusTarget.className = 'docs-venc-status status-warning'; }
+    else                        { statusTarget.textContent = 'Vigente';   statusTarget.className = 'docs-venc-status status-ok'; }
+  }
+
+  // Verificación del botiquín: alertar si han pasado > 30 días desde la última
+  if (fechaEl && statusEl) {
+    if (!fechaEl.value) { statusEl.textContent = '–'; statusEl.className = 'docs-venc-status'; }
+    else {
+      const daysSince = Math.floor((Date.now() - new Date(fechaEl.value + 'T00:00:00')) / 86400000);
+      if (daysSince > 30)      { statusEl.textContent = `Hace ${daysSince}d`; statusEl.className = 'docs-venc-status status-danger'; }
+      else if (daysSince > 20) { statusEl.textContent = `Hace ${daysSince}d`; statusEl.className = 'docs-venc-status status-warning'; }
+      else                     { statusEl.textContent = 'Al día';             statusEl.className = 'docs-venc-status status-ok'; }
+    }
+  }
+
+  _dayStatus(deaMantEl?.value,  mantStEl,  90, 30);
+  _dayStatus(deaElecEl?.value,  elecStEl,  30, 10);
+
+  // Badge del header
+  if (badgeEl) {
+    const fecha = fechaEl?.value;
+    if (!fecha) { badgeEl.textContent = 'Sin verificar'; badgeEl.className = 'botiquin-status-badge bot-badge-warn'; badgeEl.hidden = false; }
+    else {
+      const ds = Math.floor((Date.now() - new Date(fecha + 'T00:00:00')) / 86400000);
+      if (ds > 30)      { badgeEl.textContent = 'Vencido'; badgeEl.className = 'botiquin-status-badge bot-badge-danger'; badgeEl.hidden = false; }
+      else if (ds > 20) { badgeEl.textContent = `Hace ${ds}d`; badgeEl.className = 'botiquin-status-badge bot-badge-warn'; badgeEl.hidden = false; }
+      else              { badgeEl.textContent = 'Al día'; badgeEl.className = 'botiquin-status-badge bot-badge-ok'; badgeEl.hidden = false; }
+    }
+  }
+}
+
+function saveBotiquin() {
+  if (!_requireUnlocked()) return;
+  const data = getBotiquin();
+  data.tipo             = _botTipoActual;
+  data.fechaVerificacion = document.getElementById('fechaBotiquin')?.value || null;
+  data.fechaDeaMant     = document.getElementById('fechaDeaMant')?.value   || null;
+  data.fechaDeaElectrodos = document.getElementById('fechaDeaElectrodos')?.value || null;
+
+  const items = {};
+  document.querySelectorAll('.botiquin-checkbox').forEach(cb => {
+    items[cb.dataset.botItem] = cb.checked;
+  });
+  data.items = items;
+
+  localStorage.setItem('aqua_botiquin', JSON.stringify(data));
+  _updateBotiquinDates();
+  renderDashboardVencimientos();
+  showToast('Verificación de botiquín guardada.', 'success');
+}
+
+function renderBotiquinCard() {
+  const data = getBotiquin();
+  const tipo = data.tipo || 'A';
+  _botTipoActual = tipo;
+
+  ['A','B','C'].forEach(t => {
+    const btn = document.getElementById('btnBot' + t);
+    if (btn) btn.classList.toggle('active', t === tipo);
+  });
+
+  const deaSec = document.getElementById('botiquinDeaSection');
+  if (deaSec) deaSec.hidden = tipo !== 'C';
+
+  const fechaEl = document.getElementById('fechaBotiquin');
+  if (fechaEl && data.fechaVerificacion) fechaEl.value = data.fechaVerificacion;
+  const deaMantEl = document.getElementById('fechaDeaMant');
+  if (deaMantEl && data.fechaDeaMant) deaMantEl.value = data.fechaDeaMant;
+  const deaElecEl = document.getElementById('fechaDeaElectrodos');
+  if (deaElecEl && data.fechaDeaElectrodos) deaElecEl.value = data.fechaDeaElectrodos;
+
+  _renderBotiquinChecklist(tipo);
+  _updateBotiquinDates();
+}
+
+// ── REGISTRO DE LABORATORIO TRIMESTRAL ────────────────────
+const LAB_MICRO_KEYS = ['coliformesTotales', 'eColi', 'pseudomonas', 'staphylococcus'];
+const LAB_MICRO_LABELS = {
+  coliformesTotales: 'Coliformes totales',
+  eColi: 'E. coli',
+  pseudomonas: 'Pseudomonas aeruginosa',
+  staphylococcus: 'Staphylococcus aureus',
+};
+
+function getLabRecords() {
+  try { return JSON.parse(localStorage.getItem('aqua_lab') || '[]'); } catch { return []; }
+}
+
+function _labPctMicro(entry) {
+  const tested = LAB_MICRO_KEYS.filter(k => entry[k] === 'ausente' || entry[k] === 'presente');
+  if (!tested.length) return null;
+  const nonConform = tested.filter(k => entry[k] === 'presente').length;
+  return Math.round((nonConform / tested.length) * 100);
+}
+
+function _labDaysSince(entry) {
+  if (!entry?.fecha) return null;
+  return Math.floor((Date.now() - new Date(entry.fecha + 'T00:00:00').getTime()) / 86400000);
+}
+
+function saveLabRecord() {
+  if (!_requireUnlocked()) return;
+  const fecha        = document.getElementById('labFecha').value;
+  const laboratorio  = document.getElementById('labLaboratorio').value.trim();
+  const acreditacion = document.getElementById('labAcreditacion').value.trim();
+  const coliformes   = document.getElementById('labColiformes').value;
+  const ecoli        = document.getElementById('labEcoli').value;
+  const pseudomonas  = document.getElementById('labPseudomonas').value;
+  const staph        = document.getElementById('labStaph').value;
+  const cyaRaw       = parseFloat(document.getElementById('labCya').value);
+
+  if (!fecha)       { showToast('Ingresa la fecha de toma de muestra.', 'warning'); return; }
+  if (!laboratorio) { showToast('Ingresa el nombre del laboratorio.', 'warning'); return; }
+  const microFilled = [coliformes, ecoli, pseudomonas, staph].filter(v => v !== '');
+  if (!microFilled.length) { showToast('Ingresa al menos un resultado microbiológico.', 'warning'); return; }
+
+  const entry = {
+    ts: Date.now(),
+    fecha,
+    laboratorio,
+    acreditacion: acreditacion || null,
+    coliformesTotales: coliformes || null,
+    eColi:             ecoli      || null,
+    pseudomonas:       pseudomonas || null,
+    staphylococcus:    staph      || null,
+    cya: isNaN(cyaRaw) ? null : cyaRaw,
+  };
+
+  const records = getLabRecords();
+  records.unshift(entry);
+  _secSave('aqua_lab', JSON.stringify(records));
+
+  // Auto-actualizar slider microbiológico del IRAPI
+  const pct = _labPctMicro(entry);
+  if (pct !== null) {
+    const sliderMicro = document.getElementById('sliderMicro');
+    const microInput  = document.getElementById('microLabValue');
+    if (sliderMicro) { sliderMicro.value = pct; }
+    if (microInput)  { microInput.value  = pct; }
+    calcIRAPI();
+    showToast(`Resultado guardado. IRAPI microbiológico actualizado a ${pct}%.`, 'success');
+  } else {
+    showToast('Resultado de laboratorio guardado.', 'success');
+  }
+
+  // Limpiar formulario
+  ['labFecha','labLaboratorio','labAcreditacion','labCya'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['labColiformes','labEcoli','labPseudomonas','labStaph'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+
+  renderLabReg();
+  renderDashboardVencimientos();
+}
+
+function deleteLabRecord(ts) {
+  if (!_requireUnlocked()) return;
+  showConfirm('¿Eliminar este resultado de laboratorio?', () => {
+    const records = getLabRecords().filter(r => r.ts !== ts);
+    _secSave('aqua_lab', JSON.stringify(records));
+    renderLabReg();
+    renderDashboardVencimientos();
+    showToast('Registro eliminado.', 'success');
+  });
+}
+
+function renderLabReg() {
+  const records  = getLabRecords();
+  const latest   = records[0] || null;
+  const daysSince = _labDaysSince(latest);
+
+  const alertEl  = document.getElementById('labRegAlert');
+  const badgeEl  = document.getElementById('labRegBadge');
+  const histEl   = document.getElementById('labRegHistory');
+  if (!alertEl || !histEl) return;
+
+  // Alert de vencimiento
+  if (daysSince === null) {
+    alertEl.hidden = false;
+    alertEl.className = 'lab-reg-alert lab-reg-alert-warn';
+    alertEl.innerHTML = '<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Sin análisis registrado. La Res. 234/2026 exige análisis microbiológico certificado cada 90 días.';
+    if (badgeEl) { badgeEl.textContent = 'Sin registro'; badgeEl.className = 'lab-reg-badge lab-reg-badge-warn'; badgeEl.hidden = false; }
+  } else if (daysSince > 90) {
+    alertEl.hidden = false;
+    alertEl.className = 'lab-reg-alert lab-reg-alert-danger';
+    alertEl.innerHTML = `<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> <strong>ANÁLISIS VENCIDO</strong> — Hace ${daysSince} días (límite: 90 días). Solicite un nuevo análisis a un laboratorio acreditado.`;
+    if (badgeEl) { badgeEl.textContent = 'VENCIDO'; badgeEl.className = 'lab-reg-badge lab-reg-badge-danger'; badgeEl.hidden = false; }
+  } else if (daysSince > 75) {
+    alertEl.hidden = false;
+    alertEl.className = 'lab-reg-alert lab-reg-alert-warn';
+    alertEl.innerHTML = `<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Próximo vencimiento — quedan <strong>${90 - daysSince} días</strong> para el siguiente análisis trimestral.`;
+    if (badgeEl) { badgeEl.textContent = `Vence en ${90 - daysSince}d`; badgeEl.className = 'lab-reg-badge lab-reg-badge-warn'; badgeEl.hidden = false; }
+  } else {
+    alertEl.hidden = true;
+    if (badgeEl) { badgeEl.textContent = 'Vigente'; badgeEl.className = 'lab-reg-badge lab-reg-badge-ok'; badgeEl.hidden = false; }
+  }
+
+  // Historial
+  if (!records.length) {
+    histEl.innerHTML = '<p class="empty-state">Sin análisis registrados.</p>';
+    return;
+  }
+
+  histEl.innerHTML = records.map(r => {
+    const pct  = _labPctMicro(r);
+    const cya  = r.cya != null ? `${r.cya} mg/L` : '–';
+    const cyaOut = r.cya != null && r.cya > 75;
+    const microRows = LAB_MICRO_KEYS
+      .filter(k => r[k])
+      .map(k => {
+        const ok = r[k] === 'ausente';
+        return `<span class="lab-micro-chip ${ok ? 'lab-chip-ok' : 'lab-chip-out'}">${LAB_MICRO_LABELS[k]}: ${ok ? '✓ Ausente' : '✗ Presente'}</span>`;
+      }).join('');
+    return `
+    <div class="lab-reg-item" data-ts="${r.ts}">
+      <div class="lab-reg-item-header">
+        <strong>${escapeHtml(r.fecha || '–')}</strong>
+        <span class="lab-reg-item-lab">${escapeHtml(r.laboratorio || '–')}${r.acreditacion ? ` · ${escapeHtml(r.acreditacion)}` : ''}</span>
+        ${pct !== null ? `<span class="lsi-pbadge ${pct === 0 ? 'lsi-pbadge-ok' : 'lsi-pbadge-out'}" style="margin-left:auto">Micro: ${pct}% NC</span>` : ''}
+        <button class="btn-delete-lab" data-ts="${r.ts}" title="Eliminar registro" aria-label="Eliminar registro">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+      ${microRows ? `<div class="lab-micro-chips">${microRows}</div>` : ''}
+      ${r.cya != null ? `<div class="lab-cya-row">CYA (lab): <strong class="${cyaOut ? 'text-danger' : ''}">${cya}</strong>${cyaOut ? ' ⚠ Sobre límite' : ''}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
 function updateVencimientos() {
   const pairs = [
     { inputId: 'fechaSalvavidas', statusId: 'statusSalvavidas' },
@@ -4318,6 +5641,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     restoreIRAPISliders();
     calcIRAPI();
     updateIRAPIBitacoraBtn();
+    renderLabReg();
+    renderBotiquinCard();
+    renderSaneamiento();
     updateReportBtn();
     updateDashReportBtn();
     initDocs();
@@ -4346,8 +5672,108 @@ function _isValidMntEntry(e) {
     && typeof e.ts          === 'number' && isFinite(e.ts)
     && typeof e.fecha       === 'string' && e.fecha.length > 0
     && typeof e.tecnico     === 'string' && e.tecnico.length > 0
-    && ['motobomba', 'caldera'].includes(e.area)
+    && (e.area in MNT_AREA_LABELS)
     && typeof e.descripcion === 'string' && e.descripcion.length > 0;
+}
+
+// ── SANEAMIENTO BÁSICO ────────────────────────────────────
+const SANEAMIENTO_PROGRAMS = [
+  { id: 'san_limpieza',  label: 'Limpieza y desinfección',      frecLabel: 'Semanal',  dias: 7  },
+  { id: 'san_vectores',  label: 'Control de vectores y plagas', frecLabel: 'Mensual',  dias: 30 },
+  { id: 'san_residuos',  label: 'Gestión de residuos sólidos',  frecLabel: 'Semanal',  dias: 7  },
+  { id: 'san_agua',      label: 'Suministro de agua potable',   frecLabel: 'Mensual',  dias: 30 },
+  { id: 'san_aguas_res', label: 'Manejo de aguas residuales',   frecLabel: 'Mensual',  dias: 30 },
+];
+
+const MNT_AREA_LABELS = {
+  motobomba:    { label: 'Motobomba',                   badge: 'mnt-badge-motobomba' },
+  caldera:      { label: 'Caldera',                     badge: 'mnt-badge-caldera'   },
+  san_limpieza: { label: 'Limpieza y desinfección',     badge: 'mnt-badge-san'       },
+  san_vectores: { label: 'Control vectores y plagas',   badge: 'mnt-badge-san'       },
+  san_residuos: { label: 'Residuos sólidos',            badge: 'mnt-badge-san'       },
+  san_agua:     { label: 'Agua potable',                badge: 'mnt-badge-san'       },
+  san_aguas_res:{ label: 'Aguas residuales',            badge: 'mnt-badge-san'       },
+};
+
+function _mntLogRaw() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('aqua_mantenimiento') || '[]');
+    return Array.isArray(raw) ? raw.filter(_isValidMntEntry) : [];
+  } catch { return []; }
+}
+
+function _sanPreFill(areaId) {
+  const el = document.getElementById('mntArea');
+  if (el) { el.value = areaId; checkMntForm(); }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderSaneamiento() {
+  const el = document.getElementById('sanTracker');
+  if (!el) return;
+  const log = _mntLogRaw();
+  const sanIds = new Set(SANEAMIENTO_PROGRAMS.map(p => p.id));
+  const sanLog = log.filter(e => sanIds.has(e.area));
+
+  // ── Semáforo por programa ──
+  const trackerHTML = SANEAMIENTO_PROGRAMS.map(prog => {
+    const last      = sanLog.find(e => e.area === prog.id);
+    const warn      = Math.ceil(prog.dias * 0.3);
+    let statusClass = 'san-status-none';
+    let statusText  = 'Sin registro';
+    let fechaText   = '–';
+
+    if (last) {
+      const daysSince = Math.floor((Date.now() - new Date(last.fecha + 'T00:00:00')) / 86400000);
+      const daysLeft  = prog.dias - daysSince;
+      fechaText = last.fecha;
+      if (daysSince > prog.dias) { statusClass = 'san-status-danger'; statusText = `VENCIDO (hace ${daysSince}d)`; }
+      else if (daysLeft <= warn)  { statusClass = 'san-status-warn';   statusText = `Vence en ${daysLeft}d`; }
+      else                        { statusClass = 'san-status-ok';     statusText = `Al día (hace ${daysSince}d)`; }
+    }
+
+    return `
+    <div class="san-item">
+      <div class="san-item-left">
+        <span class="san-item-label">${prog.label}</span>
+        <span class="san-item-frec">${prog.frecLabel}</span>
+      </div>
+      <div class="san-item-right">
+        <span class="san-item-fecha">${fechaText}</span>
+        <span class="san-status ${statusClass}">${statusText}</span>
+        <button class="san-reg-btn" data-san-id="${prog.id}" title="Registrar ${prog.label}">+</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── Historial de registros ──
+  let histHTML = '<div class="san-hist-title">Historial de ejecuciones</div>';
+  if (!sanLog.length) {
+    histHTML += '<p class="empty-state">Sin registros aún. Usa el formulario de arriba.</p>';
+  } else {
+    histHTML += sanLog.map(e => {
+      const areaInfo = MNT_AREA_LABELS[e.area] || { label: e.area, badge: 'mnt-badge-san' };
+      return `
+      <div class="san-hist-item" data-ts="${e.ts}">
+        <div class="san-hist-info">
+          <strong>${escapeHtml(e.fecha)}</strong>
+          <span class="mnt-area-badge ${areaInfo.badge}">${escapeHtml(areaInfo.label)}</span>
+          <span class="san-hist-tec">Técnico: ${escapeHtml(e.tecnico)}</span>
+          <span class="san-hist-desc">${escapeHtml(e.descripcion)}</span>
+        </div>
+        <div class="san-hist-actions">
+          <button class="btn-edit-log san-edit-btn" data-ts="${e.ts}" title="Editar">
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-delete-log san-del-btn" data-ts="${e.ts}" title="Eliminar">
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = trackerHTML + histHTML;
 }
 
 function getMntLog() {
@@ -4394,7 +5820,7 @@ function saveMnt() {
   const prox  = document.getElementById('mntProximo').value.trim();
   if (!fecha || !tec || !area || !desc) return;
 
-  const areaLabel = area === 'motobomba' ? 'Motobomba' : 'Caldera';
+  const areaLabel = (MNT_AREA_LABELS[area] || { label: area }).label;
   let log = getMntLog();
   let toastMsg;
 
@@ -4418,6 +5844,7 @@ function saveMnt() {
   _checkStorageUsage();
   clearMntForm();
   renderMnt();
+  renderSaneamiento();
   showToast(toastMsg, 'success');
 }
 
@@ -4427,6 +5854,7 @@ function deleteMnt(ts) {
     const log = getMntLog().filter(e => e.ts !== ts);
     _secSave('aqua_mantenimiento', JSON.stringify(log));
     renderMnt();
+    renderSaneamiento();
     showToast('Registro de mantenimiento eliminado.', 'success');
   });
 }
@@ -4470,9 +5898,9 @@ function renderMnt() {
     return;
   }
   wrap.innerHTML = log.map(e => {
-    const isMoto     = e.area === 'motobomba';
-    const badgeClass = isMoto ? 'mnt-badge-motobomba' : 'mnt-badge-caldera';
-    const badgeText  = isMoto ? 'Motobomba' : 'Caldera';
+    const areaInfo   = MNT_AREA_LABELS[e.area] || { label: e.area, badge: 'mnt-badge-caldera' };
+    const badgeClass = areaInfo.badge;
+    const badgeText  = areaInfo.label;
     const proxTxt    = e.proximo ? ` · Próximo: ${escapeHtml(e.proximo)}` : '';
     const hasPhoto   = !!_safePhotoSrc(e.foto);
     return `

@@ -1485,6 +1485,14 @@ input, select, textarea { font-family: inherit; }
   background: #d97706;
   border-color: #d97706;
 }
+.afr-type-btn.afr-btn-sangre.active {
+  background: #be123c;
+  border-color: #be123c;
+}
+.afr-type-btn.afr-btn-quimicos.active {
+  background: #7c3aed;
+  border-color: #7c3aed;
+}
 
 /* Emergency banner — diarreico */
 .afr-emergency-banner[hidden] { display: none !important; }
@@ -1527,6 +1535,14 @@ input, select, textarea { font-family: inherit; }
   border-left: 3px solid #d97706;
   background: var(--warning-light);
 }
+.afr-incident-item.afr-inc-sangre {
+  border-left: 3px solid #be123c;
+  background: #fff1f2;
+}
+.afr-incident-item.afr-inc-quimicos {
+  border-left: 3px solid #7c3aed;
+  background: #faf5ff;
+}
 
 /* Severity badges in incident list */
 .afr-inc-badge {
@@ -1542,6 +1558,8 @@ input, select, textarea { font-family: inherit; }
 .afr-inc-badge-emergencia { background: var(--destructive-light); color: #991b1b; }
 .afr-inc-badge-solido     { background: var(--warning-light);     color: #92400e; }
 .afr-inc-badge-vomito     { background: #fef9c3;                   color: #713f12; }
+.afr-inc-badge-sangre     { background: #ffe4e6;                   color: #9f1239; }
+.afr-inc-badge-quimicos   { background: #ede9fe;                   color: #5b21b6; }
 
 @keyframes afr-out-left  { to { opacity: 0; transform: translateX(-22px); } }
 @keyframes afr-out-right { to { opacity: 0; transform: translateX( 22px); } }
@@ -3218,6 +3236,25 @@ a.docs-ref-item:hover { background: var(--border); }
   pointer-events: none;
 }
 
+/* ── Banner de establecimiento en dashboard ─────────────── */
+.dash-establishment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.dash-est-icon { display: flex; align-items: center; color: var(--primary); }
+.dash-est-name { font-weight: 600; color: var(--text-primary); }
+.dash-est-loc  { color: var(--text-muted); }
+
+[data-theme="dark"] .dash-establishment { background: var(--card-bg); border-color: var(--border); }
+
 /* ── FLUJO DE NAVEGACIÓN GUIADA ────────────────────────── */
 
 /* Panel "Por dónde empezar" en dashboard vacío */
@@ -3433,6 +3470,186 @@ a.docs-ref-item:hover { background: var(--border); }
   margin-top: 6px;
 }
 
+/* ── BOTIQUÍN Y DEA ─────────────────────────────────────── */
+.botiquin-card  { margin-top: 16px; }
+.botiquin-note  { font-size: 12px; color: var(--text-muted); margin: 0 0 14px; font-style: italic; }
+
+.botiquin-tipo-wrap { margin-bottom: 14px; }
+.botiquin-tipo-toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.botiquin-tipo-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.3;
+  transition: var(--transition);
+  min-width: 110px;
+}
+.botiquin-tipo-btn strong { font-size: 14px; }
+.botiquin-tipo-btn span   { font-size: 11px; color: var(--text-muted); }
+.botiquin-tipo-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-light, #eff6ff);
+  color: var(--primary);
+}
+.botiquin-tipo-btn.active span { color: var(--primary); opacity: .75; }
+
+.botiquin-fecha-row { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 12px; }
+
+.botiquin-checklist { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.botiquin-check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: background .12s;
+}
+.botiquin-check-item:hover { background: var(--surface-alt, #f8fafc); }
+.botiquin-checkbox {
+  width: 16px; height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.botiquin-dea-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--destructive);
+  padding: 10px 0 8px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.botiquin-dea-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.botiquin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  margin-left: auto;
+}
+.bot-badge-ok     { background: #dcfce7; color: #166534; }
+.bot-badge-warn   { background: var(--warning-light); color: #92400e; }
+.bot-badge-danger { background: var(--destructive-light); color: #991b1b; }
+
+/* ── REGISTRO DE LABORATORIO TRIMESTRAL ─────────────────── */
+.lab-reg-card { margin-top: 16px; }
+.lab-reg-intro { font-size: 13px; color: var(--text-muted); margin: 0 0 14px; }
+
+.lab-reg-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+  border: 1.5px solid;
+}
+.lab-reg-alert svg { flex-shrink: 0; margin-top: 1px; }
+.lab-reg-alert-warn   { background: var(--warning-light); border-color: #d97706; color: #78350f; }
+.lab-reg-alert-danger { background: var(--destructive-light); border-color: var(--destructive); color: #991b1b; }
+
+.lab-reg-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  margin-left: auto;
+}
+.lab-reg-badge-ok     { background: #dcfce7; color: #166534; }
+.lab-reg-badge-warn   { background: var(--warning-light); color: #92400e; }
+.lab-reg-badge-danger { background: var(--destructive-light); color: #991b1b; }
+
+.lab-reg-form { display: flex; flex-direction: column; gap: 4px; }
+.lab-reg-row  { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+
+.lab-reg-micro-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin: 10px 0 6px;
+}
+.lab-reg-micro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.lab-micro-item { display: flex; flex-direction: column; gap: 4px; }
+
+.lab-reg-history-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin: 18px 0 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.lab-reg-item {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: var(--surface);
+}
+.lab-reg-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lab-reg-item-lab { font-size: 13px; color: var(--text-muted); }
+
+.lab-micro-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.lab-micro-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: .03em;
+}
+.lab-chip-ok  { background: #dcfce7; color: #166534; }
+.lab-chip-out { background: var(--destructive-light); color: #991b1b; }
+
+.lab-cya-row { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.lab-cya-row strong { color: var(--text); }
+.text-danger { color: var(--destructive) !important; }
+
 /* ── AFR INCIDENTS ──────────────────────────────────────── */
 .afr-incident-item {
   display: flex;
@@ -3539,6 +3756,579 @@ a.docs-ref-item:hover { background: var(--border); }
 
 [data-theme="dark"] .mnt-badge-motobomba { background: #1e3a5f; color: #93c5fd; }
 [data-theme="dark"] .mnt-badge-caldera   { background: #431407; color: #fdba74; }
+[data-theme="dark"] .mnt-badge-san       { background: #052e16; color: #6ee7b7; }
+
+/* ── PLAN SANEAMIENTO BÁSICO ─────────────────────────────── */
+.san-card  { margin-top: 16px; }
+.san-intro { font-size: 13px; color: var(--text-muted); margin: 0 0 14px; }
+.san-norm-tag {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.san-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.san-item-left  { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.san-item-label { font-size: 14px; font-weight: 600; }
+.san-item-frec  { font-size: 11px; color: var(--text-muted); }
+.san-item-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.san-item-fecha { font-size: 12px; color: var(--text-muted); }
+
+.san-status {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: .03em;
+}
+.san-status-ok     { background: #dcfce7; color: #166534; }
+.san-status-warn   { background: var(--warning-light); color: #92400e; }
+.san-status-danger { background: var(--destructive-light); color: #991b1b; }
+.san-status-none   { background: #f1f5f9; color: #64748b; }
+
+.san-reg-btn {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+.san-reg-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* badge en historial */
+.mnt-badge-san { background: #dcfce7; color: #166534; }
+
+.san-hist-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin: 16px 0 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.san-hist-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--surface);
+}
+.san-hist-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  min-width: 0;
+}
+.san-hist-tec  { font-size: 12px; color: var(--text-muted); }
+.san-hist-desc { font-size: 12px; color: var(--text-muted); width: 100%; }
+.san-hist-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+[data-theme="dark"] .san-norm-tag    { background: #2e1065; color: #c4b5fd; }
+[data-theme="dark"] .san-item        { border-color: #334155; }
+[data-theme="dark"] .san-status-ok   { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .san-status-warn { background: #3b1a00; color: #fcd34d; }
+[data-theme="dark"] .san-status-danger { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .san-status-none { background: #1e293b; color: #64748b; }
+[data-theme="dark"] .san-reg-btn     { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .mnt-badge-san   { background: #052e16; color: #6ee7b7; }
+
+/* ── PERFIL DEL ESTABLECIMIENTO ─────────────────────────── */
+.perfil-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px 0 32px;
+}
+.perfil-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+.perfil-radio-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+.perfil-radio-opt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.perfil-radio-opt input[type="radio"] {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+.perfil-vol-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #15803d;
+}
+.perfil-vol-result strong { font-size: 15px; }
+.perfil-sv-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.perfil-sv-row:last-child { border-bottom: none; }
+.perfil-sv-del {
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+.perfil-add-btn {
+  margin-top: 8px;
+  font-size: 12px;
+  padding: 6px 12px;
+  gap: 6px;
+}
+.perfil-save-btn {
+  align-self: flex-end;
+  padding: 10px 28px;
+  font-size: 14px;
+  gap: 8px;
+}
+.form-group.fg-1 { flex: 1; min-width: 140px; }
+.form-group.fg-2 { flex: 2; min-width: 200px; }
+
+@media (max-width: 600px) {
+  .perfil-sv-row { flex-direction: column; gap: 8px; }
+  .perfil-save-btn { align-self: stretch; }
+}
+
+[data-theme="dark"] .perfil-vol-result {
+  background: #052e16;
+  border-color: #166534;
+  color: #86efac;
+}
+
+/* ── VISITAS DE INSPECCIÓN SANITARIA ────────────────────── */
+.visita-nota {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+}
+.visita-hist-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+/* Opciones de concepto */
+.visita-concepto-opts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.visita-concepto-opt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+  flex: 1;
+  min-width: 110px;
+}
+.visita-concepto-opt:hover { border-color: var(--primary); }
+.visita-concepto-opt.vc-selected { border-color: var(--primary); background: var(--primary-light, #eff6ff); }
+.visita-concepto-opt input[type="radio"] { width: 15px; height: 15px; accent-color: var(--primary); flex-shrink: 0; }
+.vc-icon {
+  font-size: 14px;
+  font-weight: 800;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.vc-ok   { background: #dcfce7; color: #166534; }
+.vc-warn { background: #fef3c7; color: #92400e; }
+.vc-nok  { background: #fee2e2; color: #dc2626; }
+
+/* Badges en historial */
+.vc-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.vc-badge-ok   { background: #dcfce7; color: #166534; }
+.vc-badge-warn { background: #fef3c7; color: #92400e; }
+.vc-badge-nok  { background: #fee2e2; color: #dc2626; }
+
+/* Items del historial */
+.visita-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: var(--surface);
+}
+.visita-item-warn { border-left: 3px solid #f59e0b; }
+.visita-item-nok  { border-left: 3px solid #ef4444; }
+
+.visita-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.visita-item-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.visita-fecha { font-weight: 600; }
+.visita-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+.visita-item-body { margin-top: 6px; }
+.visita-func { font-size: 12px; color: var(--text-muted); display: block; }
+.visita-obs  { font-size: 12px; color: var(--text); margin: 4px 0 0; line-height: 1.5; }
+
+.visita-plazo { font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
+.visita-plazo-ok   { background: #dcfce7; color: #166534; }
+.visita-plazo-warn { background: #fef3c7; color: #92400e; }
+.visita-plazo-venc { background: #fee2e2; color: #dc2626; }
+
+[data-theme="dark"] .visita-concepto-opt       { border-color: #334155; }
+[data-theme="dark"] .visita-concepto-opt.vc-selected { background: #1e3a5f; border-color: #3b82f6; }
+[data-theme="dark"] .vc-ok                     { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .vc-warn                   { background: #3b1a00; color: #fcd34d; }
+[data-theme="dark"] .vc-nok                    { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .vc-badge-ok               { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .vc-badge-warn             { background: #3b1a00; color: #fcd34d; }
+[data-theme="dark"] .vc-badge-nok              { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .visita-item               { border-color: #334155; background: #1e293b; }
+[data-theme="dark"] .visita-plazo-ok           { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .visita-plazo-warn         { background: #3b1a00; color: #fcd34d; }
+[data-theme="dark"] .visita-plazo-venc         { background: #450a0a; color: #fca5a5; }
+
+/* ── BAÑISTAS POR EDAD ───────────────────────────────────── */
+/* Celda en tabla */
+.ban-cell        { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.ban-line        { display: flex; align-items: center; gap: 3px; }
+.ban-sub         { font-size: 10px; color: var(--text-muted); }
+.ban-total       { font-weight: 700; padding-left: 4px; border-left: 1px solid var(--border); }
+
+/* Grid en modal de detalle */
+.ban-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+}
+.ban-detail-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-subtle, #f8fafc);
+}
+.ban-det-label { font-size: 11px; color: var(--text-muted); }
+.ban-det-val   { font-size: 22px; font-weight: 700; color: var(--text); }
+.ban-det-menor { border-color: #bfdbfe; background: #eff6ff; }
+.ban-det-mayor { border-color: #bbf7d0; background: #f0fdf4; }
+.ban-det-total { border-color: var(--primary); background: var(--primary-light, #f0f4ff); }
+.ban-det-menor .ban-det-val { color: #1d4ed8; }
+.ban-det-mayor .ban-det-val { color: #15803d; }
+.ban-det-total .ban-det-val { color: var(--primary); }
+
+@media (max-width: 400px) {
+  .ban-detail-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .ban-det-val { font-size: 18px; }
+}
+
+[data-theme="dark"] .ban-det-menor { border-color: #1e3a5f; background: #0f172a; }
+[data-theme="dark"] .ban-det-mayor { border-color: #14532d; background: #052e16; }
+[data-theme="dark"] .ban-det-total { background: #1e1b4b; }
+[data-theme="dark"] .ban-det-menor .ban-det-val { color: #93c5fd; }
+[data-theme="dark"] .ban-det-mayor .ban-det-val { color: #86efac; }
+
+/* ── APTITUD DEL ESTANQUE ────────────────────────────────── */
+.apt-block {
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin: 16px 0 4px;
+  background: var(--surface);
+}
+.apt-block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.apt-block-header svg { color: var(--primary); flex-shrink: 0; }
+
+.apt-suggestion {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  min-height: 0;
+}
+.apt-suggestion:empty { display: none; }
+.apt-sug-ok   { background: #dcfce7; color: #166534; }
+.apt-sug-warn { background: #fef3c7; color: #92400e; }
+
+.apt-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 520px) { .apt-options { grid-template-columns: 1fr; } }
+
+.apt-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+  user-select: none;
+}
+.apt-option:hover { border-color: var(--primary); }
+.apt-option.apt-selected { border-color: var(--primary); background: var(--primary-light, #eff6ff); }
+.apt-option input[type="radio"] { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--primary); cursor: pointer; }
+
+.apt-option-icon {
+  font-size: 18px;
+  font-weight: 800;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.apt-icon-ok  { background: #dcfce7; color: #166534; }
+.apt-icon-nok { background: #fee2e2; color: #dc2626; }
+
+.apt-option-text { display: flex; flex-direction: column; gap: 2px; }
+.apt-option-text strong { font-size: 13px; }
+.apt-option-sub { font-size: 11px; color: var(--text-muted); }
+
+.apt-razon-wrap { margin-top: 12px; }
+.apt-razon-wrap .form-label { margin-bottom: 4px; }
+
+/* Badge en tabla */
+.apt-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.apt-badge-ok   { background: #dcfce7; color: #166534; }
+.apt-badge-nok  { background: #fee2e2; color: #dc2626; }
+.apt-badge-none { background: #f1f5f9; color: #94a3b8; }
+
+/* Banner en modal de detalle */
+.apt-detail-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+.apt-det-ok   { background: #f0fdf4; border: 1.5px solid #bbf7d0; color: #15803d; }
+.apt-det-warn { background: #fffbeb; border: 1.5px solid #fde68a; color: #92400e; }
+.apt-det-nok  { background: #fef2f2; border: 1.5px solid #fecaca; color: #dc2626; }
+.apt-det-icon { font-size: 22px; font-weight: 800; line-height: 1; flex-shrink: 0; }
+.apt-det-razon { font-size: 12px; margin-top: 4px; opacity: .85; }
+
+[data-theme="dark"] .apt-block         { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .apt-option        { border-color: #334155; }
+[data-theme="dark"] .apt-option.apt-selected { background: #1e3a5f; border-color: #3b82f6; }
+[data-theme="dark"] .apt-sug-ok        { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .apt-sug-warn      { background: #3b1a00; color: #fcd34d; }
+[data-theme="dark"] .apt-icon-ok       { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .apt-icon-nok      { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .apt-badge-ok      { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .apt-badge-nok     { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .apt-badge-none    { background: #1e293b; color: #475569; }
+[data-theme="dark"] .apt-det-ok        { background: #052e16; border-color: #166534; color: #6ee7b7; }
+[data-theme="dark"] .apt-det-warn      { background: #3b1a00; border-color: #92400e; color: #fcd34d; }
+[data-theme="dark"] .apt-det-nok       { background: #450a0a; border-color: #991b1b; color: #fca5a5; }
+
+/* ── SEGURIDAD DIARIA ────────────────────────────────────── */
+.seg-block {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 16px 0 4px;
+  background: var(--surface);
+}
+.seg-block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.seg-block-header svg { color: var(--primary); flex-shrink: 0; }
+
+.seg-counter {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #64748b;
+  transition: background .2s, color .2s;
+}
+.seg-counter-ok      { background: #dcfce7; color: #166534; }
+.seg-counter-partial { background: #fef3c7; color: #92400e; }
+
+.seg-items-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+}
+@media (max-width: 520px) { .seg-items-grid { grid-template-columns: 1fr; } }
+
+.seg-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+  color: var(--text);
+  user-select: none;
+}
+.seg-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.seg-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.seg-badge-ok   { background: #dcfce7; color: #166534; }
+.seg-badge-warn { background: #fef3c7; color: #92400e; }
+.seg-badge-none { background: #f1f5f9; color: #94a3b8; }
+
+.seg-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin-top: 4px;
+}
+@media (max-width: 520px) { .seg-detail-grid { grid-template-columns: 1fr; } }
+
+.seg-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+.seg-det-ok  { background: #f0fdf4; color: #15803d; }
+.seg-det-nok { background: #fef2f2; color: #dc2626; }
+.seg-det-icon { font-weight: 800; font-size: 13px; flex-shrink: 0; }
+
+[data-theme="dark"] .seg-block           { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .seg-counter         { background: #334155; color: #94a3b8; }
+[data-theme="dark"] .seg-counter-ok      { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .seg-counter-partial { background: #3b1a00; color: #fcd34d; }
+[data-theme="dark"] .seg-badge-ok        { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .seg-badge-warn      { background: #3b1a00; color: #fcd34d; }
+[data-theme="dark"] .seg-badge-none      { background: #1e293b; color: #475569; }
+[data-theme="dark"] .seg-det-ok          { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .seg-det-nok         { background: #450a0a; color: #fca5a5; }
 
 /* ── PRELOADER ───────────────────────────────────────────── */
 .preloader {
@@ -4075,10 +4865,34 @@ a.docs-ref-item:hover { background: var(--border); }
 [data-theme="dark"] .afr-card.afr-emergency .afr-content  { background: #1a0505; border-color: #7f1d1d; }
 [data-theme="dark"] .afr-incident-item.afr-inc-diarreico  { background: #1a0505; }
 [data-theme="dark"] .afr-incident-item.afr-inc-vomito     { background: #1f1200; }
+[data-theme="dark"] .afr-incident-item.afr-inc-sangre     { background: #2d0a14; }
+[data-theme="dark"] .afr-incident-item.afr-inc-quimicos   { background: #1a0a2e; }
 [data-theme="dark"] .afr-inc-badge-emergencia             { background: #450a0a; color: #fca5a5; }
 [data-theme="dark"] .afr-inc-badge-solido                 { background: #3b1a00; color: #fde68a; }
 [data-theme="dark"] .afr-inc-badge-vomito                 { background: #291000; color: #fde68a; }
+[data-theme="dark"] .afr-inc-badge-sangre                 { background: #4c0519; color: #fda4af; }
+[data-theme="dark"] .afr-inc-badge-quimicos               { background: #2e1065; color: #c4b5fd; }
 [data-theme="dark"] .afr-dose-product                     { background: #0f172a; border-color: #334155; }
+
+/* ── Botiquín dark ── */
+[data-theme="dark"] .botiquin-tipo-btn        { background: #1e293b; color: #94a3b8; border-color: #334155; }
+[data-theme="dark"] .botiquin-tipo-btn.active { background: #0c1a3a; color: #60a5fa; border-color: #3b82f6; }
+[data-theme="dark"] .botiquin-tipo-btn.active span { color: #93c5fd; }
+[data-theme="dark"] .botiquin-check-item:hover { background: #1e293b; }
+[data-theme="dark"] .bot-badge-ok     { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .bot-badge-warn   { background: #3b1a00; color: #fcd34d; }
+[data-theme="dark"] .bot-badge-danger { background: #450a0a; color: #fca5a5; }
+
+/* ── Lab registro dark ── */
+[data-theme="dark"] .lab-reg-card         { background: #0f172a; }
+[data-theme="dark"] .lab-reg-alert-warn   { background: #2d1d00; border-color: #78350f; color: #fcd34d; }
+[data-theme="dark"] .lab-reg-alert-danger { background: #1a0505; border-color: #7f1d1d; color: #fca5a5; }
+[data-theme="dark"] .lab-reg-item         { background: #1e293b; border-color: #334155; }
+[data-theme="dark"] .lab-micro-chip.lab-chip-ok  { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .lab-micro-chip.lab-chip-out { background: #450a0a; color: #fca5a5; }
+[data-theme="dark"] .lab-reg-badge-ok     { background: #052e16; color: #6ee7b7; }
+[data-theme="dark"] .lab-reg-badge-warn   { background: #3b1a00; color: #fcd34d; }
+[data-theme="dark"] .lab-reg-badge-danger { background: #450a0a; color: #fca5a5; }
 
 /* ── Normativa ── */
 [data-theme="dark"] .art-box             { background: #291000; border-color: #78350f; color: #fde68a; }
@@ -4322,6 +5136,109 @@ a.docs-ref-item:hover { background: var(--border); }
   background: rgba(255,255,255,.1);
   color: #fff;
 }
+.sidebar-whatsapp-btn {
+  color: #25d366;
+  text-decoration: none;
+}
+.sidebar-whatsapp-btn:hover {
+  background: rgba(37,211,102,.15);
+  color: #25d366;
+}
+.quick-btn-whatsapp {
+  text-decoration: none;
+  color: #25d366;
+}
+.quick-btn-whatsapp:hover {
+  background: rgba(37,211,102,.12);
+  color: #25d366;
+}
+
+/* ── BAÑISTAS POR EDAD ───────────────────────────────── */
+.banistas-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.banistas-sub {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.banistas-sub-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.banistas-total {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 48px;
+  text-align: center;
+}
+.banistas-total-val {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 38px;
+}
+
+/* ── MOMENTO DEL DÍA ─────────────────────────────────── */
+.momento-toggle-wrap {
+  margin-bottom: 14px;
+}
+.momento-toggle {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.momento-btn {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.momento-btn[data-momento="apertura"].active {
+  background: rgba(14,165,233,.12);
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+}
+.momento-btn[data-momento="mediodia"].active {
+  background: rgba(245,158,11,.12);
+  border-color: #f59e0b;
+  color: #c07b00;
+}
+[data-theme="dark"] .momento-btn[data-momento="mediodia"].active {
+  color: #fbbf24;
+}
+.momento-btn[data-momento="cierre"].active {
+  background: rgba(139,92,246,.12);
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+}
+.momento-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 4px;
+  vertical-align: middle;
+  letter-spacing: .02em;
+}
+.momento-badge.apertura { background: rgba(14,165,233,.15); color: #0ea5e9; }
+.momento-badge.mediodia { background: rgba(245,158,11,.15); color: #c07b00; }
+[data-theme="dark"] .momento-badge.mediodia { color: #fbbf24; }
+.momento-badge.cierre   { background: rgba(139,92,246,.15); color: #8b5cf6; }
 
 /* Dark mode */
 [data-theme="dark"] .pin-overlay { background: #0f172a; }
@@ -4385,6 +5302,15 @@ a.docs-ref-item:hover { background: var(--border); }
 .afr-emergency-note { font-weight: 400; }
 
 /* Formulario de reporte — rango de fechas */
+.rep-quick-select {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.rep-quick-select .btn-sm {
+  font-size: 12px;
+  padding: 5px 12px;
+}
 .rep-range-fg { flex: 1; min-width: 0; }
 #btnClearRepRange {
   align-self: flex-end;
@@ -4427,3 +5353,92 @@ a.docs-ref-item:hover { background: var(--border); }
 /* Textos del preloader pantalla 2 */
 .preloader-greeting { margin-bottom: 4px; }
 .preloader-text     { margin: 0; }
+.fg-time { flex: 0 0 130px; }
+
+/* ── CALIDAD FÍSICA DEL AGUA (Alistamiento 1) ───────────── */
+.fis-wrap {
+  background: var(--surface-2, #f8fafc);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+[data-theme="dark"] .fis-wrap {
+  background: #1e293b;
+}
+.fis-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.fis-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-secondary);
+}
+.fis-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.fis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+@media (max-width: 520px) {
+  .fis-grid { grid-template-columns: 1fr; }
+}
+.fis-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fis-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-muted);
+}
+.fis-opts {
+  display: flex;
+  gap: 4px;
+}
+.fis-btn {
+  flex: 1;
+  padding: 5px 6px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background .15s, border-color .15s, color .15s;
+  white-space: nowrap;
+}
+.fis-btn.fis-ok.active {
+  background: rgba(16,185,129,.12);
+  border-color: #10b981;
+  color: #059669;
+}
+[data-theme="dark"] .fis-btn.fis-ok.active {
+  color: #34d399;
+  background: rgba(16,185,129,.15);
+}
+.fis-btn.fis-bad.active {
+  background: rgba(239,68,68,.1);
+  border-color: #ef4444;
+  color: #dc2626;
+}
+[data-theme="dark"] .fis-btn.fis-bad.active {
+  color: #f87171;
+  background: rgba(239,68,68,.15);
+}
+/* Badge de calidad física en tabla */
+.fis-badge-ok  { color: #10b981; font-weight: 600; font-size: 12px; }
+.fis-badge-bad { color: #ef4444; font-weight: 600; font-size: 12px; }
+.fis-badge-na  { color: var(--text-muted); font-size: 12px; }
