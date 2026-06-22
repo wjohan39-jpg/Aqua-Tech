@@ -1564,7 +1564,7 @@ input, select, textarea { font-family: inherit; }
   display: inline-block;
   padding: 1px 7px;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: .04em;
   vertical-align: middle;
@@ -2143,13 +2143,18 @@ input, select, textarea { font-family: inherit; }
   margin-top: 0.25rem;
 }
 
-/* ── UTILIDADES CSP — reemplazan style="..." en HTML ──── */
+/* ── UTILIDADES CSP — reemplazan style="..." en HTML y JS ─ */
 .u-mt4  { margin-top: 4px; }
 .u-mt8  { margin-top: 8px; }
 .u-mt12 { margin-top: 12px; }
 .u-mt16 { margin-top: 16px; }
 .u-mt20 { margin-top: 20px; }
+.u-mb4  { margin-bottom: 4px; }
+.u-mb10 { margin-bottom: 10px; }
 .u-mb12 { margin-bottom: 12px; }
+.u-mb16 { margin-bottom: 16px; }
+.u-ml-auto   { margin-left: auto; }
+.u-shrink-0  { flex-shrink: 0; }
 .u-textarea-mnt { resize: vertical; min-height: 72px; }
 .backup-card-body { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
 .backup-desc { font-size: 13px; color: var(--text-muted, #64748b); margin: 0; }
@@ -2158,6 +2163,87 @@ input, select, textarea { font-family: inherit; }
 .backup-import-label { cursor: pointer; display: flex; align-items: center; gap: 6px; justify-content: center; }
 .botiquin-fecha-group { flex: 1; max-width: 220px; }
 .botiquin-status-bottom { align-self: flex-end; margin-bottom: 4px; }
+
+/* Colores de estado (reemplazan hex dinámicos en JS) */
+.c-ok     { color: #0cb86a; }
+.c-warn   { color: #f59e0b; }
+.c-mid    { color: #ea580c; }
+.c-danger { color: #ef4444; }
+.c-muted  { color: #94a3b8; }
+.c-amber  { color: #d97706; }
+.text-xs-muted { font-size: 11px; color: #94a3b8; }
+
+/* Badges IRAPI/LSI */
+.idx-badge-ok     { background: #0cb86a20; color: #0cb86a; }
+.idx-badge-warn   { background: #f59e0b20; color: #f59e0b; }
+.idx-badge-mid    { background: #ea580c20; color: #ea580c; }
+.idx-badge-danger { background: #ef444420; color: #ef4444; }
+.idx-badge-muted  { background: #94a3b820; color: #94a3b8; }
+
+/* Barras IRAPI/LSI */
+.idx-bar-ok     { background: #0cb86a; }
+.idx-bar-warn   { background: #f59e0b; }
+.idx-bar-mid    { background: #ea580c; }
+.idx-bar-danger { background: #ef4444; }
+.idx-bar-muted  { background: #94a3b8; }
+
+/* ISL detail box (ficha de registro) */
+.isl-detail-box { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; }
+.isl-box-ok     { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.isl-box-warn   { background: #fffbeb; border: 1px solid #fde68a; }
+.isl-box-danger { background: #fef2f2; border: 1px solid #fecaca; }
+.isl-score      { font-size: 28px; font-weight: 800; }
+.isl-status     { font-weight: 700; }
+.isl-range-note { font-size: 12px; color: #64748b; }
+
+/* ISL celda en tabla de bitácora */
+.isl-cell        { font-weight: 700; }
+.isl-cell-ok     { color: #0cb86a; }
+.isl-cell-warn   { color: #f59e0b; }
+.isl-cell-danger { color: #ef4444; }
+
+/* LSI diagnosis box variantes */
+.lsi-box-danger    { border-color: #ef444455; background: #ef444410; }
+.lsi-box-warn      { border-color: #f59e0b55; background: #f59e0b10; }
+.lsi-box-amber     { border-color: #d9770655; background: #fffbeb;    }
+.lsi-box-danger-mb { border-color: #ef444455; background: #ef444410; margin-bottom: 8px; }
+.lsi-title-danger  { color: #ef4444; }
+.lsi-title-warn    { color: #f59e0b; }
+.lsi-title-amber   { color: #d97706; }
+
+/* Botones de acción en fichas de detalle */
+.detail-actions      { display: flex; gap: 8px; margin-top: 20px; }
+.detail-actions-wrap { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+.btn-flex { flex: 1; }
+.btn-icon { margin-right: 4px; }
+
+/* Texto en fichas de detalle */
+.detail-h3   { margin: 0; font-size: 15px; font-weight: 600; color: var(--text); }
+.detail-p    { margin: 0; font-size: 13px; line-height: 1.65; color: var(--text); }
+.detail-meta { font-size: 13px; color: var(--text-muted, #64748b); }
+.mnt-hist-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 2px; }
+
+/* Banner AFR pendiente de cierre */
+.afr-pending-banner {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px;
+  font-size: 12px; color: #92400e;
+}
+/* Descripción del protocolo AFR */
+.afr-proto-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin: 0; }
+/* Título sección "Cierre del protocolo" */
+.section-title-ok { color: #0cb86a; }
+
+/* Calc noaction variante amarilla (advertencia) */
+.calc-noaction-warn { background: #fef3c7; border: 1px solid #fde68a; color: #92400e; }
+
+/* Inputs estrechos */
+.calc-input-narrow { max-width: 120px; }
+
+/* SVG dentro de .calc-ph-alknote y .mnt-item-info */
+.calc-ph-alknote svg { flex-shrink: 0; margin-top: 1px; }
+.mnt-item-info > svg { flex-shrink: 0; }
 
 /* ── CONCEPTO SANITARIO SELECTOR ─────────────────────── */
 .docs-venc-concepto { flex-wrap: wrap; }
@@ -4119,6 +4205,7 @@ a.docs-ref-item:hover { background: var(--border); }
   padding: 10px 12px;
   margin-bottom: 8px;
   background: var(--surface);
+  cursor: pointer;
 }
 .visita-item-warn { border-left: 3px solid #f59e0b; }
 .visita-item-nok  { border-left: 3px solid #ef4444; }

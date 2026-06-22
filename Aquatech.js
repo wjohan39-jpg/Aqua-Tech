@@ -1170,26 +1170,26 @@ function renderDashboardIndices() {
 
   if (!irapiResult && !lsiResult) { el.innerHTML = ''; return; }
 
-  const irapiColor = !irapiResult ? '#94a3b8'
-    : irapiResult.score <= 10 ? '#0cb86a'
-    : irapiResult.score <= 35 ? '#f59e0b'
-    : irapiResult.score <= 75 ? '#ea580c'
-    : '#ef4444';
+  const irapiCls = !irapiResult ? 'muted'
+    : irapiResult.score <= 10 ? 'ok'
+    : irapiResult.score <= 35 ? 'warn'
+    : irapiResult.score <= 75 ? 'mid'
+    : 'danger';
 
-  const lsiColor = !lsiResult ? '#94a3b8'
-    : lsiResult.status === 'Equilibrada' ? '#0cb86a'
-    : lsiResult.status === 'Incrustante' ? '#f59e0b'
-    : '#ef4444';
+  const lsiCls = !lsiResult ? 'muted'
+    : lsiResult.status === 'Equilibrada' ? 'ok'
+    : lsiResult.status === 'Incrustante' ? 'warn'
+    : 'danger';
 
   const irapiCard = irapiResult ? `
     <div class="dash-index-card">
       <div class="dash-index-top">
         <span class="dash-index-name">Riesgo sanitario (IRAPI)</span>
-        <span class="dash-index-badge" style="background:${irapiColor}20;color:${irapiColor}">${irapiResult.label}</span>
+        <span class="dash-index-badge idx-badge-${irapiCls}">${irapiResult.label}</span>
       </div>
-      <div class="dash-index-score" style="color:${irapiColor}">${irapiResult.score}</div>
+      <div class="dash-index-score c-${irapiCls}">${irapiResult.score}</div>
       <div class="dash-index-bar-bg">
-        <div class="dash-index-bar-fill" style="width:${Math.min(irapiResult.score,100)}%;background:${irapiColor}"></div>
+        <div class="dash-index-bar-fill idx-bar-${irapiCls}" data-pct="${Math.min(irapiResult.score,100)}"></div>
       </div>
       <div class="dash-index-hint">Escala 0–100</div>
     </div>` : '';
@@ -1198,16 +1198,19 @@ function renderDashboardIndices() {
     <div class="dash-index-card">
       <div class="dash-index-top">
         <span class="dash-index-name">Equilibrio del agua (ISL)</span>
-        <span class="dash-index-badge" style="background:${lsiColor}20;color:${lsiColor}">${lsiResult.status}</span>
+        <span class="dash-index-badge idx-badge-${lsiCls}">${lsiResult.status}</span>
       </div>
-      <div class="dash-index-score" style="color:${lsiColor}">${lsiResult.lsi.toFixed(2)}</div>
+      <div class="dash-index-score c-${lsiCls}">${lsiResult.lsi.toFixed(2)}</div>
       <div class="dash-index-bar-bg">
-        <div class="dash-index-bar-fill" style="width:${Math.min(Math.abs(lsiResult.lsi)/2*100,100)}%;background:${lsiColor}"></div>
+        <div class="dash-index-bar-fill idx-bar-${lsiCls}" data-pct="${Math.min(Math.abs(lsiResult.lsi)/2*100,100)}"></div>
       </div>
       <div class="dash-index-hint">Rango: −0.3 a +0.5</div>
     </div>` : '';
 
   el.innerHTML = `<div class="dash-indices-grid">${irapiCard}${lsiCard}</div>`;
+  el.querySelectorAll('.dash-index-bar-fill[data-pct]').forEach(bar => {
+    bar.style.width = bar.dataset.pct + '%';
+  });
 }
 
 function goToVencimientos(event) {
@@ -1400,7 +1403,7 @@ function renderDashMntSchedule() {
       <div class="mnt-sch-header">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
         <strong>Próximas revisiones de mantenimiento</strong>
-        <button class="btn btn-sm btn-outline" data-navigate="mantenimiento" style="margin-left:auto;font-size:0.78rem;padding:4px 10px">Ver todo</button>
+        <button class="btn btn-sm btn-outline dash-venc-btn" data-navigate="mantenimiento">Ver todo</button>
       </div>
       ${rows}
     </div>
@@ -1460,8 +1463,8 @@ function renderDashboardGauges() {
     const cumple    = value !== null && value >= p.normMin && value <= p.normMax;
     const warn      = cumple && p.warnBelow !== undefined && value < p.warnBelow;
     if (value !== null && !cumple) allCumple = false;
-    const color   = value === null ? '#94a3b8' : !cumple ? '#ef4444' : warn ? '#f59e0b' : '#0cb86a';
-    const display = value !== null ? value : '–';
+    const colorCls = value === null ? 'c-muted' : !cumple ? 'c-danger' : warn ? 'c-warn' : 'c-ok';
+    const display  = value !== null ? value : '–';
 
     let trendHtml = '';
     if (value !== null && prevValue !== null) {
@@ -1482,7 +1485,7 @@ function renderDashboardGauges() {
       <div class="gauge-canvas-wrap">
         <canvas id="${p.id}" width="140" height="80"></canvas>
       </div>
-      <div class="gauge-val" style="color:${color}">
+      <div class="gauge-val ${colorCls}">
         ${display}<span class="unit">${p.unit}</span>
       </div>
       <div class="gauge-name">
@@ -1887,7 +1890,7 @@ function _calcPhBlock(vol, p, r) {
   let body = '';
   if (!phOk) {
     const phNote = `<div class="calc-ph-alknote">
-      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       <span><strong>Dosis de inicio conservadora.</strong> La cantidad real depende de la alcalinidad total (AT) del agua: a mayor AT, mayor resistencia al cambio de pH. Verifica el resultado siempre tras 4–6 h de circulación antes de volver a dosar.</span>
     </div>`;
     if (p.phA < PMIN) {
@@ -1957,7 +1960,7 @@ function _calcCloroCombBlock(vol, p) {
           formula: `${vol.toFixed(1)} m³ × ${bpDelta.toFixed(1)} Δppm × 5.78 ml/m³` },
       ]);
     } else {
-      body = `<div class="calc-noaction" style="background:#fef3c7;border-color:#fde68a"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      body = `<div class="calc-noaction calc-noaction-warn"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         El cloro libre actual (${actualCloro} ppm) ya supera el objetivo de cloración de choque (${bpTarget} ppm). Aguardar disipación natural.</div>`;
     }
   }
@@ -2244,8 +2247,8 @@ function calcLSI() {
       if (hard < 200) tips.push(`Subir dureza cálcica — actual ${hard} ppm, mínimo 200 ppm`);
       if (alk < 20)   tips.push(`Subir alcalinidad — actual ${alk} ppm, mínimo 20 ppm`);
       if (!tips.length) tips.push('Combinación de factores genera índice negativo. Revisar pH y alcalinidad.');
-      diagEl.innerHTML = `<div class="lsi-diag-box" style="border-color:#ef444455;background:#ef444410">
-        <div class="lsi-diag-title" style="color:#ef4444">
+      diagEl.innerHTML = `<div class="lsi-diag-box lsi-box-danger">
+        <div class="lsi-diag-title lsi-title-danger">
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Agua corrosiva — puede dañar superficies, tuberías y equipos
         </div>
@@ -2260,8 +2263,8 @@ function calcLSI() {
       if (hard > 700) tips.push(`Dureza cálcica muy alta — actual ${hard} ppm, máximo 700 ppm. Dilución parcial.`);
       if (temp > 40)  tips.push(`Temperatura excede el máximo — actual ${temp} °C, máx. 40 °C`);
       if (!tips.length) tips.push('Revisar pH y alcalinidad para reducir el índice.');
-      diagEl.innerHTML = `<div class="lsi-diag-box" style="border-color:#f59e0b55;background:#f59e0b10">
-        <div class="lsi-diag-title" style="color:#f59e0b">
+      diagEl.innerHTML = `<div class="lsi-diag-box lsi-box-warn">
+        <div class="lsi-diag-title lsi-title-warn">
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           Agua incrustante — puede formar sarro en tuberías y equipos
         </div>
@@ -2281,8 +2284,8 @@ function calcLSI() {
       if (temp > 40)  { elevando.push(`Temperatura alta (${temp} °C) eleva el ISL`); corregir.push(`Temperatura excede el máximo de 40 °C`); }
 
       const efectos = [...elevando, ...reduciendo];
-      diagEl.innerHTML = `<div class="lsi-diag-box" style="border-color:#d9770655;background:#fffbeb">
-        <div class="lsi-diag-title" style="color:#d97706">
+      diagEl.innerHTML = `<div class="lsi-diag-box lsi-box-amber">
+        <div class="lsi-diag-title lsi-title-amber">
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           ISL equilibrado por compensación — parámetros individuales fuera de rango
         </div>
@@ -2302,8 +2305,8 @@ function calcLSI() {
     if (alk  < 10) tableWarnings.push(`Alcalinidad ${alk} ppm — por debajo del mínimo de la tabla (10 ppm). El coeficiente CA se clampea a 1.006; el ISL puede subestimar la corrosividad. Eleve la alcalinidad a mínimo 20 ppm.`);
 
     if (tableWarnings.length && diagEl) {
-      const wHtml = `<div class="lsi-diag-box" style="border-color:#ef444455;background:#ef444410;margin-bottom:8px">
-        <div class="lsi-diag-title" style="color:#ef4444">
+      const wHtml = `<div class="lsi-diag-box lsi-box-danger-mb">
+        <div class="lsi-diag-title lsi-title-danger">
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           ISL no confiable — valor fuera del rango de la tabla de coeficientes
         </div>
@@ -3398,7 +3401,7 @@ function renderLog() {
             <td data-label="ORP"${e.orp != null && !isNaN(e.orp) ? (e.orp <= 700 ? ' class="cell-ok"' : ' class="cell-out"') : ''}>${e.orp != null && !isNaN(e.orp) ? e.orp + ' mV' : '–'}</td>
             <td data-label="TDS"${cc('tds', e.tds)}>${e.tds != null && !isNaN(e.tds) ? e.tds + ' mg/L' : '–'}</td>
             <td data-label="Conduct."${cc('cond', e.cond)}>${e.cond != null && !isNaN(e.cond) ? e.cond + ' µS/cm' : '–'}</td>
-            <td data-label="ISL">${e.isl != null ? `<span style="font-weight:700;color:${e.islStatus==='Equilibrada'?'#0cb86a':e.islStatus==='Incrustante'?'#f59e0b':'#ef4444'}">${e.isl.toFixed(2)}</span>` : '–'}</td>
+            <td data-label="ISL">${e.isl != null ? `<span class="isl-cell ${e.islStatus==='Equilibrada'?'isl-cell-ok':e.islStatus==='Incrustante'?'isl-cell-warn':'isl-cell-danger'}">${e.isl.toFixed(2)}</span>` : '–'}</td>
             <td data-label="Art.16" title="${[e.caudal != null ? 'Caudal: ' + e.caudal + ' m³/h' : '', e.horasFun != null ? 'H. func.: ' + e.horasFun + 'h' : '', e.horasFilt != null ? 'H. filt.: ' + e.horasFilt + 'h' : '', e.aguaRep != null ? 'Agua: ' + e.aguaRep + ' m³' : '', e.retrolav != null ? 'Retrolavados: ' + e.retrolav : '', e.presion != null ? 'Presión: ' + e.presion + ' psi' : '', e.prodQuim ? 'Prod: ' + escapeHtml(e.prodQuim) : '', e.averias ? 'Averías: ' + escapeHtml(e.averias) : ''].filter(Boolean).join(' · ') || 'Sin datos Art.16'}">${(e.caudal != null || e.horasFun != null || e.horasFilt != null || e.aguaRep != null || e.retrolav != null || e.presion != null || e.prodQuim || e.averias) ? '✓' : '–'}</td>
             <td data-label="Bañistas">${(() => {
               const men = e.banistasMenores; const may = e.banistasMayores; const tot = e.banistas;
@@ -3512,7 +3515,7 @@ function viewLog(ts) {
     entry.aguaRep   != null ? `<li>Agua repuesta: <strong>${_safeNum(entry.aguaRep)} m³</strong></li>` : '',
     entry.retrolav  != null ? `<li>Retrolavados: <strong>${_safeNum(entry.retrolav)}</strong></li>` : '',
     entry.presion   != null ? `<li>Presión filtro: <strong>${_safeNum(entry.presion)} psi</strong></li>` : '',
-    entry.nivelAgua != null ? `<li>Nivel del agua: <strong>${_safeNum(entry.nivelAgua)} m</strong>${entry.nivelAgua > 0.6 ? ' <span style="color:#ef4444">⚠ supera 0.6 m</span>' : ''}</li>` : '',
+    entry.nivelAgua != null ? `<li>Nivel del agua: <strong>${_safeNum(entry.nivelAgua)} m</strong>${entry.nivelAgua > 0.6 ? ' <span class="c-danger">⚠ supera 0.6 m</span>' : ''}</li>` : '',
     entry.neutralizador != null ? `<li>Neutralizador (cloro alto): <strong>${_safeNum(entry.neutralizador)} kg/L</strong></li>` : '',
     entry.cloroDos      != null ? `<li>Cloro dosificado (cloro bajo): <strong>${_safeNum(entry.cloroDos)} kg/L</strong></li>` : '',
     (entry.horaAjuste && (entry.neutralizador != null || entry.cloroDos != null)) ? `<li>Hora de ajuste: <strong>${escapeHtml(entry.horaAjuste)}</strong></li>` : '',
@@ -3553,17 +3556,15 @@ function viewLog(ts) {
 
   let islHTML = '';
   if (entry.isl != null) {
-    const islColor  = entry.islStatus === 'Equilibrada' ? '#0cb86a' : entry.islStatus === 'Incrustante' ? '#f59e0b' : '#ef4444';
-    const islBg     = entry.islStatus === 'Equilibrada' ? '#f0fdf4' : entry.islStatus === 'Incrustante' ? '#fffbeb' : '#fef2f2';
-    const islBorder = entry.islStatus === 'Equilibrada' ? '#bbf7d0' : entry.islStatus === 'Incrustante' ? '#fde68a' : '#fecaca';
-    const durezaNote = entry.dureza == null ? ` <span style="font-size:11px;color:#94a3b8">(dureza estimada: ${_safeNum(entry.islDureza)} ppm)</span>` : '';
+    const islCls     = entry.islStatus === 'Equilibrada' ? 'ok' : entry.islStatus === 'Incrustante' ? 'warn' : 'danger';
+    const durezaNote = entry.dureza == null ? ` <span class="text-xs-muted">(dureza estimada: ${_safeNum(entry.islDureza)} ppm)</span>` : '';
     islHTML = `<div class="log-detail-section">
       <div class="log-detail-section-title">Índice de Saturación Langelier (ISL)</div>
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;border:1px solid ${islBorder};background:${islBg}">
-        <span style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:800;color:${islColor}">${_safeNum(entry.isl, 2)}</span>
+      <div class="isl-detail-box isl-box-${islCls}">
+        <span class="isl-score c-${islCls}">${_safeNum(entry.isl, 2)}</span>
         <div>
-          <div style="font-weight:700;color:${islColor}">${entry.islStatus}</div>
-          <div style="font-size:12px;color:#64748b">Rango óptimo: −0.3 a +0.5${durezaNote}</div>
+          <div class="isl-status c-${islCls}">${entry.islStatus}</div>
+          <div class="isl-range-note">Rango óptimo: −0.3 a +0.5${durezaNote}</div>
         </div>
       </div>
     </div>`;
@@ -3669,13 +3670,13 @@ function viewLog(ts) {
     ${instHTML}
     ${extraHTML}
     ${fotosHTML}
-    <div style="display:flex;gap:8px;margin-top:20px">
-      <button class="btn btn-outline btn-danger-outline js-log-detail-delete" style="flex:1">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    <div class="detail-actions">
+      <button class="btn btn-outline btn-danger-outline js-log-detail-delete btn-flex">
+        <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         Eliminar
       </button>
-      <button class="btn btn-outline js-log-detail-edit" style="flex:1">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <button class="btn btn-outline js-log-detail-edit btn-flex">
+        <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Editar
       </button>
     </div>
@@ -3819,7 +3820,7 @@ function renderAFRDoseBlock() {
     ? `<div class="afr-dose-row"><span>Volumen de la piscina</span><strong>${vol.toFixed(1)} m³</strong></div>`
     : `<div class="afr-dose-row afr-dose-row-input">
          <span>Volumen de piscina</span>
-         <div class="input-unit" style="max-width:120px">
+         <div class="input-unit calc-input-narrow">
            <input type="number" class="form-input" id="afrVolInput" min="1" max="9999" step="1"
                   placeholder="m³" />
            <span class="unit">m³</span>
@@ -3878,7 +3879,7 @@ function calcAFRDose(volArg, targetArg, cloroArg) {
   const naclo = Math.round(delta * vol * 5.78);
 
   const deltaRow = (lastCloro !== null)
-    ? `<div class="afr-dose-row" style="margin-bottom:4px"><span>Diferencia a agregar</span><strong>${delta.toFixed(1)} ppm</strong></div>` : '';
+    ? `<div class="afr-dose-row u-mb4"><span>Diferencia a agregar</span><strong>${delta.toFixed(1)} ppm</strong></div>` : '';
 
   resultEl.innerHTML = `
     ${deltaRow}
@@ -4001,11 +4002,11 @@ function renderAFRIncidents() {
     return `
     <div class="afr-incident-item ${incClass}" data-ts="${i.ts}" title="Ver detalle del incidente">
       <div class="afr-incident-info">
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" style="flex-shrink:0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2" class="u-shrink-0"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         <div>
           <strong>${escapeHtml(_afrFechaDisplay(i))} · ${escapeHtml(fmt12h(i.hora, ''))}</strong>
           <span class="afr-inc-badge ${badgeClass}">${badgeText}</span><br>
-          <span style="font-size:13px;color:var(--text-muted)">Operador: ${escapeHtml(i.operador) || '–'}</span>
+          <span class="detail-meta">Operador: ${escapeHtml(i.operador) || '–'}</span>
         </div>
       </div>
       <div class="afr-incident-actions">
@@ -4078,21 +4079,21 @@ function viewAFRIncident(ts) {
     : 'Extracción física del material · Sin cierre obligatorio · Verificar niveles de cloro residual.';
 
   document.getElementById('afrDetailTitle').innerHTML =
-    `Incidente AFR <span class="afr-inc-badge ${badgeClass}" style="font-size:11px">${badgeText}</span>`;
+    `Incidente AFR <span class="afr-inc-badge ${badgeClass}">${badgeText}</span>`;
   document.getElementById('afrDetailMeta').textContent =
     `${i.fecha || '–'} · ${fmt12h(i.hora, '')} · ${i.operador || 'Sin operador'}`;
 
   const hasCierre = i.fechaReapertura || i.cloroFinal != null || i.phFinal != null || i.turbFinal != null;
   const cierreSection = hasCierre
     ? `<div class="log-detail-section">
-        <div class="log-detail-section-title" style="color:#0cb86a">✓ Cierre del protocolo</div>
+        <div class="log-detail-section-title section-title-ok">✓ Cierre del protocolo</div>
         ${i.cloroFinal != null ? `<div class="log-detail-param"><span class="log-detail-param-label">Cloro libre post-tratamiento</span><span class="log-detail-param-val">${i.cloroFinal} ppm ${i.cloroFinal >= 2 && i.cloroFinal <= 4 ? '<span class="log-detail-badge ok">✓ En rango</span>' : '<span class="log-detail-badge out">✗ Fuera</span>'}</span></div>` : ''}
         ${i.phFinal    != null ? `<div class="log-detail-param"><span class="log-detail-param-label">pH post-tratamiento</span><span class="log-detail-param-val">${i.phFinal} ${i.phFinal >= 6.8 && i.phFinal <= 7.3 ? '<span class="log-detail-badge ok">✓ En rango</span>' : '<span class="log-detail-badge out">✗ Fuera</span>'}</span></div>` : ''}
         ${i.turbFinal  != null ? `<div class="log-detail-param"><span class="log-detail-param-label">Turbiedad post-tratamiento</span><span class="log-detail-param-val">${i.turbFinal} UNT ${i.turbFinal <= 0.5 ? '<span class="log-detail-badge ok">✓ ≤ 0.5</span>' : '<span class="log-detail-badge out">✗ > 0.5</span>'}</span></div>` : ''}
         ${i.fechaReapertura ? `<div class="log-detail-param"><span class="log-detail-param-label">Reapertura</span><span class="log-detail-param-val">${i.fechaReapertura}${i.horaReapertura ? ' · ' + fmt12h(i.horaReapertura) : ''}</span></div>` : ''}
       </div>`
     : `<div class="log-detail-section">
-        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e">
+        <div class="afr-pending-banner">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Cierre pendiente — registra cloro final, pH, turbiedad y fecha de reapertura al editar este incidente.
         </div>
@@ -4120,7 +4121,7 @@ function viewAFRIncident(ts) {
     </div>
     <div class="log-detail-section">
       <div class="log-detail-section-title">Protocolo aplicado (Res. 234/2026)</div>
-      <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin:0">${protDesc}</p>
+      <p class="afr-proto-desc">${protDesc}</p>
     </div>
     ${cierreSection}
     ${i.foto ? `<div class="log-detail-section">
@@ -4129,12 +4130,12 @@ function viewAFRIncident(ts) {
         <div class="log-detail-foto-item"><span class="log-detail-foto-label">Foto del incidente</span><img class="log-detail-foto-img" src="${_safePhotoSrc(i.foto)}" alt="Foto del incidente AFR" /></div>
       </div>
     </div>` : ''}
-    <div style="display:flex;gap:8px;margin-top:20px">
-      <button class="btn btn-outline js-afr-detail-edit" style="flex:1">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    <div class="detail-actions">
+      <button class="btn btn-outline js-afr-detail-edit btn-flex">
+        <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Editar
       </button>
-      <button class="btn btn-primary js-afr-detail-close" style="flex:1">Cerrar</button>
+      <button class="btn btn-primary js-afr-detail-close btn-flex">Cerrar</button>
     </div>
   `;
 
@@ -5170,7 +5171,7 @@ function _paintSalvavidasList() {
   const el = document.getElementById('pfSalvavidasList');
   if (!el) return;
   if (!_salvavidasArr.length) {
-    el.innerHTML = '<p class="perfil-hint" style="margin-bottom:10px">Sin salvavidas registrados.</p>';
+    el.innerHTML = '<p class="perfil-hint u-mb10">Sin salvavidas registrados.</p>';
     return;
   }
   el.innerHTML = _salvavidasArr.map((s, i) => `
@@ -5329,7 +5330,7 @@ function viewVisita(ts) {
   })() : '';
 
   body.innerHTML = `
-    <div class="apt-detail-banner ${cfg.cls}" style="margin-bottom:16px">
+    <div class="apt-detail-banner ${cfg.cls}">
       <span class="apt-det-icon">${cfg.icon}</span>
       <strong>Concepto ${cfg.label}</strong>
     </div>
@@ -5345,19 +5346,19 @@ function viewVisita(ts) {
     ${v.obs || v.plazo ? `
     <div class="log-detail-section">
       <div class="log-detail-section-title">Requerimientos</div>
-      ${v.obs ? `<div class="visita-obs" style="margin-bottom:10px">${escapeHtml(v.obs)}</div>` : ''}
+      ${v.obs ? `<div class="visita-obs u-mb10">${escapeHtml(v.obs)}</div>` : ''}
       ${plazoHTML}
     </div>` : ''}
 
-    <div style="display:flex;gap:8px;margin-top:20px">
-      <button class="btn btn-outline btn-danger-outline" style="flex:1"
+    <div class="detail-actions">
+      <button class="btn btn-outline btn-danger-outline btn-flex"
         onclick="deleteVisita(${v.ts}); document.getElementById('visitaDetailOverlay').classList.add('js-hidden')">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         Eliminar
       </button>
-      <button class="btn btn-outline" style="flex:1"
+      <button class="btn btn-outline btn-flex"
         onclick="editVisita(${v.ts}); document.getElementById('visitaDetailOverlay').classList.add('js-hidden')">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Editar
       </button>
     </div>
@@ -5389,7 +5390,7 @@ function renderVisitas() {
         })()
       : '';
     return `
-    <div class="visita-item ${v.concepto === 'desfavorable' ? 'visita-item-nok' : v.concepto === 'requerimientos' ? 'visita-item-warn' : ''}" data-ts="${v.ts}" style="cursor:pointer" title="Ver ficha de la visita">
+    <div class="visita-item ${v.concepto === 'desfavorable' ? 'visita-item-nok' : v.concepto === 'requerimientos' ? 'visita-item-warn' : ''}" data-ts="${v.ts}" title="Ver ficha de la visita">
       <div class="visita-item-top">
         <div class="visita-item-info">
           <span class="visita-fecha">${escapeHtml(v.fecha)}${v.hora ? ' · ' + escapeHtml(v.hora) : ''}</span>
@@ -5714,7 +5715,7 @@ function renderLabReg() {
       <div class="lab-reg-item-header">
         <strong>${escapeHtml(r.fecha || '–')}</strong>
         <span class="lab-reg-item-lab">${escapeHtml(r.laboratorio || '–')}${r.acreditacion ? ` · ${escapeHtml(r.acreditacion)}` : ''}</span>
-        ${pct !== null ? `<span class="lsi-pbadge ${pct === 0 ? 'lsi-pbadge-ok' : 'lsi-pbadge-out'}" style="margin-left:auto">Micro: ${pct}% NC</span>` : ''}
+        ${pct !== null ? `<span class="lsi-pbadge ${pct === 0 ? 'lsi-pbadge-ok' : 'lsi-pbadge-out'} u-ml-auto">Micro: ${pct}% NC</span>` : ''}
         <button class="btn-delete-lab" data-ts="${r.ts}" title="Eliminar registro" aria-label="Eliminar registro">
           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
@@ -6148,14 +6149,14 @@ function renderMnt() {
     return `
     <div class="mnt-item" data-ts="${e.ts}" title="Ver detalle del mantenimiento">
       <div class="mnt-item-info">
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
         <div>
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
+          <div class="mnt-hist-meta">
             <strong>${escapeHtml(e.fecha)}</strong>
             <span class="mnt-area-badge ${badgeClass}">${badgeText}</span>
             ${hasPhoto ? `<svg title="Foto adjunta" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>` : ''}
           </div>
-          <span style="font-size:13px;color:var(--text-muted)">Técnico: ${escapeHtml(e.tecnico)}${proxTxt}</span>
+          <span class="detail-meta">Técnico: ${escapeHtml(e.tecnico)}${proxTxt}</span>
         </div>
       </div>
       <div class="mnt-item-actions">
@@ -6201,23 +6202,23 @@ function openMntDetail(ts) {
   body.innerHTML = `
     <div class="log-detail-section">
       <div class="log-detail-section-title">Técnico</div>
-      <p style="margin:0;font-size:15px;font-weight:600;color:var(--text)">${escapeHtml(e.tecnico)}</p>
+      <p class="detail-h3">${escapeHtml(e.tecnico)}</p>
     </div>
     <div class="log-detail-section">
       <div class="log-detail-section-title">Descripción del trabajo</div>
-      <p style="margin:0;font-size:13px;line-height:1.65;color:var(--text)">${escapeHtml(e.descripcion)}</p>
+      <p class="detail-p">${escapeHtml(e.descripcion)}</p>
     </div>
     ${fotoHTML}
-    <div style="display:flex;gap:8px;margin-top:20px;flex-wrap:wrap">
-      <button class="btn btn-outline btn-danger-outline js-mnt-detail-delete" style="flex:1">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    <div class="detail-actions-wrap">
+      <button class="btn btn-outline btn-danger-outline js-mnt-detail-delete btn-flex">
+        <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         Eliminar
       </button>
-      <button class="btn btn-outline js-mnt-detail-edit" style="flex:1">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <button class="btn btn-outline js-mnt-detail-edit btn-flex">
+        <svg class="btn-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         Editar
       </button>
-      <button class="btn btn-primary js-mnt-detail-close" style="flex:1">Cerrar</button>
+      <button class="btn btn-primary js-mnt-detail-close btn-flex">Cerrar</button>
     </div>
   `;
 
