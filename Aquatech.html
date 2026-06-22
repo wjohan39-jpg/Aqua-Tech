@@ -153,6 +153,7 @@
                 <line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>
               </svg>
               <span class="nav-text">Documentos</span>
+              <span class="nav-venc-badge" id="navVencBadge" hidden></span>
             </button>
           </li>
 
@@ -330,6 +331,9 @@
 
           <!-- Alertas de vencimientos -->
           <div id="dashVencAlerts" class="js-hidden"></div>
+
+          <!-- Próximas revisiones de mantenimiento -->
+          <div id="dashMntSchedule" class="js-hidden"></div>
 
           <!-- Seguridad + Accesos rápidos -->
           <div class="bottom-grid">
@@ -673,6 +677,9 @@
                   <div id="microLabReminder" class="micro-lab-reminder" hidden>
                     <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="icon-top"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <span>Bitácora cargada. El dato <strong>microbiológico</strong> requiere laboratorio certificado — ingrésalo desde tu último análisis trimestral (Res. 234/2026).</span>
+                    <button type="button" class="btn btn-sm btn-primary" id="btnGoLabReg">
+                      Ingresar resultado de laboratorio ↓
+                    </button>
                   </div>
                 </div>
                 <div class="irapi-slider-group">
@@ -729,7 +736,7 @@
           </div>
 
           <!-- Registro de laboratorio trimestral -->
-          <div class="card lab-reg-card">
+          <div class="card lab-reg-card" id="labRegCard">
             <div class="card-header">
               <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0h10m-10 0a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2m-10 0V9m10 5V9M5 21l4-4m0 0 4 4m-4-4v4"/><path d="M3 7h18M3 17h18"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
               <h3>Registro de laboratorio trimestral</h3>
@@ -1558,6 +1565,10 @@
                 <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Generar PDF oficial
               </button>
+              <button class="btn btn-outline btn-full" id="btnExportCSV" disabled>
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                Exportar bitácora (.csv)
+              </button>
               <p class="irapi-bitacora-note" id="repPdfNote">Sin registros en la bitácora.</p>
             </div>
           </div>
@@ -1862,6 +1873,28 @@
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
               Guardar perfil del establecimiento
             </button>
+
+            <!-- Respaldo de datos -->
+            <div class="card" style="margin-top:16px">
+              <div class="card-header">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 9 12 4 7 9"/><line x1="12" y1="4" x2="12" y2="15"/></svg>
+                <h3>Respaldo de datos</h3>
+              </div>
+              <div class="card-body" style="display:flex;flex-direction:column;gap:10px;padding:14px 16px">
+                <p style="font-size:13px;color:var(--text-muted,#64748b);margin:0">Exporta todos los datos de la app (bitácora, AFR, mantenimiento, perfil) en un archivo JSON. Impórtalo en otro dispositivo o guárdalo como respaldo.</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button type="button" class="btn btn-outline" id="btnExportJSON" style="flex:1;min-width:140px">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 15 21 19 3 19 3 15"/><polyline points="17 9 12 4 7 9"/><line x1="12" y1="4" x2="12" y2="15"/></svg>
+                    Exportar respaldo (.json)
+                  </button>
+                  <label class="btn btn-outline" style="flex:1;min-width:140px;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 15 3 19 21 19 21 15"/><polyline points="7 9 12 14 17 9"/><line x1="12" y1="14" x2="12" y2="3"/></svg>
+                    Importar respaldo
+                    <input type="file" id="inputImportJSON" accept=".json" style="display:none" onchange="importarBackupJSON(this)" />
+                  </label>
+                </div>
+              </div>
+            </div>
 
           </div>
         </section>
@@ -2339,6 +2372,173 @@
 
     </div>
   </div>
+
+<!-- ONBOARDING — solo primer uso ─────────────────────── -->
+<div id="onboardingOverlay" class="ob-overlay" hidden role="dialog" aria-modal="true" aria-label="Bienvenido a Aqua Tech">
+
+  <!-- PASO 1: BIENVENIDA -->
+  <div class="ob-step" id="obStep1">
+    <div class="ob-hero">
+      <svg class="ob-wave-top" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,60 C360,120 1080,0 1440,60 L1440,0 L0,0 Z" fill="rgba(255,255,255,0.07)"/>
+        <path d="M0,80 C400,20 1000,140 1440,80 L1440,0 L0,0 Z" fill="rgba(255,255,255,0.04)"/>
+      </svg>
+
+      <div class="ob-single-logo">
+        <div class="ob-logo-pill">
+          <picture>
+            <source srcset="Multimedia/logo1.webp" type="image/webp">
+            <img src="Multimedia/logo1.png" alt="Aqua Tech" class="ob-logo-app" width="48" height="72">
+          </picture>
+        </div>
+      </div>
+
+      <div class="ob-hero-text">
+        <h1 class="ob-hero-title">Bienvenido a<br><span>Aqua Tech</span></h1>
+        <p class="ob-hero-sub">Sistema de gestión de calidad de agua<br>Resolución 234/2026 · Colombia</p>
+      </div>
+
+      <svg class="ob-wave-bottom" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#f1f5f9"/>
+        <path d="M0,55 C480,10 960,80 1440,35 L1440,80 L0,80 Z" fill="#f1f5f9" opacity="0.6"/>
+      </svg>
+    </div>
+
+    <div class="ob-body">
+      <div class="ob-dots" aria-label="Paso 1 de 3">
+        <span class="ob-dot ob-dot-on" aria-hidden="true"></span>
+        <span class="ob-dot" aria-hidden="true"></span>
+        <span class="ob-dot" aria-hidden="true"></span>
+      </div>
+      <button class="ob-btn-primary" id="obBtn1">
+        Comenzar
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="ob-btn-ghost" id="obSkip">Saltar y explorar</button>
+    </div>
+  </div>
+
+  <!-- PASO 2: LO QUE HACE LA APP -->
+  <div class="ob-step ob-hidden" id="obStep2">
+    <div class="ob-step-top">
+      <button class="ob-back" id="obBack2" aria-label="Atrás">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="ob-step-label">2 de 3</span>
+    </div>
+
+    <div class="ob-agent-row">
+      <div class="ob-jg-chip">JG</div>
+      <div class="ob-agent-bubble">
+        <p>Esto es lo que puedo hacer por ti:</p>
+      </div>
+    </div>
+
+    <div class="ob-features">
+      <div class="ob-feature">
+        <div class="ob-feature-ic ob-ic-blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="ob-feature-txt">
+          <strong>Bitácora oficial</strong>
+          <span>Registra parámetros con validación en tiempo real. Cumple Res. 234/2026.</span>
+        </div>
+      </div>
+      <div class="ob-feature">
+        <div class="ob-feature-ic ob-ic-teal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>
+        </div>
+        <div class="ob-feature-txt">
+          <strong>Calculadora química</strong>
+          <span>Dosis exactas de cloro, pH y más — con productos disponibles en Colombia.</span>
+        </div>
+      </div>
+      <div class="ob-feature">
+        <div class="ob-feature-ic ob-ic-green">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+        </div>
+        <div class="ob-feature-txt">
+          <strong>Reporte PDF oficial</strong>
+          <span>Genera documentación normativa con integridad verificada. Descarga en segundos.</span>
+        </div>
+      </div>
+      <div class="ob-feature">
+        <div class="ob-feature-ic ob-ic-amber">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="ob-feature-txt">
+          <strong>IRAPI 2026 + alertas</strong>
+          <span>Índice de riesgo sanitario y avisos de vencimiento de documentos legales.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ob-body">
+      <div class="ob-dots" aria-label="Paso 2 de 3">
+        <span class="ob-dot" aria-hidden="true"></span>
+        <span class="ob-dot ob-dot-on" aria-hidden="true"></span>
+        <span class="ob-dot" aria-hidden="true"></span>
+      </div>
+      <button class="ob-btn-primary" id="obBtn2">Siguiente
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- PASO 3: PRIMER PASO RECOMENDADO -->
+  <div class="ob-step ob-hidden" id="obStep3">
+    <div class="ob-step-top">
+      <button class="ob-back" id="obBack3" aria-label="Atrás">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="ob-step-label">3 de 3</span>
+    </div>
+
+    <div class="ob-agent-row">
+      <div class="ob-jg-chip">JG</div>
+      <div class="ob-agent-bubble">
+        <p>Un paso antes de comenzar:</p>
+      </div>
+    </div>
+
+    <div class="ob-cta-card">
+      <div class="ob-cta-icon-wrap">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      <div class="ob-cta-text">
+        <h3>Registra la medición de hoy</h3>
+        <p>La bitácora es el núcleo de Aqua Tech. Registra los parámetros del agua y la app valida automáticamente si cumples la Resolución 234/2026.</p>
+        <ul class="ob-cta-checks">
+          <li>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Validación en tiempo real
+          </li>
+          <li>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Alerta si algo sale de rango
+          </li>
+          <li>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Genera reporte PDF con un toque
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="ob-body">
+      <div class="ob-dots" aria-label="Paso 3 de 3">
+        <span class="ob-dot" aria-hidden="true"></span>
+        <span class="ob-dot" aria-hidden="true"></span>
+        <span class="ob-dot ob-dot-on" aria-hidden="true"></span>
+      </div>
+      <button class="ob-btn-primary" id="obGoPerfil">Comenzar
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <button class="ob-btn-ghost" id="obLater">Ver el dashboard</button>
+    </div>
+  </div>
+
+</div>
 
 <!-- PIN LOCK SCREEN -->
 <div id="pinOverlay" class="pin-overlay" role="dialog" aria-modal="true" aria-label="Acceso a Brazada Aqua Tech" hidden>

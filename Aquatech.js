@@ -411,13 +411,13 @@ const APP = {
 
 // ── NAVEGACIÓN ───────────────────────────────────────────
 function sectionInit(section) {
-  if (section === 'dashboard')  { renderDashboardIndices(); renderDashboardVencimientos(); renderDashboardGauges(); updateDashReportBtn(); _renderDashEstablishment(); }
+  if (section === 'dashboard')  { renderDashboardIndices(); renderDashboardVencimientos(); renderDashMntSchedule(); renderDashboardGauges(); updateDashReportBtn(); _renderDashEstablishment(); updateNavVencBadge(); }
   if (section === 'reporte')    { _prefillReporteFromPerfil(); updateReportSummary(); updateReportBtn(); }
   if (section === 'calculadora'){ calcVolume(); calcDosificacion(); }
   if (section === 'lsi')        { _lsiFromBitacora = false; calcLSI(); }
   if (section === 'irapi')      { calcIRAPI(); updateIRAPIBitacoraBtn(); renderLabReg(); }
   if (section === 'perfil')     { renderPerfil(); }
-  if (section === 'documentos') { renderDocs(); updateVencimientos(); renderBotiquinCard(); renderVisitas(); clearVisitaForm(); }
+  if (section === 'documentos') { renderDocs(); updateVencimientos(); renderBotiquinCard(); renderVisitas(); clearVisitaForm(); updateNavVencBadge(); }
   if (section === 'bitacora')      { renderLog(); updateOperadorDatalist(); updateSalvavidasDatalist(); }
   if (section === 'protocolo')     { renderAFR(); renderAFRIncidents(); }
   if (section === 'mantenimiento') { renderMnt(); renderSaneamiento(); checkMntForm(); }
@@ -576,6 +576,7 @@ document.addEventListener('click', e => {
   if (t.closest('.calc-to-bitacora'))    { navigateCalcToBitacora(e); return; }
   if (t.closest('#btnCalcLSIBitacora'))  { calcLSIFromBitacora();     return; }
   if (t.closest('#btnCalcIRAPIBitacora')) { calcIRAPIFromBitacora();  return; }
+  if (t.closest('#btnGoLabReg'))          { document.getElementById('labRegCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
   if (t.closest('#btnSaveLab'))           { saveLabRecord();          return; }
   if (t.closest('.btn-delete-lab'))       { deleteLabRecord(Number(t.closest('[data-ts]').dataset.ts)); return; }
   if (t.closest('#btnSavePerfil'))        { savePerfil();             return; }
@@ -643,7 +644,9 @@ document.addEventListener('click', e => {
   if (t.closest('#btnClearRepRange'))   { clearRepRange();  return; }
   if (t.closest('#btnRepMesActual'))    { setRepMes(0);    return; }
   if (t.closest('#btnRepMesAnterior'))  { setRepMes(-1);   return; }
-  if (t.closest('#btnGeneratePDF'))     { generatePDF();   return; }
+  if (t.closest('#btnGeneratePDF'))     { generatePDF();       return; }
+  if (t.closest('#btnExportCSV'))       { exportarCSVBitacora(); return; }
+  if (t.closest('#btnExportJSON'))      { exportarBackupJSON();  return; }
 
   const profileBtn = t.closest('[data-profile]');
   if (profileBtn) { setDocsProfile(profileBtn.dataset.profile); return; }
@@ -1323,6 +1326,86 @@ function renderDashboardVencimientos() {
       ).join('')}
     </div>
   `;
+}
+
+function updateNavVencBadge() {
+  const badge = document.getElementById('navVencBadge');
+  if (!badge) return;
+
+  const profile = getDocsProfile();
+  let count = 0;
+
+  if (profile === 'publico') {
+    const dates = JSON.parse(localStorage.getItem('aqua_docs_dates') || '{}');
+    const val = dates['fechaSalvavidas'];
+    if (val) {
+      const days = Math.ceil((new Date(val + 'T00:00:00') - new Date()) / 86400000);
+      if (days <= 30) count++;
+    }
+    const ultimaVisita = _visitasRaw()[0];
+    if (ultimaVisita) {
+      if (ultimaVisita.concepto === 'desfavorable' || ultimaVisita.concepto === 'requerimientos') count++;
+      if (ultimaVisita.plazo) {
+        const plazoD = Math.ceil((new Date(ultimaVisita.plazo + 'T00:00:00') - new Date()) / 86400000);
+        if (plazoD <= 7) count++;
+      }
+    }
+    const mntRaw = _mntLogRaw();
+    SANEAMIENTO_PROGRAMS.forEach(prog => {
+      const last = mntRaw.find(e => e.area === prog.id);
+      if (!last) return;
+      const ds = Math.floor((Date.now() - new Date(last.fecha + 'T00:00:00')) / 86400000);
+      if (ds > prog.dias - Math.ceil(prog.dias * 0.3)) count++;
+    });
+    const botData = getBotiquin();
+    if (botData.fechaVerificacion) {
+      const botDays = Math.floor((Date.now() - new Date(botData.fechaVerificacion + 'T00:00:00')) / 86400000);
+      if (botDays > 20) count++;
+    }
+    const labRecords = getLabRecords();
+    const labDaysSince = _labDaysSince(labRecords[0] || null);
+    if (labDaysSince !== null && labDaysSince > 75) count++;
+  }
+
+  if (count === 0) { badge.hidden = true; return; }
+  badge.hidden = false;
+  badge.textContent = count;
+}
+
+function renderDashMntSchedule() {
+  const el = document.getElementById('dashMntSchedule');
+  if (!el) return;
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const pending = _mntLogRaw()
+    .filter(e => e.proximo)
+    .map(e => {
+      const d = new Date(e.proximo + 'T00:00:00');
+      return { label: (MNT_AREA_LABELS[e.area] || { label: e.area }).label, date: d,
+               days: Math.ceil((d - today) / 86400000) };
+    })
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 4);
+
+  if (!pending.length) { el.classList.add('js-hidden'); return; }
+
+  const rows = pending.map(({ label, days }) => {
+    const cls  = days < 0 ? 'mnt-sch-danger' : days <= 7 ? 'mnt-sch-warning' : 'mnt-sch-ok';
+    const msg  = days < 0 ? `Vencida hace ${Math.abs(days)}d` : days === 0 ? 'Hoy' : `En ${days} día${days === 1 ? '' : 's'}`;
+    return `<div class="mnt-sch-item ${cls}"><span class="mnt-sch-label">${label}</span><span class="mnt-sch-badge">${msg}</span></div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="mnt-sch-wrap">
+      <div class="mnt-sch-header">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        <strong>Próximas revisiones de mantenimiento</strong>
+        <button class="btn btn-sm btn-outline" data-navigate="mantenimiento" style="margin-left:auto;font-size:0.78rem;padding:4px 10px">Ver todo</button>
+      </div>
+      ${rows}
+    </div>
+  `;
+  el.classList.remove('js-hidden');
 }
 
 function renderDashboardGauges() {
@@ -2870,7 +2953,7 @@ function clearLogForm() {
   const now  = new Date();
   document.getElementById('logDate').value      = localDateStr(now);
   document.getElementById('logTime').value      = now.toTimeString().slice(0, 5);
-  document.getElementById('logOperador').value     = '';
+  document.getElementById('logOperador').value     = getPerfil().opNombre || '';
   document.getElementById('logSalvavidas').value   = '';
   document.getElementById('logSalvavidasNia').value= '';
   document.getElementById('logCloro').value        = '';
@@ -4259,6 +4342,8 @@ function updateReportBtn() {
   const hasta  = document.getElementById('repHasta')?.value  || '';
   const hasFilter = desde || hasta;
   btn.disabled = !ready;
+  const csvBtn = document.getElementById('btnExportCSV');
+  if (csvBtn) csvBtn.disabled = !ready;
   if (note) {
     if (!ready) {
       note.textContent = hasFilter
@@ -4353,11 +4438,12 @@ async function _doPDF() {
       const keys = integrity.tampered.map(c => c.key).join(', ');
       showToast(`Advertencia de integridad: los datos de ${keys} pueden haber sido modificados externamente. El PDF incluirá una advertencia.`, 'warning', 7000);
     }
-    const [logoB64, logHash] = await Promise.all([
+    const [logoAquaB64, logoEstabB64, logHash] = await Promise.all([
       _loadImgB64('Multimedia/logo1.png').catch(() => null),
+      _loadImgB64('Multimedia/LogoBrazada.webp').catch(() => null),
       _sha256Hex(localStorage.getItem('aqua_bitacora') || '[]'),
     ]);
-    await __buildPDF(logoB64, integrity, logHash);
+    await __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash);
   } catch (err) {
     showToast('Error al generar el PDF. Intenta de nuevo.', 'error');
   } finally {
@@ -4365,7 +4451,7 @@ async function _doPDF() {
   }
 }
 
-async function __buildPDF(logoB64, integrity, logHash) {
+async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 
@@ -4386,7 +4472,7 @@ async function __buildPDF(logoB64, integrity, logHash) {
 
   const genTs    = new Date();
   const genLocal = genTs.toLocaleString('es-CO', { dateStyle: 'long', timeStyle: 'medium' });
-  const hashShort = logHash ? logHash.slice(0, 16) + '…' + logHash.slice(-8) : '–';
+  const hashShort = logHash ? logHash.slice(0, 16) + '...' + logHash.slice(-8) : '-';
 
   // ── Metadata del documento ────────────────────────────────
   doc.setProperties({
@@ -4402,21 +4488,51 @@ async function __buildPDF(logoB64, integrity, logHash) {
   doc.setFillColor(255, 255, 255);
   doc.rect(0, 0, 210, 28, 'F');
 
-  // Logo
-  if (logoB64) {
-    doc.addImage(logoB64, 'PNG', 10, 2, 15, 21);
-  }
+  if (logoEstabB64) {
+    // ── Layout dual: logo establecimiento izquierda · Aquatech derecha ──
+    // Logo del establecimiento (el nombre ya va dentro del logo)
+    doc.addImage(logoEstabB64, 'WEBP', 8, 2, 22, 22);
 
-  // Nombre y subtítulo
-  doc.setTextColor(30, 41, 59);
-  doc.setFontSize(15);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Brazada Aqua Tech', 29, 11);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(100, 116, 139);
-  doc.text('Sistema de Gestión de Piscinas · Resolución 234 / 2026 · Colombia', 29, 18);
-  doc.text(`Generado: ${genLocal}`, 196, 11, { align: 'right' });
+    // Solo ubicación debajo del logo (el nombre está en la imagen)
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(ubicacion.length > 45 ? ubicacion.slice(0, 43) + '…' : ubicacion, 33, 18);
+
+    // Separador vertical
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.3);
+    doc.line(128, 4, 128, 24);
+
+    // Logo Aquatech (derecha, más pequeño — rol de sistema soporte)
+    if (logoAquaB64) {
+      doc.addImage(logoAquaB64, 'PNG', 132, 4, 13, 18);
+    }
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Aqua Tech', logoAquaB64 ? 148 : 132, 11);
+    doc.setFontSize(6.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Sistema de Gestión · Res. 234/2026', logoAquaB64 ? 148 : 132, 17);
+    doc.text(`Generado: ${genLocal}`, 198, 23, { align: 'right' });
+
+  } else {
+    // ── Layout original: solo Aquatech ──
+    if (logoAquaB64) {
+      doc.addImage(logoAquaB64, 'PNG', 10, 2, 15, 21);
+    }
+    doc.setTextColor(30, 41, 59);
+    doc.setFontSize(15);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Brazada Aqua Tech', 29, 11);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text('Sistema de Gestión de Piscinas · Resolución 234 / 2026 · Colombia', 29, 18);
+    doc.text(`Generado: ${genLocal}`, 196, 11, { align: 'right' });
+  }
 
   // Banda oscura
   doc.setFillColor(30, 41, 59);
@@ -4477,19 +4593,19 @@ async function __buildPDF(logoB64, integrity, logHash) {
   const paramRows = [
     { label: 'Cloro libre residual', unit: 'ppm', field: 'cloro',     dec: 1, ok: e => e.cloro >= 2.0 && e.cloro <= 4.0,                                                    range: '2.0 – 4.0 ppm' },
     { label: 'Cloro combinado',      unit: 'ppm', field: 'clorocomb', dec: 2, ok: e => { const v = +e.clorocomb; return isNaN(v) ? true : v >= 0 && v <= 0.3; },             range: '0 – 0.3 ppm'   },
-    { label: 'Bromo total (Br₂)',   unit: 'ppm', field: 'bromo',     dec: 1, ok: e => e.bromo == null || (e.bromo >= 4.0 && e.bromo <= 6.0), range: '4.0 – 6.0 ppm'  },
+    { label: 'Bromo total (Br2)',    unit: 'ppm', field: 'bromo',     dec: 1, ok: e => e.bromo == null || (e.bromo >= 4.0 && e.bromo <= 6.0), range: '4.0 - 6.0 ppm'  },
     { label: 'pH',                   unit: '',    field: 'ph',        dec: 2, ok: e => e.ph   >= 6.8 && e.ph   <= 7.3,                                                    range: '6.8 – 7.3'     },
     { label: 'Alcalinidad total',     unit: 'ppm', field: 'alc',    dec: 0, ok: e => e.alc    >= 20  && e.alc    <= 150, range: '20 – 150 ppm'    },
     { label: 'Dureza cálcica',        unit: 'ppm', field: 'dureza', dec: 0, ok: e => e.dureza == null || (e.dureza >= 200 && e.dureza <= 700), range: '200 – 700 ppm'  },
     { label: 'Estabilizador (CYA)',    unit: 'ppm', field: 'cya',    dec: 0, ok: e => e.cya == null || (e.cya >= 0 && e.cya <= 75), range: '0 – 75 ppm' },
     { label: 'Transparencia / Turbiedad', unit: 'UNT', field: 'turb', dec: 2, ok: e => e.turb >= 0   && e.turb <= 0.5,  range: '0 – 0.5 UNT'    },
-    { label: 'Temperatura del agua',  unit: '°C',   field: 'temp',     dec: 1, ok: e => { const v = +e.temp;     return isNaN(v) ? true : v <= 40; },          range: '≤ 40 °C'          },
-    { label: 'Temperatura del aire',  unit: '°C',   field: 'tempAire', dec: 1, ok: () => true,                                                              range: 'Informativo'      },
+    { label: 'Temperatura del agua',  unit: 'C',    field: 'temp',     dec: 1, ok: e => { const v = +e.temp;     return isNaN(v) ? true : v <= 40; },          range: 'max. 40 C'        },
+    { label: 'Temperatura del aire',  unit: 'C',    field: 'tempAire', dec: 1, ok: () => true,                                                              range: 'Informativo'      },
     { label: 'Humedad relativa',      unit: '%',    field: 'humedad',  dec: 0, ok: e => { const v = +e.humedad; return isNaN(v) ? true : v >= 40 && v <= 60; }, range: '40 – 60 %'   },
     { label: 'Potencial redox (ORP)',  unit: 'mV',   field: 'orp',     dec: 0, ok: e => { const v = +e.orp;     return isNaN(v) ? true : v >= 0 && v <= 700; }, range: '0 – 700 mV'  },
     { label: 'Sólidos disueltos (TDS)',unit: 'mg/L', field: 'tds',  dec: 0, ok: e => e.tds  == null || (e.tds  >= 1000 && e.tds  <= 1200), range: '1000 – 1200 mg/L'   },
-    { label: 'Conductividad eléctrica',unit: 'µS/cm',field: 'cond', dec: 0, ok: e => e.cond == null || (e.cond >= 2000 && e.cond <= 2400), range: '2000 – 2400 µS/cm'  },
-    { label: 'Nivel del agua (bajo borda)',  unit: 'm', field: 'nivelAgua', dec: 2, ok: e => e.nivelAgua == null || e.nivelAgua <= 0.6, range: '≤ 0.6 m' },
+    { label: 'Conductividad electrica', unit: 'uS/cm',field: 'cond', dec: 0, ok: e => e.cond == null || (e.cond >= 2000 && e.cond <= 2400), range: '2000 - 2400 uS/cm'  },
+    { label: 'Nivel del agua (bajo borda)', unit: 'm',  field: 'nivelAgua', dec: 2, ok: e => e.nivelAgua == null || e.nivelAgua <= 0.6, range: 'max. 0.6 m'         },
     { label: 'Color del agua (visual)',     categorical: true, range: 'Aceptable',    ok: e => !e.fisColor     || e.fisColor     === 'aceptable' },
     { label: 'Materias flotantes',          categorical: true, range: 'Ausentes',     ok: e => !e.fisFlotantes || e.fisFlotantes === 'ausentes'  },
     { label: 'Olor del agua (olfativo)',    categorical: true, range: 'Aceptable',    ok: e => !e.fisOlor      || e.fisOlor      === 'aceptable' },
@@ -4651,9 +4767,58 @@ async function __buildPDF(logoB64, integrity, logHash) {
     });
   }
 
+  // ── Analisis de laboratorio (Art. 11) ────────────────────
+  {
+    const labRecs = getLabRecords();
+    const pageH   = doc.internal.pageSize.getHeight();
+    let lY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 16 : 20;
+    if (lY + 44 > pageH - 15) { doc.addPage(); lY = 20; }
+
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 41, 59);
+    doc.text('Analisis de laboratorio — Art. 11 Res. 234/2026', 14, lY);
+
+    if (!labRecs.length) {
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
+      doc.text('Sin registros de laboratorio en el periodo.', 14, lY + 8);
+    } else {
+      const RESULT = v => v === 'ausente' ? 'Ausente' : v === 'presente' ? 'Presente' : '-';
+      const labRows = labRecs.slice(0, 6).map(r => [
+        r.fecha       || '-',
+        r.laboratorio || '-',
+        r.acreditacion || '-',
+        RESULT(r.coliformes),
+        RESULT(r.ecoli),
+        RESULT(r.pseudomonas),
+        RESULT(r.staph),
+        r.cya != null ? r.cya + ' mg/L' : '-',
+      ]);
+      doc.autoTable({
+        startY: lY + 5,
+        head: [['Fecha muestra', 'Laboratorio', 'Acreditacion', 'Coliformes', 'E. coli', 'Pseudomonas', 'Staph.', 'CYA']],
+        body: labRows,
+        theme: 'striped',
+        headStyles: { fillColor: [2, 62, 138], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+        styles: { fontSize: 7, cellPadding: 1.5 },
+        columnStyles: {
+          0: { cellWidth: 22 }, 1: { cellWidth: 36 }, 2: { cellWidth: 22 },
+          3: { cellWidth: 20 }, 4: { cellWidth: 16 }, 5: { cellWidth: 22 },
+          6: { cellWidth: 16 }, 7: { cellWidth: 18 },
+        },
+        didParseCell: data => {
+          if (data.section === 'body') {
+            const v = data.cell.raw;
+            if (v === 'Presente') { data.cell.styles.textColor = [185, 28, 28]; data.cell.styles.fontStyle = 'bold'; }
+            if (v === 'Ausente')  { data.cell.styles.textColor = [22, 101, 52]; }
+          }
+        },
+        margin: { left: 14, right: 14 },
+      });
+    }
+  }
+
   // ── Incidentes AFR ───────────────────────────────────────
   const afrPageH = doc.internal.pageSize.getHeight();
-  let afrY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 12 : 20;
+  let afrY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 16 : 20;
   if (afrY + 40 > afrPageH - 15) { doc.addPage(); afrY = 20; }
 
   doc.setFontSize(11);
@@ -4661,14 +4826,17 @@ async function __buildPDF(logoB64, integrity, logHash) {
   doc.setTextColor(30, 41, 59);
   doc.text('Protocolo AFR — Incidentes del periodo', 14, afrY);
 
+  let afterAfrY = afrY + 14;
+
   if (incidents.length === 0) {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100);
     doc.text('Sin incidentes AFR registrados en este periodo.', 14, afrY + 8);
+    afterAfrY = afrY + 18;
   } else {
     doc.autoTable({
-      startY: afrY + 4,
+      startY: afrY + 6,
       head: [['Fecha', 'Hora', 'Tipo / Severidad', 'Operador', 'Cl. final', 'pH final', 'Turb. final', 'Reapertura']],
       body: incidents.map(i => {
         const reapertura = i.fechaReapertura
@@ -4713,42 +4881,43 @@ async function __buildPDF(logoB64, integrity, logHash) {
   // ── Sección de verificación de integridad ────────────────
   {
     const pageH = doc.internal.pageSize.getHeight();
-    let vY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 14 : 20;
+    const afrFinalY = incidents.length > 0 && doc.lastAutoTable ? doc.lastAutoTable.finalY : afterAfrY;
+    let vY = afrFinalY + 16;
     if (vY + 38 > pageH - 20) { doc.addPage(); vY = 20; }
 
-    const integrityOk  = integrity?.clean !== false;
-    const headerColor  = integrityOk ? [12, 184, 106] : [220, 38, 38];
-    const headerLabel  = integrityOk
-      ? 'Verificación de integridad — OK'
-      : '⚠ Advertencia de integridad — datos posiblemente modificados';
+    const integrityOk = integrity?.clean !== false;
+    const hmacLabel   = integrityOk
+      ? 'Valida — sin modificaciones externas detectadas'
+      : `Falla detectada en: ${integrity.tampered.map(c => c.key).join(', ')}`;
 
-    doc.setFontSize(10);
+    // Título neutro de sección
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...headerColor);
-    doc.text(headerLabel, 14, vY);
+    doc.setTextColor(30, 41, 59);
+    doc.text('Verificacion del documento', 14, vY);
 
     doc.autoTable({
-      startY: vY + 4,
+      startY: vY + 5,
       body: [
-        ['Fecha y hora de generación', genLocal],
-        ['SHA-256 bitácora (primeros/últimos bytes)', hashShort],
-        ['Origen de los datos', 'Brazada Aqua Tech — almacenamiento local del dispositivo (localStorage)'],
-        ['Verificación HMAC', integrityOk ? 'Firmas válidas — no se detectaron modificaciones externas' : `Falla de integridad detectada en: ${integrity.tampered.map(c => c.key).join(', ')}`],
-        ['Advertencia legal', 'Este documento fue generado por una aplicación cliente. No constituye un registro oficial certificado por autoridad sanitaria. La integridad de los datos depende del dispositivo y del navegador del operador.'],
+        ['Estado del documento',          hmacLabel],
+        ['Fecha de generacion',           genLocal],
+        ['Codigo de verificacion',        hashShort],
+        ['Origen de los datos',           'Aqua Tech - almacenamiento local del dispositivo'],
+        ['Advertencia legal',             'Este documento fue generado por una aplicacion cliente. No constituye un registro oficial certificado por autoridad sanitaria. La integridad de los datos depende del dispositivo y del navegador del operador.'],
       ],
       theme: 'plain',
-      styles:      { fontSize: 8, cellPadding: 2 },
+      styles:      { fontSize: 8, cellPadding: 2.5 },
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 60, textColor: [100, 116, 139] },
         1: { cellWidth: 126 },
       },
       didParseCell: (data) => {
-        if (data.section === 'body' && data.row.index === 3) {
+        if (data.section === 'body' && data.row.index === 0) {
           data.cell.styles.textColor = integrityOk ? [22, 101, 52] : [185, 28, 28];
           data.cell.styles.fontStyle = 'bold';
         }
         if (data.section === 'body' && data.row.index === 4) {
-          data.cell.styles.textColor = [120, 120, 120];
+          data.cell.styles.textColor = [150, 150, 150];
           data.cell.styles.fontStyle = 'italic';
         }
       },
@@ -5614,6 +5783,7 @@ function initDateTimeFields() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  initOnboarding();              // Muestra pantalla de bienvenida solo en primer uso
   _pinInit();                    // Muestra overlay de PIN antes que cualquier otra cosa
   await _verifyIntegrity();      // Espera la verificación de integridad antes de renderizar datos
 
@@ -5654,10 +5824,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }, 0);
 
+  const _isMobile = () => navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-      // No bloquear si la cámara/galería del OS está abierta
-      if (_PIN.exists() && _PIN.unlocked && !_photoPickerActive) lockApp();
+      // Bloqueo automatico solo en movil — en PC es molesto al cambiar de pestana
+      if (_isMobile() && _PIN.exists() && _PIN.unlocked && !_photoPickerActive) lockApp();
     } else {
       // App vuelve al frente: limpiar bandera (cubre el caso de cancelar sin foto)
       if (_photoPickerActive) setTimeout(() => { _photoPickerActive = false; }, 300);
@@ -6027,6 +6199,160 @@ function dismissPreloader(section) {
     el.remove();
     if (section && section !== 'dashboard') navigate(section);
   }, 420);
+}
+
+// ── ONBOARDING ────────────────────────────────────────────────
+function initOnboarding() {
+  if (localStorage.getItem('aqua_onboarded')) return;
+
+  // Esperar a que el PIN se cierre (usuario autenticado) antes de mostrar el tutorial
+  const pinOverlay = document.getElementById('pinOverlay');
+  if (!pinOverlay) return;
+
+  const observer = new MutationObserver(() => {
+    if (pinOverlay.hidden) {
+      observer.disconnect();
+      _showOnboarding();
+    }
+  });
+  observer.observe(pinOverlay, { attributes: true, attributeFilter: ['hidden'] });
+}
+
+function _showOnboarding() {
+  if (localStorage.getItem('aqua_onboarded')) return;
+
+  const overlay = document.getElementById('onboardingOverlay');
+  if (!overlay) return;
+
+  overlay.removeAttribute('hidden');
+
+  // Evitar duplicar listeners si se llama más de una vez
+  const fresh = overlay.cloneNode(true);
+  overlay.replaceWith(fresh);
+
+  function _obGo(from, to) {
+    const fromEl = fresh.querySelector('#obStep' + from);
+    const toEl   = fresh.querySelector('#obStep' + to);
+    if (!fromEl || !toEl) return;
+    fromEl.classList.add('ob-exit');
+    setTimeout(() => {
+      fromEl.classList.add('ob-hidden');
+      fromEl.classList.remove('ob-exit');
+      toEl.classList.remove('ob-hidden');
+    }, 300);
+  }
+
+  function _obDismiss(section) {
+    localStorage.setItem('aqua_onboarded', '1');
+    fresh.style.transition = 'opacity 0.4s ease';
+    fresh.style.opacity = '0';
+    setTimeout(() => {
+      fresh.setAttribute('hidden', '');
+      fresh.style.opacity = '';
+      if (section && section !== 'dashboard') navigate(section);
+    }, 400);
+  }
+
+  fresh.addEventListener('click', e => {
+    const t = e.target;
+    if (t.closest('#obBtn1'))    { _obGo(1, 2);            return; }
+    if (t.closest('#obSkip'))    { _obDismiss('dashboard'); return; }
+    if (t.closest('#obBack2'))   { _obGo(2, 1);            return; }
+    if (t.closest('#obBtn2'))    { _obGo(2, 3);            return; }
+    if (t.closest('#obBack3'))   { _obGo(3, 2);            return; }
+    if (t.closest('#obGoPerfil')){ _obDismiss('bitacora');  return; }
+    if (t.closest('#obLater'))   { _obDismiss('dashboard'); return; }
+  });
+}
+
+// ── EXPORTAR / IMPORTAR RESPALDO JSON ────────────────────────
+function exportarBackupJSON() {
+  const KEYS = ['aqua_bitacora', 'aqua_afr', 'aqua_mantenimiento', 'aqua_lab', 'aqua_perfil', 'aqua_config', 'aqua_visitas', 'aqua_reporte'];
+  const backup = {
+    _meta: { app: 'Aquatech', version: '2.0', fecha: new Date().toISOString(), registros: getLog().length },
+    data: {}
+  };
+  KEYS.forEach(k => {
+    try { const v = localStorage.getItem(k); if (v) backup.data[k] = JSON.parse(v); } catch {}
+  });
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `Aquatech_backup_${localDateStr(new Date())}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Respaldo exportado: ${backup._meta.registros} registros de bitácora.`, 'ok', 5000);
+}
+
+function importarBackupJSON(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = e => {
+    let backup;
+    try { backup = JSON.parse(e.target.result); } catch { showToast('Archivo inválido — no es un JSON válido.', 'error'); return; }
+    if (!backup._meta || !backup.data) { showToast('Formato de respaldo no reconocido.', 'error'); return; }
+    const fecha = backup._meta.fecha ? backup._meta.fecha.slice(0, 10) : '?';
+    const regs  = backup._meta.registros ?? '?';
+    showConfirm(
+      `¿Restaurar respaldo del ${fecha}?\n\nContiene ${regs} registros de bitácora. Los datos actuales serán reemplazados. Esta acción no se puede deshacer.`,
+      async () => {
+        for (const [k, v] of Object.entries(backup.data)) {
+          await _secSave(k, JSON.stringify(v));
+        }
+        showToast('Respaldo restaurado correctamente. Recarga la app para ver todos los cambios.', 'ok', 7000);
+      }
+    );
+  };
+  reader.readAsText(file);
+}
+
+// ── EXPORTAR BITÁCORA CSV ─────────────────────────────────────
+function exportarCSVBitacora() {
+  const log = getReportLog();
+  if (!log.length) { showToast('No hay registros para exportar.', 'warn'); return; }
+
+  const HEADERS = [
+    'Fecha','Hora','Momento','Operador','Salvavidas','NIA',
+    'Cl.Libre(ppm)','Cl.Comb(ppm)','Bromo(ppm)','pH','Alc(ppm)','Dureza(ppm)','CYA(ppm)',
+    'Turbidez(UNT)','T.Agua(°C)','T.Aire(°C)','Humedad(%)','ORP(mV)','TDS(ppm)','Conductividad(µS/cm)',
+    'ISL','NivelAgua(m)','Bañistas',
+    'HoraInicio','HoraFin','HorasFun(h)','HorasFilt(h)','Caudal(m3/h)','AguaRep(m3)',
+    'Retrolavados','Presion(psi)','Neutralizador','CloroDos','HoraAjuste',
+    'ProductosQuimicos','Averias',
+    'Color','Flotantes','Olor','Transparencia',
+    'Aptitud','MotivoNoApta',
+    'Labores','Seguridad','Instalacion'
+  ];
+
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+  const rows = log.map(e => [
+    e.fecha, e.hora, e.momento, e.operador, e.salvavidas, e.salvavidasNia,
+    e.cloro, e.clorocomb, e.bromo, e.ph, e.alc, e.dureza, e.cya,
+    e.turb, e.temp, e.tempAire, e.humedad, e.orp, e.tds, e.cond,
+    e.isl, e.nivelAgua, e.banistas,
+    e.horaInicio, e.horaFin, e.horasFun, e.horasFilt, e.caudal, e.aguaRep,
+    e.retrolav, e.presion, e.neutralizador, e.cloroDos, e.horaAjuste,
+    e.prodQuim, e.averias,
+    e.fisColor, e.fisFlotantes, e.fisOlor, e.fisTransp,
+    e.aptitud, e.motivoNoApta,
+    e.labores   ? Object.entries(e.labores).filter(([,v])=>v).map(([k])=>k).join('|')    : '',
+    e.seguridad ? Object.entries(e.seguridad).filter(([,v])=>v).map(([k])=>k).join('|') : '',
+    e.instalacion ? Object.entries(e.instalacion).filter(([,v])=>v).map(([k])=>k).join('|') : '',
+  ].map(esc).join(','));
+
+  const csv  = [HEADERS.map(esc).join(','), ...rows].join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `Aquatech_bitacora_${localDateStr(new Date())}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`CSV exportado: ${log.length} registros.`, 'ok', 5000);
 }
 
 (function initPreloader() {
