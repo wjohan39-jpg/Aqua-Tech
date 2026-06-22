@@ -1,4 +1,4 @@
-const CACHE = 'brazada-v11';
+const CACHE = 'brazada-v12';
 
 const PRECACHE = [
   './Aquatech.html',
@@ -6,7 +6,6 @@ const PRECACHE = [
   './Aquatech.js',
   './manifest.json',
   './Multimedia/logo1.webp',
-  './Multimedia/logo1.png',
   './Multimedia/icon-192.png',
   './Multimedia/icon-512.png',
   './Multimedia/icon-512-maskable.png',

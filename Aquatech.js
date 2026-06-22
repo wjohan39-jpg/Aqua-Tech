@@ -6241,17 +6241,7 @@ function closeMntDetail(event) {
 function preloaderNext() {
   const s1    = document.getElementById('preloaderScreen1');
   const s2    = document.getElementById('preloaderScreen2');
-  const chip  = document.querySelector('.preloader-jg-chip');
-  const video = document.querySelector('.preloader-avatar');
   if (!s1 || !s2) return;
-
-  // Mover el video al header del screen 2 como avatar circular
-  if (video && chip) {
-    video.classList.add('preloader-avatar-sm');
-    chip.replaceWith(video);
-    // En PC el movimiento del nodo DOM puede pausar el video; forzar reproducción
-    video.play().catch(() => {});
-  }
 
   s1.classList.add('screen-exit');
   setTimeout(() => {
