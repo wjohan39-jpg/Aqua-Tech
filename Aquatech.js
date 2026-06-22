@@ -4374,11 +4374,9 @@ function generatePDF() {
     restore();
     showToast('Error al cargar el generador de PDF. Verifica tu conexión.', 'error');
   };
-  const loadScript = (src, integrity, cb) => {
+  const loadScript = (src, cb) => {
     const s = document.createElement('script');
     s.src = src;
-    s.integrity = integrity;
-    s.crossOrigin = 'anonymous';
     s.onload = cb;
     s.onerror = onError;
     document.head.appendChild(s);
@@ -4386,10 +4384,8 @@ function generatePDF() {
 
   loadScript(
     'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-    'sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAOnx5S09ydFYWWNSfcEqDTTHgtNA==',
     () => loadScript(
       'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
-      'sha512-2/YdOMV+YNpanLCF5MdQwaoFRVbTmrJ4u4EpqS/USXAQNUDgI5uwYi6J98WVtJKcfe1AbgerygzDFToxAlOGEQ==',
       () => { restore(); _doPDF(); }
     )
   );
