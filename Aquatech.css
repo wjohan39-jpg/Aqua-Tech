@@ -2143,6 +2143,22 @@ input, select, textarea { font-family: inherit; }
   margin-top: 0.25rem;
 }
 
+/* ── UTILIDADES CSP — reemplazan style="..." en HTML ──── */
+.u-mt4  { margin-top: 4px; }
+.u-mt8  { margin-top: 8px; }
+.u-mt12 { margin-top: 12px; }
+.u-mt16 { margin-top: 16px; }
+.u-mt20 { margin-top: 20px; }
+.u-mb12 { margin-bottom: 12px; }
+.u-textarea-mnt { resize: vertical; min-height: 72px; }
+.backup-card-body { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; }
+.backup-desc { font-size: 13px; color: var(--text-muted, #64748b); margin: 0; }
+.backup-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.backup-btn { flex: 1; min-width: 140px; }
+.backup-import-label { cursor: pointer; display: flex; align-items: center; gap: 6px; justify-content: center; }
+.botiquin-fecha-group { flex: 1; max-width: 220px; }
+.botiquin-status-bottom { align-self: flex-end; margin-bottom: 4px; }
+
 /* ── CONCEPTO SANITARIO SELECTOR ─────────────────────── */
 .docs-venc-concepto { flex-wrap: wrap; }
 

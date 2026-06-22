@@ -1,4 +1,4 @@
-const CACHE = 'brazada-v9';
+const CACHE = 'brazada-v10';
 
 const PRECACHE = [
   './Aquatech.html',
@@ -57,7 +57,8 @@ self.addEventListener('fetch', e => {
       fetch(e.request)
         .then(res => {
           if (res && res.status === 200) {
-            caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+            const resClone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, resClone));
           }
           return res;
         })
@@ -70,7 +71,10 @@ self.addEventListener('fetch', e => {
         cache.match(e.request).then(cached => {
           const networkFetch = fetch(e.request)
             .then(res => {
-              if (res && res.status === 200) cache.put(e.request, res.clone());
+              if (res && res.status === 200) {
+                const resClone = res.clone();
+                cache.put(e.request, resClone);
+              }
               return res;
             })
             .catch(() => null);
