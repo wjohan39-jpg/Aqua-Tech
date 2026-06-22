@@ -417,7 +417,7 @@ function sectionInit(section) {
   if (section === 'lsi')        { _lsiFromBitacora = false; calcLSI(); }
   if (section === 'irapi')      { calcIRAPI(); updateIRAPIBitacoraBtn(); renderLabReg(); }
   if (section === 'perfil')     { renderPerfil(); }
-  if (section === 'documentos') { renderDocs(); updateVencimientos(); renderBotiquinCard(); renderVisitas(); clearVisitaForm(); updateNavVencBadge(); }
+  if (section === 'documentos') { renderDocs(); updateVencimientos(); renderVencSaneamiento(); renderBotiquinCard(); renderVisitas(); clearVisitaForm(); updateNavVencBadge(); }
   if (section === 'bitacora')      { renderLog(); updateOperadorDatalist(); updateSalvavidasDatalist(); }
   if (section === 'protocolo')     { renderAFR(); renderAFRIncidents(); }
   if (section === 'mantenimiento') { renderMnt(); renderSaneamiento(); checkMntForm(); }
@@ -5723,6 +5723,54 @@ function renderLabReg() {
       ${r.cya != null ? `<div class="lab-cya-row">CYA (lab): <strong class="${cyaOut ? 'text-danger' : ''}">${cya}</strong>${cyaOut ? ' ⚠ Sobre límite' : ''}</div>` : ''}
     </div>`;
   }).join('');
+}
+
+function renderVencSaneamiento() {
+  const el = document.getElementById('vencSaneamientoList');
+  if (!el) return;
+
+  const today   = Date.now();
+  const mntRaw  = _mntLogRaw();
+  const labRecs = getLabRecords();
+
+  const rows = [];
+
+  SANEAMIENTO_PROGRAMS.forEach(prog => {
+    const last = mntRaw.find(e => e.area === prog.id);
+    if (!last) {
+      rows.push({ label: prog.label, msg: 'Sin registro', cls: '' });
+    } else {
+      const ds = Math.floor((today - new Date(last.fecha + 'T00:00:00')) / 86400000);
+      const pct = ds / prog.dias;
+      if (pct >= 1)         rows.push({ label: prog.label, msg: 'Vencido',              cls: 'status-danger'  });
+      else if (pct >= 0.7)  rows.push({ label: prog.label, msg: `${prog.dias - ds} días`, cls: 'status-warning' });
+      else                  rows.push({ label: prog.label, msg: 'Al dia',                cls: 'status-ok'      });
+    }
+  });
+
+  // Botiquin
+  const botiquin = (() => { try { return JSON.parse(localStorage.getItem('aqua_botiquin') || '{}'); } catch { return {}; } })();
+  const botOk = botiquin.verificado === true;
+  rows.push({ label: 'Botiquin', msg: botOk ? 'Verificado' : 'Sin verificar', cls: botOk ? 'status-ok' : 'status-warning' });
+
+  // Lab trimestral
+  const lastLab = labRecs.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''))[0];
+  if (!lastLab) {
+    rows.push({ label: 'Lab. trimestral', msg: 'Sin registro', cls: '' });
+  } else {
+    const ds = Math.floor((today - new Date(lastLab.fecha + 'T00:00:00')) / 86400000);
+    if (ds > 90)       rows.push({ label: 'Lab. trimestral', msg: 'Vencido',           cls: 'status-danger'  });
+    else if (ds > 63)  rows.push({ label: 'Lab. trimestral', msg: `${90 - ds} dias`,   cls: 'status-warning' });
+    else               rows.push({ label: 'Lab. trimestral', msg: 'Al dia',             cls: 'status-ok'      });
+  }
+
+  el.innerHTML = `
+    <div class="docs-venc-san-title">Saneamiento y operacion</div>
+    ${rows.map(r => `
+      <div class="docs-venc-item">
+        <span class="docs-venc-label">${r.label}</span>
+        <span class="docs-venc-status ${r.cls}">${r.msg}</span>
+      </div>`).join('')}`;
 }
 
 function updateVencimientos() {

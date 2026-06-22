@@ -2132,6 +2132,17 @@ input, select, textarea { font-family: inherit; }
   text-align: right;
 }
 
+.docs-venc-san-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.75rem 0 0.25rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.25rem;
+}
+
 /* ── CONCEPTO SANITARIO SELECTOR ─────────────────────── */
 .docs-venc-concepto { flex-wrap: wrap; }
 
