@@ -5749,9 +5749,15 @@ function renderVencSaneamiento() {
   });
 
   // Botiquin
-  const botiquin = (() => { try { return JSON.parse(localStorage.getItem('aqua_botiquin') || '{}'); } catch { return {}; } })();
-  const botOk = botiquin.verificado === true;
-  rows.push({ label: 'Botiquin', msg: botOk ? 'Verificado' : 'Sin verificar', cls: botOk ? 'status-ok' : 'status-warning' });
+  const botiquin = getBotiquin();
+  if (!botiquin.fechaVerificacion) {
+    rows.push({ label: 'Botiquin', msg: 'Sin verificar', cls: 'status-warning' });
+  } else {
+    const botDs = Math.floor((today - new Date(botiquin.fechaVerificacion + 'T00:00:00')) / 86400000);
+    if (botDs > 30)      rows.push({ label: 'Botiquin', msg: 'Vencido',        cls: 'status-danger'  });
+    else if (botDs > 20) rows.push({ label: 'Botiquin', msg: `Hace ${botDs}d`, cls: 'status-warning' });
+    else                 rows.push({ label: 'Botiquin', msg: 'Al dia',          cls: 'status-ok'      });
+  }
 
   // Lab trimestral
   const lastLab = labRecs.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''))[0];
