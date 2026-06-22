@@ -3006,6 +3006,12 @@ a.docs-ref-item:hover { background: var(--border); }
   border-radius: 12px;
   overflow: hidden;
 }
+.dash-venc-btn {
+  margin-left: auto;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+}
+
 .dash-venc-header {
   display: flex;
   align-items: center;

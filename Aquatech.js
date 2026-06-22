@@ -1319,7 +1319,7 @@ function renderDashboardVencimientos() {
       <div class="dash-venc-header">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <strong>Documentos con vencimiento próximo</strong>
-        <button class="btn btn-sm btn-outline js-go-venc" style="margin-left:auto;font-size:0.78rem;padding:4px 10px">Ver vencimientos</button>
+        <button class="btn btn-sm btn-outline js-go-venc dash-venc-btn">Ver vencimientos</button>
       </div>
       ${alerts.map(({ label, msg, cls }) =>
         `<div class="dash-venc-item ${cls}"><span>${label}</span><span class="venc-badge">${msg}</span></div>`
@@ -5846,6 +5846,10 @@ function initDateTimeFields() {
   const timeEl = document.getElementById('logTime');
   if (dateEl) dateEl.value = date;
   if (timeEl) timeEl.value = time;
+}
+
+if ('serviceWorker' in navigator && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

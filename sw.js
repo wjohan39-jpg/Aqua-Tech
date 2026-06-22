@@ -1,4 +1,4 @@
-const CACHE = 'brazada-v8';
+const CACHE = 'brazada-v9';
 
 const PRECACHE = [
   './Aquatech.html',
@@ -42,8 +42,13 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
 
-  const parsedUrl    = new URL(e.request.url);
+  const parsedUrl = new URL(e.request.url);
+  // Ignorar esquemas no soportados (chrome-extension, etc.)
+  if (!parsedUrl.protocol.startsWith('http')) return;
+
   const isSameOrigin = parsedUrl.origin === self.location.origin;
+  // No interceptar recursos de terceros (Google Fonts, CDN externos)
+  if (!isSameOrigin) return;
   const isNetworkFirst = isSameOrigin && NETWORK_FIRST.some(f => parsedUrl.pathname.includes(f));
 
   if (isNetworkFirst) {
