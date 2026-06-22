@@ -1608,7 +1608,7 @@ function compartirEstado() {
     ? `\nIRAPI: ${irapiScore} — ${irapiLabel}` : '';
 
   const text = [
-    '🏊 Brazada Aqua Tech — Estado de piscina',
+    '🏊 Aqua Tech — Estado de piscina',
     `📅 ${fecha}${hora}${op}`,
     '',
     `${stateEmoji} ${stateLabel}`,
@@ -1618,7 +1618,7 @@ function compartirEstado() {
     ...paramLines,
     irapiLine,
     '',
-    '— Generado con Brazada Aqua Tech',
+    '— Generado con Aqua Tech',
   ].join('\n');
 
   const tryClipboard = () => {
@@ -1632,7 +1632,7 @@ function compartirEstado() {
   };
 
   if (navigator.share) {
-    navigator.share({ title: 'Estado de piscina — Brazada Aqua Tech', text })
+    navigator.share({ title: 'Estado de piscina — Aqua Tech', text })
       .catch(err => { if (err.name !== 'AbortError') tryClipboard(); });
   } else {
     tryClipboard();
@@ -4475,7 +4475,7 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
     title:    `Reporte Calidad del Agua — ${nombre}`,
     subject:  `Período: ${periodo}`,
     author:   responsable,
-    creator:  'Brazada Aqua Tech · PWA · Res. 234/2026',
+    creator:  'Aqua Tech · PWA · Res. 234/2026',
     keywords: 'piscina, calidad agua, resolución 234, Colombia',
   });
 
@@ -4522,7 +4522,7 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
     doc.setTextColor(30, 41, 59);
     doc.setFontSize(15);
     doc.setFont('helvetica', 'bold');
-    doc.text('Brazada Aqua Tech', 29, 11);
+    doc.text('Aqua Tech', 29, 11);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100, 116, 139);
@@ -4932,7 +4932,7 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(150);
     doc.text(
-      `Brazada Aqua Tech · Res. 234 / 2026 · Página ${i} de ${pages}`,
+      `Aqua Tech · Res. 234 / 2026 · Página ${i} de ${pages}`,
       105, doc.internal.pageSize.getHeight() - 8,
       { align: 'center' }
     );
