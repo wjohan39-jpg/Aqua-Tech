@@ -4764,10 +4764,11 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
   }
 
   // ── Analisis de laboratorio (Art. 11) ────────────────────
+  let labEndY = doc.lastAutoTable ? doc.lastAutoTable.finalY : 10;
   {
     const labRecs = getLabRecords();
     const pageH   = doc.internal.pageSize.getHeight();
-    let lY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 16 : 20;
+    let lY = labEndY + 16;
     if (lY + 44 > pageH - 15) { doc.addPage(); lY = 20; }
 
     doc.setFontSize(11); doc.setFont('helvetica', 'bold'); doc.setTextColor(30, 41, 59);
@@ -4776,6 +4777,7 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
     if (!labRecs.length) {
       doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100);
       doc.text('Sin registros de laboratorio en el periodo.', 14, lY + 8);
+      labEndY = lY + 18;
     } else {
       const RESULT = v => v === 'ausente' ? 'Ausente' : v === 'presente' ? 'Presente' : '-';
       const labRows = labRecs.slice(0, 6).map(r => [
@@ -4809,12 +4811,13 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
         },
         margin: { left: 14, right: 14 },
       });
+      labEndY = doc.lastAutoTable.finalY;
     }
   }
 
   // ── Incidentes AFR ───────────────────────────────────────
   const afrPageH = doc.internal.pageSize.getHeight();
-  let afrY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 16 : 20;
+  let afrY = labEndY + 16;
   if (afrY + 40 > afrPageH - 15) { doc.addPage(); afrY = 20; }
 
   doc.setFontSize(11);
