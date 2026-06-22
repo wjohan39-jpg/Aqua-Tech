@@ -1367,8 +1367,8 @@ function updateNavVencBadge() {
     if (labDaysSince !== null && labDaysSince > 75) count++;
   }
 
-  if (count === 0) { badge.hidden = true; return; }
-  badge.hidden = false;
+  if (count === 0) { badge.classList.add('js-hidden'); badge.textContent = ''; return; }
+  badge.classList.remove('js-hidden');
   badge.textContent = count;
 }
 
