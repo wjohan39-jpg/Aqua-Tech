@@ -1,4 +1,4 @@
-const CACHE = 'brazada-v7';
+const CACHE = 'brazada-v8';
 
 const PRECACHE = [
   './Aquatech.html',
@@ -10,6 +10,8 @@ const PRECACHE = [
   './Multimedia/icon-192.png',
   './Multimedia/icon-512.png',
   './Multimedia/icon-512-maskable.png',
+  './lib/jspdf.umd.min.js',
+  './lib/jspdf.plugin.autotable.min.js',
 ];
 
 // Archivos de app shell — siempre red primero, caché como respaldo offline
