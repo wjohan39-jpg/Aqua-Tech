@@ -4935,7 +4935,20 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
     );
   }
 
-  doc.save(`Reporte_Mensual_${nombre.replace(/\s+/g, '_')}_${desde || 'sin-fecha'}.pdf`);
+  const fileName = `Reporte_Mensual_${nombre.replace(/\s+/g, '_')}_${desde || 'sin-fecha'}.pdf`;
+  const isMobile = navigator.maxTouchPoints > 0 && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  if (isMobile) {
+    const blob = doc.output('blob');
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.target   = '_blank';
+    a.rel      = 'noopener';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } else {
+    doc.save(fileName);
+  }
   showToast('PDF generado correctamente.', 'success');
 }
 
