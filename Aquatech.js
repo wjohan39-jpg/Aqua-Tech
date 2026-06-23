@@ -5510,7 +5510,14 @@ function _updateBotiquinDates() {
     }
   }
 
-  _dayStatus(deaMantEl?.value,  mantStEl,  90, 30);
+  if (deaMantEl?.value) {
+    const lastMant = new Date(deaMantEl.value + 'T00:00:00');
+    const expiry   = new Date(lastMant);
+    expiry.setFullYear(expiry.getFullYear() + 1);
+    _dayStatus(expiry.toISOString().split('T')[0], mantStEl, 90, 30);
+  } else {
+    _dayStatus(null, mantStEl, 90, 30);
+  }
   _dayStatus(deaElecEl?.value,  elecStEl,  30, 10);
 
   // Badge del header
