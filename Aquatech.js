@@ -6182,9 +6182,9 @@ function openMntDetail(ts) {
   const body    = document.getElementById('mntDetailBody');
   if (!overlay || !body) return;
 
-  const isMoto     = e.area === 'motobomba';
-  const badgeClass = isMoto ? 'mnt-badge-motobomba' : 'mnt-badge-caldera';
-  const badgeText  = isMoto ? 'Motobomba' : 'Caldera';
+  const areaInfo   = MNT_AREA_LABELS[e.area] || { label: e.area, badge: 'mnt-badge-caldera' };
+  const badgeClass = areaInfo.badge;
+  const badgeText  = areaInfo.label;
 
   if (title) title.innerHTML = `Mantenimiento &middot; <span class="mnt-area-badge ${badgeClass}">${badgeText}</span>`;
   if (meta)  meta.textContent = e.fecha + (e.proximo ? ' · Próximo: ' + e.proximo : '');
