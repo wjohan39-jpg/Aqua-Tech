@@ -1,4 +1,4 @@
-const CACHE = 'brazada-v12';
+const CACHE = 'brazada-v13';
 
 const PRECACHE = [
   './Aquatech.html',
@@ -18,73 +18,62 @@ const PRECACHE = [
   './fonts/space-grotesk-latin-ext.woff2',
 ];
 
-// Archivos de app shell — siempre red primero, caché como respaldo offline
-const NETWORK_FIRST = [
-  'Aquatech.html',
-  'Aquatech.css',
-  'Aquatech.js',
-];
+const APP_SHELL = new Set(['Aquatech.html', 'Aquatech.css', 'Aquatech.js']);
 
-self.addEventListener('install', e => {
-  e.waitUntil(
+async function cacheResponse(request, response) {
+  if (!response || !response.ok) return response;
+  const cache = await caches.open(CACHE);
+  cache.put(request, response.clone());
+  return response;
+}
+
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    return cacheResponse(request, response);
+  } catch {
+    const cached = await caches.match(request);
+    return cached || caches.match('./Aquatech.html');
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request)
+    .then(response => cacheResponse(request, response))
+    .catch(() => null);
+  return cached || networkPromise || Response.error();
+}
+
+self.addEventListener('install', event => {
+  event.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(PRECACHE))
+      .then(cache => cache.addAll(PRECACHE))
       .then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
+self.addEventListener('activate', event => {
+  event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
-      ))
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+self.addEventListener('fetch', event => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
 
-  const parsedUrl = new URL(e.request.url);
-  // Ignorar esquemas no soportados (chrome-extension, etc.)
-  if (!parsedUrl.protocol.startsWith('http')) return;
+  const url = new URL(request.url);
+  if (!url.protocol.startsWith('http')) return;
+  if (url.origin !== self.location.origin) return;
 
-  const isSameOrigin = parsedUrl.origin === self.location.origin;
-  // No interceptar recursos de terceros (Google Fonts, CDN externos)
-  if (!isSameOrigin) return;
-  const isNetworkFirst = isSameOrigin && NETWORK_FIRST.some(f => parsedUrl.pathname.includes(f));
-
-  if (isNetworkFirst) {
-    // Network-first: siempre intenta la red; si falla (offline) usa caché
-    e.respondWith(
-      fetch(e.request)
-        .then(res => {
-          if (res && res.status === 200) {
-            const resClone = res.clone();
-            caches.open(CACHE).then(c => c.put(e.request, resClone));
-          }
-          return res;
-        })
-        .catch(() => caches.match(e.request))
-    );
-  } else {
-    // Cache-first para imágenes y recursos estáticos
-    e.respondWith(
-      caches.open(CACHE).then(cache =>
-        cache.match(e.request).then(cached => {
-          const networkFetch = fetch(e.request)
-            .then(res => {
-              if (res && res.status === 200) {
-                const resClone = res.clone();
-                cache.put(e.request, resClone);
-              }
-              return res;
-            })
-            .catch(() => null);
-          return cached || networkFetch;
-        })
-      )
-    );
+  if (request.mode === 'navigate' || APP_SHELL.has(url.pathname.split('/').pop())) {
+    event.respondWith(networkFirst(request));
+    return;
   }
+
+  event.respondWith(staleWhileRevalidate(request));
 });

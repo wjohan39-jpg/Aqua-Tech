@@ -1,13 +1,6 @@
-/* ═══════════════════════════════════════════════════════
-   AQUAGESTIÓN · aquagestion.js
-   Sección 1: Navegación + Sidebar + Inicialización base
-   ═══════════════════════════════════════════════════════ */
-
 'use strict';
 
-// Defensa anti-clickjacking (capa JS — complementa X-Frame-Options y CSP frame-ancestors).
-// Intenta redirigir el frame padre; si el iframe está sandboxed y bloquea la navegación,
-// oculta el body como último recurso para que no haya superficie atacable.
+// Prevent clickjacking by redirecting the parent frame when possible.
 (function guardFrame() {
   if (window.top === window.self) return;
   try {
@@ -27,26 +20,44 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-// Convierte un valor leído de localStorage a número seguro para innerHTML.
-// Cualquier valor no numérico (incluyendo strings con HTML) retorna '–'.
+// Convert a value from storage into a safe numeric display.
 function _safeNum(v, fix) {
   const n = Number(v);
   if (!isFinite(n)) return '–';
   return fix !== undefined ? n.toFixed(fix) : String(n);
 }
 
-// Valida que un valor sea un data URI de imagen base64 válido antes de usarlo como src.
-// Acepta JPEG (nuevas fotos) y PNG (fotos guardadas antes de la migración a JPEG).
-// Previene inyección de atributo y URLs externas provenientes de localStorage tamperado.
+// Only allow safe image data URIs for photo rendering.
 function _safePhotoSrc(v) {
   if (typeof v !== 'string') return '';
   if (v.startsWith('data:image/jpeg;base64,') || v.startsWith('data:image/png;base64,')) return v;
   return '';
 }
 
-// ── INTEGRIDAD DE ALMACENAMIENTO (HMAC-SHA256 + IndexedDB) ───────────────
-// CryptoKey no-extractable en IndexedDB — protege contra edición directa
-// de localStorage entre sesiones (DevTools, acceso físico al dispositivo).
+const STORAGE_KEYS = Object.freeze({
+  pin: 'aqua_pin',
+  pinState: '_pin_state',
+  bitacora: 'aqua_bitacora',
+  afr: 'aqua_afr',
+  mantenimiento: 'aqua_mantenimiento',
+  lab: 'aqua_lab',
+  visitas: 'aqua_visitas',
+  reporte: 'aqua_reporte',
+  docs: 'aqua_docs',
+  docsDates: 'aqua_docs_dates',
+  docsProfile: 'aqua_docs_profile',
+  perfil: 'aqua_perfil',
+  botiquin: 'aqua_botiquin',
+  config: 'aqua_config',
+  calc: 'aqua_calc',
+  theme: 'aqua_theme'
+});
+
+const PIN_VIEW_IDS = Object.freeze(['pinViewSetup', 'pinViewUnlock', 'pinViewChange']);
+const PIN_INPUT_IDS = Object.freeze(['pinSetupNew', 'pinSetupConfirm', 'pinUnlockInput', 'pinChangeOld', 'pinChangeNew', 'pinChangeConfirm']);
+const PIN_ERROR_IDS = Object.freeze(['pinSetupError', 'pinUnlockError', 'pinChangeError']);
+
+// Integrity protection for stored data.
 const _INTEGRITY = (() => {
   const DB    = 'brazada_integrity_v1';
   const STORE = 'keys';
@@ -100,10 +111,9 @@ const _INTEGRITY = (() => {
   return { sign, verify };
 })();
 
-// ── AUTENTICACIÓN POR PIN (PBKDF2 · SHA-256) ─────────────────────────────
-// Estado de sesión encapsulado — no accesible como variable global directa.
+// PIN-based session protection.
 const _PIN = (() => {
-  const KEY   = 'aqua_pin';
+  const KEY   = STORAGE_KEYS.pin;
   const ITERS = 600_000;   // OWASP 2024: mínimo 600k para PBKDF2-HMAC-SHA-256
   const HASH  = 'SHA-256';
   const BITS  = 256;
@@ -112,8 +122,9 @@ const _PIN = (() => {
   let _unlocked    = false;
   let _attempts    = 0;
   let _lockedUntil = 0;
+  let _sessionKey  = null;
 
-  const _SS_KEY = '_pin_state';
+  const _SS_KEY = STORAGE_KEYS.pinState;
   function _loadAttemptState() {
     try {
       const s = JSON.parse(sessionStorage.getItem(_SS_KEY) || '{}');
@@ -153,29 +164,178 @@ const _PIN = (() => {
     if (a.length !== b.length) return false;
     let diff = 0;
     for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+    if (diff === 0) _sessionKey = actual;
     return diff === 0;
   }
 
   function exists() { return !!localStorage.getItem(KEY); }
-  function remove() { localStorage.removeItem(KEY); }
+  function remove() { localStorage.removeItem(KEY); _sessionKey = null; }
+
+  function getSessionKey() { return _sessionKey; }
 
   // Interfaz de sesión — acceso controlado al estado privado
   function unlock()       { _unlocked = true; _attempts = 0; _lockedUntil = 0; _saveAttemptState(); }
-  function lock()         { _unlocked = false; }
+  function lock()         { _unlocked = false; _sessionKey = null; }
   function addAttempt()   { ++_attempts; _saveAttemptState(); return _attempts; }
   function setLockout(ms) { _lockedUntil = Date.now() + ms; _saveAttemptState(); }
   function remainingSecs(){ return Math.max(0, Math.ceil((_lockedUntil - Date.now()) / 1000)); }
 
   return {
     set, verify, exists, remove,
-    unlock, lock, addAttempt, setLockout, remainingSecs,
+    unlock, lock, addAttempt, setLockout, remainingSecs, getSessionKey,
     get unlocked()  { return _unlocked;  },
     get attempts()  { return _attempts;  },
   };
 })();
 
+const _SECURE_STORE = (() => {
+  const PROTECTED_KEYS = new Set([
+    STORAGE_KEYS.bitacora,
+    STORAGE_KEYS.afr,
+    STORAGE_KEYS.mantenimiento,
+    STORAGE_KEYS.lab,
+    STORAGE_KEYS.visitas,
+    STORAGE_KEYS.reporte,
+    STORAGE_KEYS.docs,
+    STORAGE_KEYS.docsDates,
+    STORAGE_KEYS.docsProfile,
+    STORAGE_KEYS.perfil,
+    STORAGE_KEYS.botiquin,
+    STORAGE_KEYS.config,
+    STORAGE_KEYS.calc,
+    STORAGE_KEYS.theme
+  ]);
+  const CACHE = new Map();
+  const PREFIX = '__aqua_enc__';
+  let originalGetItem = null;
+  let originalSetItem = null;
+  let originalRemoveItem = null;
+
+  function _b64(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+  function _fromB64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+
+  function _serializeValue(value) {
+    return typeof value === 'string' ? value : JSON.stringify(value);
+  }
+
+  function _parseValue(value) {
+    if (value == null) return null;
+    if (typeof value === 'string') {
+      try { return JSON.parse(value); } catch { return value; }
+    }
+    return value;
+  }
+
+  async function _encryptText(text, keyBytes) {
+    if (!keyBytes) return null;
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await crypto.subtle.importKey('raw', new Uint8Array(keyBytes), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+    const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(text));
+    return { v: 1, iv: _b64(iv), ct: _b64(new Uint8Array(data)) };
+  }
+
+  async function _decryptText(blob, keyBytes) {
+    if (!keyBytes || !blob || !blob.v || !blob.iv || !blob.ct) return null;
+    const key = await crypto.subtle.importKey('raw', new Uint8Array(keyBytes), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+    const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: _fromB64(blob.iv) }, key, _fromB64(blob.ct));
+    return new TextDecoder().decode(plain);
+  }
+
+  async function _persist(key, value) {
+    const keyBytes = _PIN.getSessionKey();
+    if (!keyBytes) return;
+    const text = _serializeValue(value);
+    const payload = await _encryptText(text, keyBytes);
+    if (!payload) return;
+    originalSetItem.call(localStorage, key, PREFIX + JSON.stringify(payload));
+    try {
+      const sig = await _INTEGRITY.sign(text);
+      originalSetItem.call(localStorage, key + '_sig', sig);
+    } catch {}
+  }
+
+  async function init() {
+    const keyBytes = _PIN.getSessionKey();
+    for (const key of PROTECTED_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      if (CACHE.has(key)) continue;
+      if (typeof raw === 'string' && raw.startsWith(PREFIX)) {
+        try {
+          const blob = JSON.parse(raw.slice(PREFIX.length));
+          const plain = keyBytes ? await _decryptText(blob, keyBytes) : null;
+          if (plain != null) CACHE.set(key, _parseValue(plain));
+        } catch {}
+      } else {
+        try {
+          CACHE.set(key, _parseValue(raw));
+          void _persist(key, CACHE.get(key));
+        } catch {}
+      }
+    }
+  }
+
+  function hasProtectedKey(key) { return typeof key === 'string' && PROTECTED_KEYS.has(key); }
+
+  function getCached(key, fallback) {
+    if (CACHE.has(key)) return CACHE.get(key);
+    const raw = originalGetItem.call(localStorage, key);
+    if (!raw) return fallback;
+    if (typeof raw === 'string' && raw.startsWith(PREFIX)) return fallback;
+    try { return _parseValue(raw); } catch { return fallback; }
+  }
+
+  function setCached(key, value) {
+    const normalized = _serializeValue(value);
+    CACHE.set(key, _parseValue(normalized));
+    void _persist(key, CACHE.get(key));
+    return normalized;
+  }
+
+  function removeCached(key) {
+    CACHE.delete(key);
+    originalRemoveItem.call(localStorage, key);
+    originalRemoveItem.call(localStorage, key + '_sig');
+  }
+
+  const storageProto = window.Storage?.prototype;
+  if (storageProto && !storageProto.__aquatechSecurePatched) {
+    originalGetItem = storageProto.getItem;
+    originalSetItem = storageProto.setItem;
+    originalRemoveItem = storageProto.removeItem;
+
+    storageProto.getItem = function(key) {
+      if (hasProtectedKey(key)) {
+        const cached = getCached(key, null);
+        if (cached !== null) return typeof cached === 'string' ? cached : JSON.stringify(cached);
+      }
+      return originalGetItem.call(this, key);
+    };
+
+    storageProto.setItem = function(key, value) {
+      if (hasProtectedKey(key)) {
+        setCached(key, value);
+        return;
+      }
+      return originalSetItem.call(this, key, value);
+    };
+
+    storageProto.removeItem = function(key) {
+      if (hasProtectedKey(key)) {
+        removeCached(key);
+        return;
+      }
+      return originalRemoveItem.call(this, key);
+    };
+
+    storageProto.__aquatechSecurePatched = true;
+  }
+
+  return { init, hasProtectedKey, getCached, setCached, removeCached };
+})();
+
 function _pinSwitchView(view) {
-  ['pinViewSetup', 'pinViewUnlock', 'pinViewChange'].forEach(id => {
+  PIN_VIEW_IDS.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = (el.id !== view);
   });
@@ -194,15 +354,14 @@ function _pinHideOverlay() {
   const overlay = document.getElementById('pinOverlay');
   if (overlay) overlay.hidden = true;
   _pinClearErrors();
-  ['pinSetupNew','pinSetupConfirm','pinUnlockInput',
-   'pinChangeOld','pinChangeNew','pinChangeConfirm'].forEach(id => {
+  PIN_INPUT_IDS.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
 }
 
 function _pinClearErrors() {
-  ['pinSetupError','pinUnlockError','pinChangeError'].forEach(id => {
+  PIN_ERROR_IDS.forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.hidden = true; el.textContent = ''; }
   });
@@ -237,7 +396,9 @@ async function _pinHandleCreate() {
   const btn = document.getElementById('btnPinCreate');
   if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
   await _PIN.set(newPin);
-  _PIN.unlock();
+  const okCreate = await _PIN.verify(newPin);
+  if (okCreate) _PIN.unlock();
+  await _SECURE_STORE.init();
   _pinHideOverlay();
   sectionInit(APP.currentSection);
   if (btn) { btn.disabled = false; btn.textContent = 'Crear PIN'; }
@@ -262,6 +423,7 @@ async function _pinHandleUnlock() {
 
   if (ok) {
     _PIN.unlock();
+    await _SECURE_STORE.init();
     _pinHideOverlay();
     sectionInit(APP.currentSection);
   } else {
@@ -314,7 +476,9 @@ async function _pinHandleChange() {
     return;
   }
   await _PIN.set(newPin);
-  _PIN.unlock();
+  const okChange = await _PIN.verify(newPin);
+  if (okChange) _PIN.unlock();
+  await _SECURE_STORE.init();
   _pinHideOverlay();
   if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
   showToast('PIN actualizado correctamente.', 'success');
@@ -366,8 +530,7 @@ function _pinInit() {
   }
 }
 
-// Guarda json en localStorage y, en paralelo, firma y persiste el HMAC.
-// La escritura es sincrónica; la firma es async no-bloqueante.
+// Guarda json de forma protegida en localStorage y, en paralelo, firma y persiste el HMAC.
 async function _secSave(lsKey, json) {
   try {
     localStorage.setItem(lsKey, json);
@@ -383,13 +546,17 @@ async function _secSave(lsKey, json) {
   } catch { /* fallo silencioso — dato guardado, firma omitida */ }
 }
 
-// Verifica la firma HMAC de cada clave protegida y avisa al usuario si falla.
+// Validate signatures for protected storage keys.
 async function _verifyIntegrity() {
-  for (const k of ['aqua_bitacora', 'aqua_afr', 'aqua_mantenimiento', 'aqua_lab', 'aqua_visitas']) {
-    const json = localStorage.getItem(k);
-    const sig  = localStorage.getItem(k + '_sig');
-    if (!json || !sig) continue;
-    const ok = await _INTEGRITY.verify(json, sig);
+  for (const k of [STORAGE_KEYS.bitacora, STORAGE_KEYS.afr, STORAGE_KEYS.mantenimiento, STORAGE_KEYS.lab, STORAGE_KEYS.visitas]) {
+    const raw = localStorage.getItem(k);
+    const sig = localStorage.getItem(k + '_sig');
+    if (!raw || !sig) continue;
+    const payload = typeof raw === 'string' && raw.startsWith('__aqua_enc__')
+      ? _SECURE_STORE.getCached(k, raw)
+      : raw;
+    const text = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    const ok = await _INTEGRITY.verify(text, sig);
     if (!ok) showToast(
       `Alerta: los datos de "${k}" fueron modificados externamente. Verifica la integridad de los registros.`,
       'error', 9000
@@ -411,16 +578,64 @@ const APP = {
 
 // ── NAVEGACIÓN ───────────────────────────────────────────
 function sectionInit(section) {
-  if (section === 'dashboard')  { renderDashboardIndices(); renderDashboardVencimientos(); renderDashMntSchedule(); renderDashboardGauges(); updateDashReportBtn(); _renderDashEstablishment(); updateNavVencBadge(); }
-  if (section === 'reporte')    { _prefillReporteFromPerfil(); updateReportSummary(); updateReportBtn(); }
-  if (section === 'calculadora'){ calcVolume(); calcDosificacion(); }
-  if (section === 'lsi')        { _lsiFromBitacora = false; calcLSI(); }
-  if (section === 'irapi')      { calcIRAPI(); updateIRAPIBitacoraBtn(); renderLabReg(); }
-  if (section === 'perfil')     { renderPerfil(); }
-  if (section === 'documentos') { renderDocs(); updateVencimientos(); renderVencSaneamiento(); renderBotiquinCard(); renderVisitas(); clearVisitaForm(); updateNavVencBadge(); }
-  if (section === 'bitacora')      { renderLog(); updateOperadorDatalist(); updateSalvavidasDatalist(); }
-  if (section === 'protocolo')     { renderAFR(); renderAFRIncidents(); }
-  if (section === 'mantenimiento') { renderMnt(); renderSaneamiento(); checkMntForm(); }
+  const renderers = {
+    dashboard: () => {
+      renderDashboardIndices();
+      renderDashboardVencimientos();
+      renderDashMntSchedule();
+      renderDashboardGauges();
+      updateDashReportBtn();
+      _renderDashEstablishment();
+      updateNavVencBadge();
+    },
+    reporte: () => {
+      _prefillReporteFromPerfil();
+      updateReportSummary();
+      updateReportBtn();
+    },
+    calculadora: () => {
+      calcVolume();
+      calcDosificacion();
+    },
+    lsi: () => {
+      _lsiFromBitacora = false;
+      calcLSI();
+    },
+    irapi: () => {
+      calcIRAPI();
+      updateIRAPIBitacoraBtn();
+      renderLabReg();
+    },
+    perfil: () => {
+      renderPerfil();
+    },
+    documentos: () => {
+      renderDocs();
+      updateVencimientos();
+      renderVencSaneamiento();
+      renderBotiquinCard();
+      renderVisitas();
+      clearVisitaForm();
+      updateNavVencBadge();
+    },
+    bitacora: () => {
+      renderLog();
+      updateOperadorDatalist();
+      updateSalvavidasDatalist();
+    },
+    protocolo: () => {
+      renderAFR();
+      renderAFRIncidents();
+    },
+    mantenimiento: () => {
+      renderMnt();
+      renderSaneamiento();
+      checkMntForm();
+    }
+  };
+
+  const render = renderers[section];
+  if (render) render();
 }
 
 function navigate(section, event) {
@@ -5863,6 +6078,7 @@ if ('serviceWorker' in navigator && location.hostname !== 'localhost' && locatio
 document.addEventListener('DOMContentLoaded', async () => {
   initOnboarding();              // Muestra pantalla de bienvenida solo en primer uso
   _pinInit();                    // Muestra overlay de PIN antes que cualquier otra cosa
+  await _SECURE_STORE.init();    // Hidrata y protege los datos sensibles del cliente
   await _verifyIntegrity();      // Espera la verificación de integridad antes de renderizar datos
 
   // Sección visible — necesario para el primer paint
