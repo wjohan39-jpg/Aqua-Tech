@@ -59,7 +59,7 @@ const PIN_ERROR_IDS = Object.freeze(['pinSetupError', 'pinUnlockError', 'pinChan
 
 // Integrity protection for stored data.
 const _INTEGRITY = (() => {
-  const DB    = 'brazada_integrity_v1';
+  const DB    = 'aquatech_integrity_v1';
   const STORE = 'keys';
   const KID   = 'hmac_k';
   let _cache  = null;
@@ -67,7 +67,10 @@ const _INTEGRITY = (() => {
   function _openDb() {
     return new Promise((res, rej) => {
       const r = indexedDB.open(DB, 1);
-      r.onupgradeneeded = e => e.target.result.createObjectStore(STORE);
+      r.onupgradeneeded = e => {
+        e.target.result.createObjectStore(STORE);
+        localStorage.setItem('aqua_key_reset', '1');
+      };
       r.onsuccess = e => res(e.target.result);
       r.onerror   = e => rej(e.target.error);
     });
@@ -490,7 +493,7 @@ function _pinHandleReset() {
     () => {
       localStorage.clear();
       sessionStorage.clear();
-      indexedDB.deleteDatabase('brazada_integrity_v1');
+      indexedDB.deleteDatabase('aquatech_integrity_v1');
       if ('caches' in self) {
         caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
       }
@@ -548,6 +551,9 @@ async function _secSave(lsKey, json) {
 
 // Validate signatures for protected storage keys.
 async function _verifyIntegrity() {
+  const migrated = localStorage.getItem('aqua_key_reset') === '1';
+  if (migrated) localStorage.removeItem('aqua_key_reset');
+
   for (const k of [STORAGE_KEYS.bitacora, STORAGE_KEYS.afr, STORAGE_KEYS.mantenimiento, STORAGE_KEYS.lab, STORAGE_KEYS.visitas]) {
     const raw = localStorage.getItem(k);
     const sig = localStorage.getItem(k + '_sig');
@@ -556,6 +562,11 @@ async function _verifyIntegrity() {
       ? _SECURE_STORE.getCached(k, raw)
       : raw;
     const text = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    if (migrated) {
+      const newSig = await _INTEGRITY.sign(text);
+      localStorage.setItem(k + '_sig', newSig);
+      continue;
+    }
     const ok = await _INTEGRITY.verify(text, sig);
     if (!ok) showToast(
       `Alerta: los datos de "${k}" fueron modificados externamente. Verifica la integridad de los registros.`,
@@ -732,6 +743,8 @@ function toggleTooltip(id) {
 }
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    const jgPanel = document.getElementById('jgPanel');
+    if (jgPanel && !jgPanel.hidden) { closeJGPanel(); return; }
     const overlay = document.getElementById('logDetailOverlay');
     if (overlay && overlay.style.display !== 'none') {
       overlay.style.display = 'none';
@@ -775,7 +788,12 @@ document.addEventListener('click', e => {
   }
 
   const navEl = t.closest('[data-navigate]');
-  if (navEl) { navigate(navEl.dataset.navigate, e); return; }
+  if (navEl) {
+    const jgPanel = document.getElementById('jgPanel');
+    if (jgPanel && !jgPanel.hidden) closeJGPanel();
+    navigate(navEl.dataset.navigate, e);
+    return;
+  }
 
   if (t.closest('#sidebarOverlay') || t.closest('#sidebarToggle')) { toggleSidebar(); return; }
   if (t.closest('#themeToggle'))    { toggleTheme();        return; }
@@ -897,6 +915,10 @@ document.addEventListener('click', e => {
   if (t.closest('#preloaderBtn')) { preloaderNext(); return; }
   const dismissBtn = t.closest('[data-dismiss]');
   if (dismissBtn) { dismissPreloader(dismissBtn.dataset.dismiss); return; }
+
+  if (t.closest('#jgFab'))          { openJGPanel();  return; }
+  if (t.closest('#jgPanelClose'))   { closeJGPanel(); return; }
+  if (t.closest('#jgPanelBackdrop')){ closeJGPanel(); return; }
 
   // Bitácora — tabla (filas clickeables + botones de acción)
   const logRow = t.closest('.log-row-clickable[data-ts]');
@@ -1160,7 +1182,7 @@ function drawLSIGauge(canvasId, lsiValue) {
   // Zonas Res. 234/2026: -0.3 a +0.5 (asimétrico)
   // lsi=-0.3 → pct=0.35 → 1.35π | lsi=+0.5 → pct=0.75 → 1.75π
   const segments = [
-    { start: Math.PI,        end: Math.PI * 1.35, color: '#ef4444' },
+    { start: Math.PI,        end: Math.PI * 1.35, color: '#dc2626' },
     { start: Math.PI * 1.35, end: Math.PI * 1.75, color: '#0cb86a' },
     { start: Math.PI * 1.75, end: Math.PI * 2,    color: '#f59e0b' },
   ];
@@ -1193,7 +1215,7 @@ function drawLSIGauge(canvasId, lsiValue) {
   ctx.fill();
 
   // Labels
-  ctx.fillStyle = '#ef4444';
+  ctx.fillStyle = '#dc2626';
   ctx.font = '11px Inter';
   ctx.fillText('Corrosiva', 4, cy - r + 20);
 
@@ -1336,7 +1358,7 @@ function renderTrendChart() {
     const isWarn  = inRange && paramDef.warnBelow !== undefined && e[_trendParam] < paramDef.warnBelow;
     ctx.beginPath();
     ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = !inRange ? '#ef4444' : isWarn ? '#f59e0b' : '#0cb86a';
+    ctx.fillStyle = !inRange ? '#dc2626' : isWarn ? '#f59e0b' : '#0cb86a';
     ctx.strokeStyle = dotBorder; ctx.lineWidth = 1.5;
     ctx.fill(); ctx.stroke();
     if (data.length <= 10 || i % labelStep === 0 || i === data.length - 1) {
@@ -1397,7 +1419,7 @@ function renderDashboardIndices() {
     : 'danger';
 
   const irapiCard = irapiResult ? `
-    <div class="dash-index-card">
+    <div class="dash-index-card${irapiCls === 'danger' ? ' dash-index-card--danger' : ''}">
       <div class="dash-index-top">
         <span class="dash-index-name">Riesgo sanitario (IRAPI)</span>
         <span class="dash-index-badge idx-badge-${irapiCls}">${irapiResult.label}</span>
@@ -1724,7 +1746,7 @@ function renderDashboardGauges() {
       if (value === null) { drawGauge(p.id, p.min, p.min, p.max, '#cbd5e1'); return; }
       const cumple = value >= p.normMin && value <= p.normMax;
       const warn   = cumple && p.warnBelow !== undefined && value < p.warnBelow;
-      drawGauge(p.id, value, p.min, p.max, !cumple ? '#ef4444' : warn ? '#f59e0b' : '#0cb86a');
+      drawGauge(p.id, value, p.min, p.max, !cumple ? '#dc2626' : warn ? '#f59e0b' : '#0cb86a');
     });
     renderTrendChart();
   }, 50);
@@ -2425,7 +2447,7 @@ function calcLSI() {
 
   // Rango aceptable Res. 234/2026: -0.3 a +0.5 (asimétrico)
   if (lsi < -0.3) {
-    status = 'Corrosiva'; color = '#ef4444';
+    status = 'Corrosiva'; color = '#dc2626';
     legend[0]?.classList.add('active-leg');
   } else if (lsi > 0.5) {
     status = 'Incrustante'; color = '#f59e0b';
@@ -2658,7 +2680,7 @@ function calcIRAPI() {
   if (bar) bar.style.width = Math.min(score, 100) + '%';
 
   let label = 'Sin riesgo', color = '#0cb86a', cls = 'sin-riesgo';
-  if (score > 75)      { label = 'Alto';  color = '#ef4444'; cls = 'alto'; }
+  if (score > 75)      { label = 'Alto';  color = '#dc2626'; cls = 'alto'; }
   else if (score > 35) { label = 'Medio'; color = '#ea580c'; cls = 'medio'; }
   else if (score > 10) { label = 'Bajo';  color = '#d97706'; cls = 'bajo'; }
 
@@ -2672,12 +2694,14 @@ function calcIRAPI() {
 
   // Frase de acción según factor dominante
   const contributions = [
-    { key: 'micro', val: micro * 0.45 },
-    { key: 'alk',   val: alk   * 0.30 },
-    { key: 'cloro', val: cloro * 0.20 },
-    { key: 'otros', val: otros * 0.05 },
+    { key: 'micro', val: micro * 0.45, raw: micro },
+    { key: 'alk',   val: alk   * 0.30, raw: alk   },
+    { key: 'cloro', val: cloro * 0.20, raw: cloro },
+    { key: 'otros', val: otros * 0.05, raw: otros  },
   ];
-  const dominant = contributions.reduce((a, b) => b.val > a.val ? b : a).key;
+  const dominant = contributions.reduce((a, b) =>
+    b.val > a.val ? b : (b.val === a.val && b.raw > a.raw ? b : a)
+  ).key;
   const ACTION_BAJO = {
     micro: 'Factor microbiológico activo. Programa análisis de laboratorio esta semana.',
     cloro: 'Nivel de cloro fuera del rango ideal. Ajusta la dosificación antes de la próxima sesión.',
@@ -4652,7 +4676,7 @@ async function _doPDF() {
     }
     const [logoAquaB64, logoEstabB64, logHash] = await Promise.all([
       _loadImgB64('Multimedia/logo1.png').catch(() => null),
-      _loadImgB64('Multimedia/LogoBrazada.webp').catch(() => null),
+      _loadImgB64('Multimedia/logo1.webp').catch(() => null),
       _sha256Hex(localStorage.getItem('aqua_bitacora') || '[]'),
     ]);
     await __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash);
@@ -5239,7 +5263,7 @@ function renderDocs() {
   const textEl = document.getElementById('docsProgressText');
   if (fillEl) {
     fillEl.style.width      = pct + '%';
-    fillEl.style.background = pct === 100 ? '#0cb86a' : pct >= 60 ? '#f59e0b' : '#ef4444';
+    fillEl.style.background = pct === 100 ? '#0cb86a' : pct >= 60 ? '#f59e0b' : '#dc2626';
   }
   if (textEl) textEl.textContent = `${checked} / ${visible.length}`;
 }
@@ -6481,8 +6505,27 @@ function dismissPreloader(section) {
   el.classList.add('fade-out');
   setTimeout(() => {
     el.remove();
+    const fab = document.getElementById('jgFab');
+    if (fab) fab.removeAttribute('hidden');
     if (section && section !== 'dashboard') navigate(section);
   }, 420);
+}
+
+let _jgPanelTimer = null;
+
+function openJGPanel() {
+  const panel = document.getElementById('jgPanel');
+  if (!panel) return;
+  clearTimeout(_jgPanelTimer);
+  panel.removeAttribute('hidden');
+  requestAnimationFrame(() => panel.classList.add('jg-panel--open'));
+}
+
+function closeJGPanel() {
+  const panel = document.getElementById('jgPanel');
+  if (!panel) return;
+  panel.classList.remove('jg-panel--open');
+  _jgPanelTimer = setTimeout(() => panel.setAttribute('hidden', ''), 280);
 }
 
 // ── ONBOARDING ────────────────────────────────────────────────
