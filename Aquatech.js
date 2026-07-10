@@ -244,7 +244,9 @@ const _SECURE_STORE = (() => {
     return new TextDecoder().decode(plain);
   }
 
-  async function _persist(key, value) {
+  const _pending = new Set();
+
+  async function _persistInternal(key, value) {
     const keyBytes = _PIN.getSessionKey();
     if (!keyBytes) return;
     const text = _serializeValue(value);
@@ -255,6 +257,17 @@ const _SECURE_STORE = (() => {
       const sig = await _INTEGRITY.sign(text);
       originalSetItem.call(localStorage, key + '_sig', sig);
     } catch {}
+  }
+
+  async function _persist(key, value) {
+    const p = _persistInternal(key, value);
+    _pending.add(p);
+    try { await p; } finally { _pending.delete(p); }
+  }
+
+  async function flush() {
+    if (_pending.size === 0) return;
+    await Promise.all([..._pending]);
   }
 
   async function init() {
@@ -334,7 +347,7 @@ const _SECURE_STORE = (() => {
     storageProto.__aquatechSecurePatched = true;
   }
 
-  return { init, hasProtectedKey, getCached, setCached, removeCached };
+  return { init, flush, hasProtectedKey, getCached, setCached, removeCached };
 })();
 
 function _pinSwitchView(view) {
@@ -512,8 +525,9 @@ function _requireUnlocked() {
   return true;
 }
 
-function lockApp() {
+async function lockApp() {
   if (!_PIN.exists()) { showToast('No hay PIN configurado.', 'warning'); return; }
+  await _SECURE_STORE.flush();
   _PIN.lock();
   ['aqua_irapi_result','aqua_irapi_sliders',
    'aqua_lsi_result','aqua_lsi_fields',
