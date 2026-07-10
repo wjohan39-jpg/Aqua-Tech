@@ -1179,12 +1179,14 @@ function drawLSIGauge(canvasId, lsiValue) {
   const cx = W / 2, cy = H - 10;
   const r  = Math.min(W, H * 2) * 0.40;
 
-  // Zonas Res. 234/2026: -0.3 a +0.5 (asimétrico)
-  // lsi=-0.3 → pct=0.35 → 1.35π | lsi=+0.5 → pct=0.75 → 1.75π
+  // Zonas Res. 234/2026: ideal -0.3 a +0.3 | aceptable -0.5 a +0.5
+  // lsi=-0.5→1.25π | lsi=-0.3→1.35π | lsi=+0.3→1.65π | lsi=+0.5→1.75π
   const segments = [
-    { start: Math.PI,        end: Math.PI * 1.35, color: '#dc2626' },
-    { start: Math.PI * 1.35, end: Math.PI * 1.75, color: '#0cb86a' },
-    { start: Math.PI * 1.75, end: Math.PI * 2,    color: '#f59e0b' },
+    { start: Math.PI,        end: Math.PI * 1.25, color: '#dc2626' },
+    { start: Math.PI * 1.25, end: Math.PI * 1.35, color: '#f59e0b' },
+    { start: Math.PI * 1.35, end: Math.PI * 1.65, color: '#0cb86a' },
+    { start: Math.PI * 1.65, end: Math.PI * 1.75, color: '#f59e0b' },
+    { start: Math.PI * 1.75, end: Math.PI * 2,    color: '#dc2626' },
   ];
 
   segments.forEach(seg => {
@@ -1232,11 +1234,11 @@ const PARAM_DEFS = [
     icon: '<path d="M9 3h6m-3 0v7l-4.5 7.38A2 2 0 0 0 9.26 20h5.48a2 2 0 0 0 1.74-2.97L12 10V3"/>' },
   { id: 'g-ph',        key: 'ph',        label: 'pH',                      unit: '',      min: 6,  max: 9,    range: 'Rango: 6.8–7.3',    normMin: 6.8,  normMax: 7.3,
     icon: '<line x1="8.5" y1="2" x2="15.5" y2="2"/><path d="M14.5 2v17.5c0 1.38-1.12 2.5-2.5 2.5s-2.5-1.12-2.5-2.5V2"/>' },
-  { id: 'g-alc',       key: 'alc',       label: 'Alcalinidad total',       unit: 'ppm',   min: 0,  max: 200,  range: 'Rango: 20–150 ppm',   normMin: 20,   normMax: 150,
+  { id: 'g-alc',       key: 'alc',       label: 'Alcalinidad total',       unit: 'ppm',   min: 0,  max: 200,  range: 'Ideal: 80–120 · Máx. 150 ppm', normMin: 0,    normMax: 150,
     icon: '<path d="M2 12c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/><path d="M2 17c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/>' },
-  { id: 'g-dureza',    key: 'dureza',    label: 'Dureza cálcica',          unit: 'ppm',   min: 0,  max: 800,  range: 'Rango: 200–700 ppm',  normMin: 200,  normMax: 700,
+  { id: 'g-dureza',    key: 'dureza',    label: 'Dureza cálcica',          unit: 'ppm',   min: 0,  max: 800,  range: 'Ideal: 200–400 · Máx. 700 ppm', normMin: 200,  normMax: 700,
     icon: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>' },
-  { id: 'g-cya',       key: 'cya',       label: 'Estabilizador (CYA)',     unit: 'ppm',   min: 0,  max: 100,  range: 'Rango: 0–75 ppm',     normMin: 0,    normMax: 75,
+  { id: 'g-cya',       key: 'cya',       label: 'Estabilizador (CYA)',     unit: 'ppm',   min: 0,  max: 20,   range: 'Máx. 15 ppm',         normMin: 0,    normMax: 15,
     icon: '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>' },
   { id: 'g-turb',      key: 'turb',      label: 'Transparencia',           unit: 'UNT',   min: 0,  max: 1,    range: 'Rango: 0–0.5 UNT', normMin: 0,    normMax: 0.5,
     icon: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>' },
@@ -1441,7 +1443,7 @@ function renderDashboardIndices() {
       <div class="dash-index-bar-bg">
         <div class="dash-index-bar-fill idx-bar-${lsiCls}" data-pct="${Math.min(Math.abs(lsiResult.lsi)/2*100,100)}"></div>
       </div>
-      <div class="dash-index-hint">Rango: −0.3 a +0.5</div>
+      <div class="dash-index-hint">Ideal: −0.3 a +0.3 · Aceptable: −0.5 a +0.5</div>
     </div>` : '';
 
   el.innerHTML = `<div class="dash-indices-grid">${irapiCard}${lsiCard}</div>`;
@@ -1946,8 +1948,8 @@ function calcVolume() {
 const PARAM_CONFIG = {
   cloro:       { label: 'Cloro libre residual', unit: 'ppm', range: 'Rango: 2–4 ppm',    min: 0,  max: 6,   normMin: 2.0, normMax: 4.0,  doseLabel: 'DOSIS RECOMENDADA · HIPOCLORITO DE CALCIO 70%',  doseUnit: 'g', note: 'Aplicar disuelto, con filtro encendido. Reevaluar a los 30 min.' },
   ph:          { label: 'pH',                   unit: '',    range: 'Rango: 6.8–7.3',    min: 6,  max: 9,   normMin: 6.8, normMax: 7.3,  doseLabel: 'AJUSTE DE pH',                                   doseUnit: '',  note: 'Subir pH: carbonato de sodio. Bajar pH: ácido muriático.' },
-  alcalinidad: { label: 'Alcalinidad total',    unit: 'ppm', range: 'Rango: 20–150 ppm', min: 0,  max: 200, normMin: 20,  normMax: 150,  doseLabel: 'DOSIS RECOMENDADA · BICARBONATO DE SODIO',        doseUnit: 'g', note: 'Disolver antes de agregar. Reevaluar en 4–6 horas.' },
-  cya:         { label: 'Estabilizador de cloro (CYA)', unit: 'ppm',range: 'Rango: 0–75 ppm', min: 0, max: 100, normMin: 0,   normMax: 75,   doseLabel: 'NIVEL DE ESTABILIZADOR (CYA)',                     doseUnit: 'ppm', note: 'Si supera 75 ppm, reemplazar parte del agua.' },
+  alcalinidad: { label: 'Alcalinidad total',    unit: 'ppm', range: 'Ideal: 80–120 · Máx. 150 ppm', min: 0,  max: 200, normMin: 0,   normMax: 150,  doseLabel: 'DOSIS RECOMENDADA · BICARBONATO DE SODIO',        doseUnit: 'g', note: 'Disolver antes de agregar. Reevaluar en 4–6 horas.' },
+  cya:         { label: 'Estabilizador de cloro (CYA)', unit: 'ppm',range: 'Máx. 15 ppm',    min: 0, max: 20,  normMin: 0,   normMax: 15,   doseLabel: 'NIVEL DE ESTABILIZADOR (CYA)',                     doseUnit: 'ppm', note: 'Si supera 15 ppm, reemplazar parte del agua sin estabilizador.' },
 };
 
 function switchParam(param, btn) {
@@ -2289,7 +2291,7 @@ function calcDosificacion() {
   }
 
   const CMIN = 2.0, CMAX = 4.0, PMIN = 6.8, PMAX = 7.3;
-  const AMIN = 20,  AMAX = 150,  CYAMAX = 75;
+  const AMIN = 0,   AMAX = 150,  CYAMAX = 15;
 
   const targetErrors = [];
   if (!isNaN(p.cloroA) && (p.cloroT < CMIN || p.cloroT > CMAX))
@@ -2445,12 +2447,18 @@ function calcLSI() {
   const legend = document.querySelectorAll('.lsi-leg-item');
   legend.forEach(l => l.classList.remove('active-leg'));
 
-  // Rango aceptable Res. 234/2026: -0.3 a +0.5 (asimétrico)
-  if (lsi < -0.3) {
+  // Res. 234/2026 Anexo I: ideal -0.3 a +0.3 | aceptable -0.5 a +0.5
+  if (lsi < -0.5) {
     status = 'Corrosiva'; color = '#dc2626';
     legend[0]?.classList.add('active-leg');
+  } else if (lsi < -0.3) {
+    status = 'Tendencia corrosiva'; color = '#f59e0b';
+    legend[0]?.classList.add('active-leg');
   } else if (lsi > 0.5) {
-    status = 'Incrustante'; color = '#f59e0b';
+    status = 'Incrustante'; color = '#dc2626';
+    legend[2]?.classList.add('active-leg');
+  } else if (lsi > 0.3) {
+    status = 'Tendencia incrustante'; color = '#f59e0b';
     legend[2]?.classList.add('active-leg');
   } else {
     legend[1]?.classList.add('active-leg');
@@ -2466,28 +2474,43 @@ function calcLSI() {
   _setLsiPBadge('lsiPhBadge',   pH >= 6.8 && pH <= 7.3,       '✓', '✗ fuera');
   _setLsiPBadge('lsiTempBadge', temp <= 40,                    '✓', '✗ > 40°C');
   _setLsiPBadge('lsiHardBadge', hard >= 200 && hard <= 700,    '✓', '✗ fuera');
-  _setLsiPBadge('lsiAlkBadge',  alk >= 20 && alk <= 150,       '✓', '✗ fuera');
+  _setLsiPBadge('lsiAlkBadge',  alk <= 150,                    '✓', '✗ fuera');
 
   // ── Diagnóstico completo ──────────────────────────────
   const diagEl = document.getElementById('lsiDiagnosis');
   if (diagEl) {
     const phOk   = pH >= 6.8 && pH <= 7.3;
     const hardOk = hard >= 200 && hard <= 700;
-    const alkOk  = alk >= 20  && alk <= 150;
+    const alkOk  = alk <= 150;
     const tempOk = temp <= 40;
     const allOk  = phOk && hardOk && alkOk && tempOk;
 
-    if (lsi < -0.3) {
+    if (lsi < -0.5) {
       // ── Corrosiva ──
       const tips = [];
       if (pH < 6.8)   tips.push(`Subir pH — actual ${pH}, mínimo 6.8`);
       if (hard < 200) tips.push(`Subir dureza cálcica — actual ${hard} ppm, mínimo 200 ppm`);
-      if (alk < 20)   tips.push(`Subir alcalinidad — actual ${alk} ppm, mínimo 20 ppm`);
+      if (alk < 80)   tips.push(`Subir alcalinidad — actual ${alk} ppm, rango ideal 80–120 ppm (máx. 150 ppm)`);
       if (!tips.length) tips.push('Combinación de factores genera índice negativo. Revisar pH y alcalinidad.');
       diagEl.innerHTML = `<div class="lsi-diag-box lsi-box-danger">
         <div class="lsi-diag-title lsi-title-danger">
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Agua corrosiva — puede dañar superficies, tuberías y equipos
+        </div>
+        <ul class="lsi-diag-list">${tips.map(t => `<li>${t}</li>`).join('')}</ul>
+      </div>`;
+
+    } else if (lsi >= -0.5 && lsi < -0.3) {
+      // ── Tendencia corrosiva (aceptable pero fuera del ideal) ──
+      const tips = [];
+      if (pH < 6.8)   tips.push(`Subir pH — actual ${pH}, mínimo 6.8`);
+      if (hard < 200) tips.push(`Subir dureza cálcica — actual ${hard} ppm, mínimo 200 ppm`);
+      if (alk < 80)   tips.push(`Subir alcalinidad al rango ideal (80–120 ppm)`);
+      if (!tips.length) tips.push('Ajustar parámetros hacia el rango ideal −0.3 a +0.3.');
+      diagEl.innerHTML = `<div class="lsi-diag-box lsi-box-warn">
+        <div class="lsi-diag-title lsi-title-warn">
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Tendencia corrosiva — ISL aceptable pero fuera del rango ideal (−0.3 a +0.3)
         </div>
         <ul class="lsi-diag-list">${tips.map(t => `<li>${t}</li>`).join('')}</ul>
       </div>`;
@@ -2500,10 +2523,25 @@ function calcLSI() {
       if (hard > 700) tips.push(`Dureza cálcica muy alta — actual ${hard} ppm, máximo 700 ppm. Dilución parcial.`);
       if (temp > 40)  tips.push(`Temperatura excede el máximo — actual ${temp} °C, máx. 40 °C`);
       if (!tips.length) tips.push('Revisar pH y alcalinidad para reducir el índice.');
+      diagEl.innerHTML = `<div class="lsi-diag-box lsi-box-danger">
+        <div class="lsi-diag-title lsi-title-danger">
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Agua incrustante — puede formar sarro en tuberías y equipos
+        </div>
+        <ul class="lsi-diag-list">${tips.map(t => `<li>${t}</li>`).join('')}</ul>
+      </div>`;
+
+    } else if (lsi > 0.3) {
+      // ── Tendencia incrustante (aceptable pero fuera del ideal) ──
+      const tips = [];
+      if (pH > 7.3)   tips.push(`Bajar pH — actual ${pH}, máximo 7.3`);
+      if (alk > 150)  tips.push(`Bajar alcalinidad — actual ${alk} ppm, máximo 150 ppm`);
+      if (hard > 700) tips.push(`Dureza cálcica alta — actual ${hard} ppm, ideal hasta 400 ppm`);
+      if (!tips.length) tips.push('Ajustar parámetros hacia el rango ideal −0.3 a +0.3.');
       diagEl.innerHTML = `<div class="lsi-diag-box lsi-box-warn">
         <div class="lsi-diag-title lsi-title-warn">
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          Agua incrustante — puede formar sarro en tuberías y equipos
+          Tendencia incrustante — ISL aceptable pero fuera del rango ideal (−0.3 a +0.3)
         </div>
         <ul class="lsi-diag-list">${tips.map(t => `<li>${t}</li>`).join('')}</ul>
       </div>`;
@@ -2516,8 +2554,8 @@ function calcLSI() {
       if (pH < 6.8)   { reduciendo.push(`pH bajo (${pH} < 6.8) reduce el ISL`); corregir.push(`Subir pH a 6.8–7.3`); }
       if (hard > 700) { elevando.push(`Dureza alta (${hard} ppm) eleva el ISL`); corregir.push(`Bajar dureza cálcica — dilución`); }
       if (hard < 200) { reduciendo.push(`Dureza baja (${hard} ppm) reduce el ISL`); corregir.push(`Subir dureza cálcica a 200–700 ppm`); }
-      if (alk > 150)  { elevando.push(`Alcalinidad alta (${alk} ppm) eleva el ISL`); corregir.push(`Bajar alcalinidad a 20–150 ppm`); }
-      if (alk < 20)   { reduciendo.push(`Alcalinidad baja (${alk} ppm) reduce el ISL`); corregir.push(`Subir alcalinidad a 20–150 ppm`); }
+      if (alk > 150)  { elevando.push(`Alcalinidad alta (${alk} ppm) eleva el ISL`); corregir.push(`Bajar alcalinidad — máx. 150 ppm`); }
+      if (alk < 80)   { reduciendo.push(`Alcalinidad baja (${alk} ppm) reduce el ISL`); corregir.push(`Subir alcalinidad al rango ideal (80–120 ppm)`); }
       if (temp > 40)  { elevando.push(`Temperatura alta (${temp} °C) eleva el ISL`); corregir.push(`Temperatura excede el máximo de 40 °C`); }
 
       const efectos = [...elevando, ...reduciendo];
@@ -2812,7 +2850,7 @@ function calcIRAPIFromBitacora() {
   const ncAlk   = log.filter(e =>
     (e.ph   != null && !isNaN(e.ph)   && (e.ph  < 6.8 || e.ph  > 7.3)) ||
     (e.orp  != null && !isNaN(e.orp)  && (e.orp < 650 || e.orp > 700)) ||
-    (e.cya  != null && !isNaN(e.cya)  && e.cya  > 75)
+    (e.cya  != null && !isNaN(e.cya)  && e.cya  > 15)
   ).length;
   // VCT (Res. 234/2026 Anexo II): Turbiedad únicamente
   const ncOtros = log.filter(e =>
@@ -3009,11 +3047,11 @@ let _trendDays   = 7;
 const LOG_PARAM_RANGES = [
   { id: 'logCloro',     badge: 'logCloroBadge',     min: 2.0, max: 4.0  },
   { id: 'logCloroComb', badge: 'logCloroCombBadge', min: 0,   max: 0.3  },
-  { id: 'logBromo',     badge: 'logBromoBadge',     min: 4.0, max: 6.0  },
+  { id: 'logBromo',     badge: 'logBromoBadge',     min: 2.0, max: 4.0  },
   { id: 'logPh',        badge: 'logPhBadge',        min: 6.8, max: 7.3  },
-  { id: 'logAlc',       badge: 'logAlcBadge',       min: 20,  max: 150  },
+  { id: 'logAlc',       badge: 'logAlcBadge',       min: 0,   max: 150  },
   { id: 'logDureza',   badge: 'logDurezaBadge',    min: 200, max: 700  },
-  { id: 'logCya',       badge: 'logCyaBadge',       min: 0,   max: 75   },
+  { id: 'logCya',       badge: 'logCyaBadge',       min: 0,   max: 15   },
   { id: 'logTurb',      badge: 'logTurbBadge',      min: 0,   max: 0.5  },
   { id: 'logTemp',      badge: 'logTempBadge',      min: 0,   max: 40   },
   { id: 'logHumedad',  badge: 'logHumedadBadge',   min: 40,  max: 60   },
@@ -3408,7 +3446,7 @@ function _calcISLForEntry(entry) {
   const CD = _lsiInterp(_LSI_HARD, hard);
   const CA = _lsiInterp(_LSI_ALK,  entry.alc);
   entry.isl       = +(entry.ph + CT + CD + CA - 12.1).toFixed(2);
-  entry.islStatus = entry.isl < -0.3 ? 'Corrosiva' : entry.isl > 0.5 ? 'Incrustante' : 'Equilibrada';
+  entry.islStatus = entry.isl < -0.5 ? 'Corrosiva' : entry.isl < -0.3 ? 'Tend. corrosiva' : entry.isl > 0.5 ? 'Incrustante' : entry.isl > 0.3 ? 'Tend. incrustante' : 'Ideal';
   entry.islDureza = hard;
 }
 
@@ -3628,7 +3666,7 @@ function renderLog() {
             <td data-label="Cal.Fís.">${(() => { const ok = _fisTodosOk(e); return (e.fisColor || e.fisFlotantes || e.fisOlor || e.fisTransp) ? `<span class="${ok ? 'fis-badge-ok' : 'fis-badge-bad'}">${ok ? '✓' : '⚠'}</span>` : '<span class="fis-badge-na">–</span>'; })()}</td>
             <td data-label="Cl. Libre"${cc('cloro',     e.cloro    )}>${e.cloro     ?? '–'} ppm</td>
             <td data-label="Cl. Comb" ${cc('clorocomb', e.clorocomb)}>${e.clorocomb != null && !isNaN(e.clorocomb) ? e.clorocomb + ' ppm' : '–'}</td>
-            <td data-label="Bromo"${e.bromo != null ? (e.bromo >= 4.0 && e.bromo <= 6.0 ? ' class="cell-ok"' : ' class="cell-out"') : ''}>${e.bromo != null ? e.bromo + ' ppm' : '–'}</td>
+            <td data-label="Bromo"${e.bromo != null ? (e.bromo >= 2.0 && e.bromo <= 4.0 ? ' class="cell-ok"' : ' class="cell-out"') : ''}>${e.bromo != null ? e.bromo + ' ppm' : '–'}</td>
             <td data-label="pH"       ${cc('ph',         e.ph       )}>${e.ph        ?? '–'}</td>
             <td data-label="Alcalinidad"${cc('alc',   e.alc  )}>${e.alc   ?? '–'} ppm</td>
             <td data-label="Dureza"${cc('dureza', e.dureza)}>${e.dureza != null && !isNaN(e.dureza) ? e.dureza + ' ppm' : '–'}</td>
@@ -3706,11 +3744,11 @@ function viewLog(ts) {
   const paramRows = [
     { key: 'cloro',     label: 'Cloro libre residual',  unit: 'ppm',   normMin: 2.0,  normMax: 4.0  },
     { key: 'clorocomb', label: 'Cloro combinado',        unit: 'ppm',   normMin: 0,    normMax: 0.3  },
-    { key: 'bromo',     label: 'Bromo total (Br₂)',      unit: 'ppm',   normMin: 4.0,  normMax: 6.0  },
+    { key: 'bromo',     label: 'Bromo total (Br₂)',      unit: 'ppm',   normMin: 2.0,  normMax: 4.0  },
     { key: 'ph',        label: 'pH',                     unit: '',      normMin: 6.8,  normMax: 7.3  },
-    { key: 'alc',       label: 'Alcalinidad total',      unit: 'ppm',   normMin: 20,   normMax: 150  },
+    { key: 'alc',       label: 'Alcalinidad total',      unit: 'ppm',   normMin: 0,    normMax: 150  },
     { key: 'dureza',    label: 'Dureza cálcica',         unit: 'ppm',   normMin: 200,  normMax: 700  },
-    { key: 'cya',       label: 'Estabilizador (CYA)',    unit: 'ppm',   normMin: 0,    normMax: 75   },
+    { key: 'cya',       label: 'Estabilizador (CYA)',    unit: 'ppm',   normMin: 0,    normMax: 15   },
     { key: 'turb',      label: 'Transparencia',          unit: 'UNT',   normMin: 0,    normMax: 0.5  },
     { key: 'temp',      label: 'Temperatura del agua',   unit: '°C',    normMin: 0,    normMax: 40   },
     { key: 'tempAire',  label: 'Temperatura del aire',   unit: '°C',    normMin: null, normMax: null },
@@ -3803,7 +3841,7 @@ function viewLog(ts) {
         <span class="isl-score c-${islCls}">${_safeNum(entry.isl, 2)}</span>
         <div>
           <div class="isl-status c-${islCls}">${entry.islStatus}</div>
-          <div class="isl-range-note">Rango óptimo: −0.3 a +0.5${durezaNote}</div>
+          <div class="isl-range-note">Ideal: −0.3 a +0.3 · Aceptable: −0.5 a +0.5${durezaNote}</div>
         </div>
       </div>
     </div>`;
@@ -3966,7 +4004,7 @@ const AFR_STEPS = {
   diarreico: [
     { title: 'Evacuar la piscina', desc: 'Solicite a todos los bañistas salir del agua de inmediato. Restrinja el acceso.' },
     { title: 'Identificar el tipo de incidente', desc: 'Confirme que se trata de materia fecal diarreica. Registre la hora exacta.' },
-    { title: 'Notificar autoridad sanitaria', desc: 'Notifique de inmediato a la Secretaría de Salud local o autoridad sanitaria competente. La Res. 234/2026 y la Ley 1209/2008 exigen notificación obligatoria ante todo evento fecal diarreico. Registre la hora de notificación y el funcionario contactado.' },
+    { title: 'Notificar autoridad sanitaria', desc: 'Notifique de inmediato a la Secretaría de Salud local o autoridad sanitaria competente. El Art. 6 núm. 6 y Art. 15 núm. 5 de la Res. 234/2026 exigen notificación ante todo evento diarreico (máx. 5 días). Registre la hora de notificación y el funcionario contactado.' },
     { title: 'Remover el residuo', desc: 'Use una red dedicada. Coloque el residuo en bolsa hermética y deseche.' },
     { title: 'Hipercloración', desc: 'Eleve el cloro residual a 20 ppm. Tiempo mínimo de contacto: 13 horas. Riesgo de Cryptosporidium.' },
     { title: 'Verificar pH', desc: 'Mantenga el pH entre 6.8 y 7.3. Monitoree cada 2 horas durante las 13 horas.' },
@@ -4359,7 +4397,7 @@ function viewAFRIncident(ts) {
       </div>
     </div>
     <div class="log-detail-section">
-      <div class="log-detail-section-title">Protocolo aplicado (Res. 234/2026)</div>
+      <div class="log-detail-section-title">Protocolo de respuesta sanitaria aplicado</div>
       <p class="afr-proto-desc">${protDesc}</p>
     </div>
     ${cierreSection}
@@ -4548,8 +4586,8 @@ function updateReportSummary() {
   document.getElementById('repTds').textContent  = pctOpt(e => e.tds  != null && !isNaN(e.tds),  e => e.tds  >= 1000 && e.tds  <= 1200);
   document.getElementById('repCond').textContent = pctOpt(e => e.cond != null && !isNaN(e.cond), e => e.cond >= 2000 && e.cond <= 2400);
   document.getElementById('repPh').textContent    = pct(e => e.ph   >= 6.8 && e.ph   <= 7.3);
-  document.getElementById('repAlc').textContent   = pct(e => e.alc  >= 20  && e.alc  <= 150);
-  document.getElementById('repCya').textContent   = pctOpt(e => e.cya != null && !isNaN(e.cya), e => e.cya >= 0 && e.cya <= 75);
+  document.getElementById('repAlc').textContent   = pct(e => e.alc  <= 150);
+  document.getElementById('repCya').textContent   = pctOpt(e => e.cya != null && !isNaN(e.cya), e => e.cya >= 0 && e.cya <= 15);
   document.getElementById('repTurb').textContent  = pct(e => e.turb >= 0   && e.turb <= 0.5);
   document.getElementById('repTemp').textContent  = pctOpt(e => e.temp != null && !isNaN(e.temp), e => e.temp <= 40);
   document.getElementById('repDureza').textContent = pctOpt(e => e.dureza != null && !isNaN(e.dureza), e => e.dureza >= 200 && e.dureza <= 700);
@@ -4829,11 +4867,11 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
   const paramRows = [
     { label: 'Cloro libre residual', unit: 'ppm', field: 'cloro',     dec: 1, ok: e => e.cloro >= 2.0 && e.cloro <= 4.0,                                                    range: '2.0 – 4.0 ppm' },
     { label: 'Cloro combinado',      unit: 'ppm', field: 'clorocomb', dec: 2, ok: e => { const v = +e.clorocomb; return isNaN(v) ? true : v >= 0 && v <= 0.3; },             range: '0 – 0.3 ppm'   },
-    { label: 'Bromo total (Br2)',    unit: 'ppm', field: 'bromo',     dec: 1, ok: e => e.bromo == null || (e.bromo >= 4.0 && e.bromo <= 6.0), range: '4.0 - 6.0 ppm'  },
+    { label: 'Bromo total (Br2)',    unit: 'ppm', field: 'bromo',     dec: 1, ok: e => e.bromo == null || (e.bromo >= 2.0 && e.bromo <= 4.0), range: '2.0 – 4.0 ppm'  },
     { label: 'pH',                   unit: '',    field: 'ph',        dec: 2, ok: e => e.ph   >= 6.8 && e.ph   <= 7.3,                                                    range: '6.8 – 7.3'     },
-    { label: 'Alcalinidad total',     unit: 'ppm', field: 'alc',    dec: 0, ok: e => e.alc    >= 20  && e.alc    <= 150, range: '20 – 150 ppm'    },
+    { label: 'Alcalinidad total',     unit: 'ppm', field: 'alc',    dec: 0, ok: e => e.alc    <= 150, range: 'Ideal: 80–120 · Máx. 150 ppm' },
     { label: 'Dureza cálcica',        unit: 'ppm', field: 'dureza', dec: 0, ok: e => e.dureza == null || (e.dureza >= 200 && e.dureza <= 700), range: '200 – 700 ppm'  },
-    { label: 'Estabilizador (CYA)',    unit: 'ppm', field: 'cya',    dec: 0, ok: e => e.cya == null || (e.cya >= 0 && e.cya <= 75), range: '0 – 75 ppm' },
+    { label: 'Estabilizador (CYA)',    unit: 'ppm', field: 'cya',    dec: 0, ok: e => e.cya == null || (e.cya >= 0 && e.cya <= 15), range: '0 – 15 ppm' },
     { label: 'Transparencia / Turbiedad', unit: 'UNT', field: 'turb', dec: 2, ok: e => e.turb >= 0   && e.turb <= 0.5,  range: '0 – 0.5 UNT'    },
     { label: 'Temperatura del agua',  unit: 'C',    field: 'temp',     dec: 1, ok: e => { const v = +e.temp;     return isNaN(v) ? true : v <= 40; },          range: 'max. 40 C'        },
     { label: 'Temperatura del aire',  unit: 'C',    field: 'tempAire', dec: 1, ok: () => true,                                                              range: 'Informativo'      },
@@ -4903,12 +4941,12 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
       (e.clorocomb != null && !isNaN(e.clorocomb) && e.clorocomb > 0.3)
     ).length;
     const ncAlk   = log.filter(e =>
-      (e.alc != null && !isNaN(e.alc) && (e.alc < 20  || e.alc > 150)) ||
+      (e.alc != null && !isNaN(e.alc) && e.alc > 150) ||
       (e.ph  != null && !isNaN(e.ph)  && (e.ph  < 6.8 || e.ph  > 7.3))
     ).length;
     const ncOtros = log.filter(e =>
       (e.turb != null && !isNaN(e.turb) && e.turb > 0.5) ||
-      (e.cya  != null && !isNaN(e.cya)  && e.cya  > 75)  ||
+      (e.cya  != null && !isNaN(e.cya)  && e.cya  > 15)  ||
       (e.orp  != null && !isNaN(e.orp)  && (e.orp < 650 || e.orp > 700))
     ).length;
     const pCloro  = Math.round((ncCloro / n) * 100);
@@ -4937,7 +4975,7 @@ async function __buildPDF(logoAquaB64, logoEstabB64, integrity, logHash) {
       body: [
         ['Microbiológico *', 'No determinado', '45%', '–'],
         ['Cloro residual',   pCloro + '%',    '20% (36% s/micro)', (pCloro * (20/55)).toFixed(1)],
-        ['Alcalinidad / pH', pAlk   + '%',    '30% (55% s/micro)', (pAlk   * (30/55)).toFixed(1)],
+        ['pH / ORP / CYA',   pAlk   + '%',    '30% (55% s/micro)', (pAlk   * (30/55)).toFixed(1)],
         ['Otros parámetros', pOtros + '%',    '5% (9% s/micro)',   (pOtros * (5/55)).toFixed(1)],
         ['Nivel de riesgo (parcial)', irapiScore.toString(), '', irapiLabel],
       ],
@@ -5949,7 +5987,7 @@ function renderLabReg() {
   histEl.innerHTML = records.map(r => {
     const pct  = _labPctMicro(r);
     const cya  = r.cya != null ? `${r.cya} mg/L` : '–';
-    const cyaOut = r.cya != null && r.cya > 75;
+    const cyaOut = r.cya != null && r.cya > 15;
     const microRows = LAB_MICRO_KEYS
       .filter(k => r[k])
       .map(k => {
