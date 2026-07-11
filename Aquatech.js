@@ -252,7 +252,14 @@ const _SECURE_STORE = (() => {
     const text = _serializeValue(value);
     const payload = await _encryptText(text, keyBytes);
     if (!payload) return;
-    originalSetItem.call(localStorage, key, PREFIX + JSON.stringify(payload));
+    try {
+      originalSetItem.call(localStorage, key, PREFIX + JSON.stringify(payload));
+    } catch (e) {
+      if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+        showToast('Almacenamiento lleno. Elimina fotos o registros antiguos para continuar.', 'error', 8000);
+      }
+      return;
+    }
     try {
       const sig = await _INTEGRITY.sign(text);
       originalSetItem.call(localStorage, key + '_sig', sig);
@@ -282,7 +289,7 @@ const _SECURE_STORE = (() => {
           const plain = keyBytes ? await _decryptText(blob, keyBytes) : null;
           if (plain != null) CACHE.set(key, _parseValue(plain));
         } catch {}
-      } else {
+      } else if (keyBytes) {
         try {
           CACHE.set(key, _parseValue(raw));
           void _persist(key, CACHE.get(key));
@@ -303,6 +310,7 @@ const _SECURE_STORE = (() => {
 
   function setCached(key, value) {
     const normalized = _serializeValue(value);
+    if (!_PIN.getSessionKey()) return normalized;
     CACHE.set(key, _parseValue(normalized));
     void _persist(key, CACHE.get(key));
     return normalized;
