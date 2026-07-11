@@ -274,7 +274,7 @@ const _SECURE_STORE = (() => {
 
   async function flush() {
     if (_pending.size === 0) return;
-    await Promise.all([..._pending]);
+    await Promise.allSettled([..._pending]);
   }
 
   async function init() {
@@ -3578,7 +3578,13 @@ async function saveLog() {
     toastMsg = `Medición del ${entry.fecha} guardada en bitácora.`;
   }
   if (btn) btn.disabled = true;
-  await _secSave('aqua_bitacora', JSON.stringify(log));  // Espera confirmación en disco
+  try {
+    await _secSave('aqua_bitacora', JSON.stringify(log));
+  } catch (_) {
+    if (btn) btn.disabled = false;
+    showToast('Error al guardar. Intenta de nuevo.', 'error');
+    return;
+  }
   if (btn) btn.disabled = false;
   _checkStorageUsage();
   _logPage = 0;
