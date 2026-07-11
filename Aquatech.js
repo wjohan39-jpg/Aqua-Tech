@@ -355,7 +355,42 @@ const _SECURE_STORE = (() => {
     storageProto.__aquatechSecurePatched = true;
   }
 
-  return { init, flush, hasProtectedKey, getCached, setCached, removeCached };
+  async function persistNow(key, value) {
+    const text = _serializeValue(value);
+    CACHE.set(key, _parseValue(text));
+
+    const keyBytes = _PIN.getSessionKey();
+    if (!keyBytes) return false;
+
+    let payload;
+    try {
+      payload = await _encryptText(text, keyBytes);
+    } catch (e) {
+      if (e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+        showToast('Almacenamiento lleno. Elimina fotos o registros antiguos para continuar.', 'error', 8000);
+      }
+      return false;
+    }
+    if (!payload) return false;
+
+    try {
+      originalSetItem.call(localStorage, key, PREFIX + JSON.stringify(payload));
+    } catch (e) {
+      if (e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+        showToast('Almacenamiento lleno. Elimina fotos o registros antiguos para continuar.', 'error', 8000);
+      }
+      return false;
+    }
+
+    try {
+      const sig = await _INTEGRITY.sign(text);
+      originalSetItem.call(localStorage, key + '_sig', sig);
+    } catch {}
+
+    return true;
+  }
+
+  return { init, flush, hasProtectedKey, getCached, setCached, removeCached, persistNow };
 })();
 
 function _pinSwitchView(view) {
@@ -555,21 +590,8 @@ function _pinInit() {
   }
 }
 
-// Guarda json de forma protegida en localStorage y espera a que el cifrado confirme escritura en disco.
 async function _secSave(lsKey, json) {
-  try {
-    localStorage.setItem(lsKey, json);  // interceptado → setCached → _persist en _pending
-  } catch (e) {
-    if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
-      showToast('Almacenamiento lleno. Elimina fotos o registros antiguos para continuar.', 'error', 8000);
-    }
-    return;
-  }
-  await _SECURE_STORE.flush();  // Espera a que el cifrado AES-GCM escriba en localStorage real
-  try {
-    const sig = await _INTEGRITY.sign(json);
-    localStorage.setItem(lsKey + '_sig', sig);
-  } catch { /* fallo silencioso — dato guardado, firma omitida */ }
+  return _SECURE_STORE.persistNow(lsKey, json);
 }
 
 // Validate signatures for protected storage keys.
@@ -3578,14 +3600,12 @@ async function saveLog() {
     toastMsg = `Medición del ${entry.fecha} guardada en bitácora.`;
   }
   if (btn) btn.disabled = true;
-  try {
-    await _secSave('aqua_bitacora', JSON.stringify(log));
-  } catch (_) {
-    if (btn) btn.disabled = false;
+  const saved = await _secSave('aqua_bitacora', JSON.stringify(log));
+  if (btn) btn.disabled = false;
+  if (!saved) {
     showToast('Error al guardar. Intenta de nuevo.', 'error');
     return;
   }
-  if (btn) btn.disabled = false;
   _checkStorageUsage();
   _logPage = 0;
   clearLogForm();
