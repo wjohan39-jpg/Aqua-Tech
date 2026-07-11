@@ -555,16 +555,17 @@ function _pinInit() {
   }
 }
 
-// Guarda json de forma protegida en localStorage y, en paralelo, firma y persiste el HMAC.
+// Guarda json de forma protegida en localStorage y espera a que el cifrado confirme escritura en disco.
 async function _secSave(lsKey, json) {
   try {
-    localStorage.setItem(lsKey, json);
+    localStorage.setItem(lsKey, json);  // interceptado → setCached → _persist en _pending
   } catch (e) {
     if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
       showToast('Almacenamiento lleno. Elimina fotos o registros antiguos para continuar.', 'error', 8000);
     }
     return;
   }
+  await _SECURE_STORE.flush();  // Espera a que el cifrado AES-GCM escriba en localStorage real
   try {
     const sig = await _INTEGRITY.sign(json);
     localStorage.setItem(lsKey + '_sig', sig);
@@ -3557,12 +3558,13 @@ function _checkStorageUsage() {
   } catch (_) {}
 }
 
-function saveLog() {
+async function saveLog() {
   const entry = _buildLogEntry();
   _calcISLForEntry(entry);
 
   let log = getLog();
   let toastMsg;
+  const btn = document.getElementById('btnSaveLog');
   if (editingLogTs) {
     log = log.map(e => e.ts === editingLogTs ? entry : e);
     editingLogTs = null;
@@ -3575,7 +3577,9 @@ function saveLog() {
     _newLogTs = entry.ts;
     toastMsg = `Medición del ${entry.fecha} guardada en bitácora.`;
   }
-  _secSave('aqua_bitacora', JSON.stringify(log));
+  if (btn) btn.disabled = true;
+  await _secSave('aqua_bitacora', JSON.stringify(log));  // Espera confirmación en disco
+  if (btn) btn.disabled = false;
   _checkStorageUsage();
   _logPage = 0;
   clearLogForm();
@@ -3585,7 +3589,7 @@ function saveLog() {
   updateReportBtn();
   updateDashReportBtn();
   updateOperadorDatalist();
-  showToast(toastMsg, 'success');
+  showToast(toastMsg, 'success');  // Toast solo aparece cuando el dato YA está en localStorage
   const _aforo = getPerfil().aforo;
   if (_aforo && entry.banistas != null && entry.banistas > _aforo) {
     setTimeout(() => showToast(`⚠ Aforo superado: ${entry.banistas} bañistas registrados (máx. ${_aforo}).`, 'warning', 6000), 600);
