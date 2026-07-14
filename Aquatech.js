@@ -248,17 +248,23 @@ const _SECURE_STORE = (() => {
 
   async function _persistInternal(key, value) {
     const keyBytes = _PIN.getSessionKey();
-    if (!keyBytes) return;
+    if (!keyBytes) throw new Error('SESSION_LOCKED');
     const text = _serializeValue(value);
-    const payload = await _encryptText(text, keyBytes);
-    if (!payload) return;
+    let payload;
+    try {
+      payload = await _encryptText(text, keyBytes);
+    } catch (e) {
+      throw new Error('ENCRYPT_FAILED');
+    }
+    if (!payload) throw new Error('ENCRYPT_FAILED');
     try {
       originalSetItem.call(localStorage, key, PREFIX + JSON.stringify(payload));
     } catch (e) {
       if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
         showToast('Almacenamiento lleno. Elimina fotos o registros antiguos para continuar.', 'error', 8000);
+        throw new Error('QUOTA_EXCEEDED');
       }
-      return;
+      throw e;
     }
     try {
       const sig = await _INTEGRITY.sign(text);
@@ -274,7 +280,9 @@ const _SECURE_STORE = (() => {
 
   async function flush() {
     if (_pending.size === 0) return;
-    await Promise.allSettled([..._pending]);
+    const results = await Promise.allSettled([..._pending]);
+    const failed = results.find(r => r.status === 'rejected');
+    if (failed) throw failed.reason;
   }
 
   async function init() {
@@ -310,7 +318,6 @@ const _SECURE_STORE = (() => {
 
   function setCached(key, value) {
     const normalized = _serializeValue(value);
-    if (!_PIN.getSessionKey()) return normalized;
     CACHE.set(key, _parseValue(normalized));
     void _persist(key, CACHE.get(key));
     return normalized;
@@ -3603,7 +3610,10 @@ async function saveLog() {
   const saved = await _secSave('aqua_bitacora', JSON.stringify(log));
   if (btn) btn.disabled = false;
   if (!saved) {
-    showToast('Error al guardar. Intenta de nuevo.', 'error');
+    const msg = !_PIN.getSessionKey()
+      ? 'Sesión bloqueada. Ingresa tu PIN e intenta de nuevo.'
+      : 'Error al guardar. Intenta de nuevo.';
+    showToast(msg, 'error');
     return;
   }
   _checkStorageUsage();
